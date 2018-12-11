@@ -8,6 +8,14 @@ from utils import drop_path
 class Cell(nn.Module):
 
   def __init__(self, genotype, C_prev_prev, C_prev, C, reduction, reduction_prev):
+    """
+        :param genotype: The genotype of the module defined in the genotypes.py module
+        :param C_prev_prev: Number of channels of the cell before the previous cell
+        :param C_prev: Number of channels of the previous cell
+        :param C: Number of channels of the current cell
+        :param reduction: boolean indicating if this computation cell is to be reduced
+        :param reduction_prev: boolean of the previous computation cell
+        """
     super(Cell, self).__init__()
     print(C_prev_prev, C_prev, C)
 
@@ -26,12 +34,26 @@ class Cell(nn.Module):
     self._compile(C, op_names, indices, concat, reduction)
 
   def _compile(self, C, op_names, indices, concat, reduction):
+    """
+      :param C: Number of channels of the current computation cell
+      :param op_names: list with the operation names defined in the genotype
+      :param indices:  indices corresponding operation names list defined in the genotype
+      :param concat:   list of integer values
+      :param reduction:
+      :return:
+    """
     assert len(op_names) == len(indices)
     self._steps = len(op_names) // 2
     self._concat = concat
     self.multiplier = len(concat)
 
     self._ops = nn.ModuleList()
+    """
+        Iterates over each operation name with its corresponding index.
+        Index is used with reduction boolean, to indicate the stride number of an operation
+        The loop then creates the operation with the OPS[name], being OPS defined in the operations.py module,
+        with its correspondin number of channels and strides and adds it into the modulelist      
+      """
     for name, index in zip(op_names, indices):
       stride = 2 if reduction and index < 2 else 1
       op = OPS[name](C, stride, True)
@@ -43,6 +65,11 @@ class Cell(nn.Module):
     s1 = self.preprocess1(s1)
 
     states = [s0, s1]
+    """
+       Iterates over the number of feedfoward steps
+       and returns the states h1 and h2, and applies the corresponding operations to the
+       computed states two 
+    """
     for i in range(self._steps):
       h1 = states[self._indices[2*i]]
       h2 = states[self._indices[2*i+1]]
@@ -111,12 +138,20 @@ class AuxiliaryHeadImageNet(nn.Module):
 class NetworkCIFAR(nn.Module):
 
   def __init__(self, C, num_classes, layers, auxiliary, genotype):
+    """
+      :param C: Number of channels
+      :param num_classes:
+      :param layers: number of layers
+      :param auxiliary: boolean indicanting the use of AuxiliaryHeadCIFAR module
+      :param genotype: The genotype of the module defined in the genotypes.py module
+    """
     super(NetworkCIFAR, self).__init__()
     self._layers = layers
     self._auxiliary = auxiliary
 
-    stem_multiplier = 3
+    stem_multiplier = 3#auxiliary variable used to create te number of channels of othe convolution layerss
     C_curr = stem_multiplier*C
+    # Creating the first convolutional layer of the network
     self.stem = nn.Sequential(
       nn.Conv2d(3, C_curr, 3, padding=1, bias=False),
       nn.BatchNorm2d(C_curr)
@@ -125,6 +160,10 @@ class NetworkCIFAR(nn.Module):
     C_prev_prev, C_prev, C_curr = C_curr, C_curr, C
     self.cells = nn.ModuleList()
     reduction_prev = False
+    """
+     Iterates over the number of layers, and for each layer creates a computation cell
+     The number channels of the prevous layer (C_prev) shall always be a multiple of 3   
+    """
     for i in range(layers):
       if i in [layers//3, 2*layers//3]:
         C_curr *= 2

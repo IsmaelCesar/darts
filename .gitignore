@@ -117,3 +117,9 @@ Session.vim
 *~
 # Auto-generated tag files
 tags
+
+\.idea/darts\.iml
+
+\.idea/misc\.xml
+
+\.idea/modules\.xml
