@@ -17,6 +17,7 @@ from torch.autograd import Variable
 from model_search import Network
 from architect import Architect
 
+#HELO JUAN!
 
 parser = argparse.ArgumentParser("cifar")
 parser.add_argument('--data', type=str, default='../data', help='location of the data corpus')
