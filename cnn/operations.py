@@ -1,6 +1,11 @@
 import torch
 import torch.nn as nn
 
+"""
+  Module contains the implementations of the operations described in the genotypes.py module.
+  As described in the article, the Zero means the lack of connection between two nodes.
+"""
+
 OPS = {
   'none' : lambda C, stride, affine: Zero(stride),
   'avg_pool_3x3' : lambda C, stride, affine: nn.AvgPool2d(3, stride=stride, padding=1, count_include_pad=False),
@@ -20,6 +25,11 @@ OPS = {
 }
 
 class ReLUConvBN(nn.Module):
+  """
+    Module applies the relu function to the input.
+    A 2d convolution
+    and a 2d batchnorm to the output of the convolution
+  """
 
   def __init__(self, C_in, C_out, kernel_size, stride, padding, affine=True):
     super(ReLUConvBN, self).__init__()
@@ -33,7 +43,10 @@ class ReLUConvBN(nn.Module):
     return self.op(x)
 
 class DilConv(nn.Module):
-    
+  """
+    Module applies a sequence of operations
+    relu, two 2d convolutions and a batchnorm to the input
+  """
   def __init__(self, C_in, C_out, kernel_size, stride, padding, dilation, affine=True):
     super(DilConv, self).__init__()
     self.op = nn.Sequential(
@@ -48,6 +61,11 @@ class DilConv(nn.Module):
 
 
 class SepConv(nn.Module):
+  """
+    Module only applies a sequence on operations to the input.
+    Where the first four 2d convolutions produce the same quantity of output channels
+    as the input.
+  """
     
   def __init__(self, C_in, C_out, kernel_size, stride, padding, affine=True):
     super(SepConv, self).__init__()
@@ -76,7 +94,10 @@ class Identity(nn.Module):
 
 
 class Zero(nn.Module):
-
+  """
+      Module used to indicate the lack o connection between two nodes.
+      This is done by multiplying all the input by zero.
+  """
   def __init__(self, stride):
     super(Zero, self).__init__()
     self.stride = stride
@@ -88,6 +109,12 @@ class Zero(nn.Module):
 
 
 class FactorizedReduce(nn.Module):
+  """
+    Module applies relu to the input.
+    Then two 2d convolutions to the input separately to the same input.
+    The first one is applied to all input, the second one is applied
+    in the input except in the first line and column of the input.
+  """
 
   def __init__(self, C_in, C_out, affine=True):
     super(FactorizedReduce, self).__init__()
