@@ -8,10 +8,20 @@ from genotypes import Genotype
 
 
 class MixedOp(nn.Module):
-
+  """
+    Module contains the implementations defined in the operations.py module
+  """
   def __init__(self, C, stride):
+    """
+    :param C:Number of channels
+    :param stride: convolution stride
+    """
     super(MixedOp, self).__init__()
     self._ops = nn.ModuleList()
+    """
+      Given the PRIMITIVES operations defined in the module genotype.py.
+      Includes the implementation of each operation to the self._ops variable.
+    """
     for primitive in PRIMITIVES:
       op = OPS[primitive](C, stride, False)
       if 'pool' in primitive:
@@ -19,12 +29,26 @@ class MixedOp(nn.Module):
       self._ops.append(op)
 
   def forward(self, x, weights):
+    """
+    :param x: input
+    :param weights: alphas
+    :return: a summation of each operation applied in the input and pondered by its corresponding alpha
+    """
     return sum(w * op(x) for w, op in zip(weights, self._ops))
 
 
 class Cell(nn.Module):
 
   def __init__(self, steps, multiplier, C_prev_prev, C_prev, C, reduction, reduction_prev):
+    """
+    :param steps: steps of foward propagation of a computation cell
+    :param multiplier: auxiliary variable to create other convolution layers
+    :param C_prev_prev: Number of channels of the layer that comes before the prevoius layer
+    :param C_prev: Number of channels of the previous layer
+    :param C: Number of channels of the current layer
+    :param reduction: flag that mark this computation cell as a cell to be reduced
+    :param reduction_prev: flag of the previous computation call
+    """
     super(Cell, self).__init__()
     self.reduction = reduction
 
@@ -38,6 +62,10 @@ class Cell(nn.Module):
 
     self._ops = nn.ModuleList()
     self._bns = nn.ModuleList()
+    """
+      Iterates over the number or feedfoward steps, and for each step 
+      creates a MixedOp module.
+    """
     for i in range(self._steps):
       for j in range(2+i):
         stride = 2 if reduction and j < 2 else 1
@@ -45,11 +73,22 @@ class Cell(nn.Module):
         self._ops.append(op)
 
   def forward(self, s0, s1, weights):
-    s0 = self.preprocess0(s0)
-    s1 = self.preprocess1(s1)
+    """
+    :param s0: input 1
+    :param s1: input 2
+    :param weights: alphas
+    :return:
+    """
+    s0 = self.preprocess0(s0)#apply first preprocessor to the first input
+    s1 = self.preprocess1(s1)#apply second preprocessor to the second input
 
     states = [s0, s1]
     offset = 0
+    """
+      Iterates over the computation steps and applies the inputs to MixedOp added in the creation
+      of the module with the alpha, according to some offset.
+      Offset indicate what operation shall be applied over what input(s0 or s1), two by two
+    """
     for i in range(self._steps):
       s = sum(self._ops[offset+j](h, weights[offset+j]) for j, h in enumerate(states))
       offset += len(states)
@@ -59,8 +98,20 @@ class Cell(nn.Module):
 
 
 class Network(nn.Module):
+  """
+    Module implements a network over which the search shall be performed,
+  """
 
   def __init__(self, C, num_classes, layers, criterion, steps=4, multiplier=4, stem_multiplier=3):
+    """
+    :param C: Number of channels
+    :param num_classes:
+    :param layers:
+    :param criterion: The optimizer to update the weights
+    :param steps: steps of foward propagation of a computing cell
+    :param multiplier: Auxiliary variable to create the first convolution layer
+    :param stem_multiplier: Auxiliary variable to create the other convolutions
+    """
     super(Network, self).__init__()
     self._C = C
     self._num_classes = num_classes
@@ -78,6 +129,12 @@ class Network(nn.Module):
     C_prev_prev, C_prev, C_curr = C_curr, C_curr, C
     self.cells = nn.ModuleList()
     reduction_prev = False
+    """
+      Loop iterates over the number of layers to create the inner computation
+      cells, markint the ones in the interval [layers//3, 2*layers//3] as cells to be reduced.
+      Which means tha at most the first three layers and the last two shall not be reduced.
+      For each layer a computation cell is created.
+    """
     for i in range(layers):
       if i in [layers//3, 2*layers//3]:
         C_curr *= 2
@@ -101,7 +158,11 @@ class Network(nn.Module):
     return model_new
 
   def forward(self, input):
-    s0 = s1 = self.stem(input)
+    s0 = s1 = self.stem(input)#Applies the convolution and batch norm of the firs layer
+    """
+      Interates over the computations cells in the network.
+      Applying the computed ouputs of each one using the weights(alphas) 
+    """
     for i, cell in enumerate(self.cells):
       if cell.reduction:
         weights = F.softmax(self.alphas_reduce, dim=-1)
@@ -113,15 +174,26 @@ class Network(nn.Module):
     return logits
 
   def _loss(self, input, target):
+    """
+    :param input:
+    :param target:
+    :return: tensor with the loss function computed according to the optmizer defined in the
+              constructor of the class
+    """
     logits = self(input)
     return self._criterion(logits, target) 
 
   def _initialize_alphas(self):
+    """
+      Randomly initializes alphas, based on the number of operations described in the genotype module.
+    """
     k = sum(1 for i in range(self._steps) for n in range(2+i))
     num_ops = len(PRIMITIVES)
 
-    self.alphas_normal = Variable(1e-3*torch.randn(k, num_ops).cuda(), requires_grad=True)
-    self.alphas_reduce = Variable(1e-3*torch.randn(k, num_ops).cuda(), requires_grad=True)
+    #self.alphas_normal = Variable(1e-3*torch.randn(k, num_ops).cuda(), requires_grad=True)
+    self.alphas_normal = Variable(1e-3 * torch.randn(k, num_ops), requires_grad=True)
+    #self.alphas_reduce = Variable(1e-3*torch.randn(k, num_ops).cuda(), requires_grad=True)
+    self.alphas_reduce = Variable(1e-3 * torch.randn(k, num_ops), requires_grad=True)
     self._arch_parameters = [
       self.alphas_normal,
       self.alphas_reduce,
@@ -131,8 +203,15 @@ class Network(nn.Module):
     return self._arch_parameters
 
   def genotype(self):
+    """
+      :return: corresponding genotype of the network
+    """
 
     def _parse(weights):
+      """
+      :param weights: alphas that where reduced during the search
+      :return: genotype corresponding to the set of alphas reduced.
+      """
       gene = []
       n = 2
       start = 0
