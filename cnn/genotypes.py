@@ -1,5 +1,14 @@
 from collections import namedtuple
 
+"""
+  Eeach genotype is a description of the operations that make a 
+  neural network. 
+  Being the list PRIMITIVES the just the name of the operations.
+  And NASNet, AmoebaNet, DARTS_v1 and DARTS_v2,  describing the
+  models being used.
+  With list of operations tobe reduced with the corresponding concats(reduce, reduce concat), 
+"""
+
 Genotype = namedtuple('Genotype', 'normal normal_concat reduce reduce_concat')
 
 PRIMITIVES = [
