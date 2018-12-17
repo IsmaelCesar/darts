@@ -60,7 +60,10 @@ def carrega_dados_vinho():
 
 def test_data_loading():
     ds_names = ["QWines-CsystemTR","QWinesEa-CsystemTR"]
-    ds  = WinesDataset(ds_names)
+    m_data  = WinesDataset(ds_names)
+    train_queue = torch.utils.data.DataLoader(m_data,batch_size=10,shuffle=True)
+
+    print(train_queue)
 
 if __name__ == '__main__':
     test_data_loading()
