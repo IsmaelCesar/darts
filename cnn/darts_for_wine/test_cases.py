@@ -61,9 +61,17 @@ def carrega_dados_vinho():
 def test_data_loading():
     ds_names = ["QWines-CsystemTR","QWinesEa-CsystemTR"]
     m_data  = WinesDataset(ds_names)
-    train_queue = torch.utils.data.DataLoader(m_data,batch_size=10,shuffle=True)
+    batch_size = 10
+    data_size  = len(m_data)
+    indices    = range(data_size)
+    train_queue = torch.utils.data.DataLoader(m_data,sampler=torch.utils.data.SubsetRandomSampler(indices[1:]),
+                                              batch_size=batch_size)
 
-    print(train_queue)
+    for i, (data,target1,target2) in enumerate(train_queue):
+        print("Shape of the data: \n",data.shape)
+        print("Shape of the target1: \n", target1.shape)
+        print("Shape of the target2: \n", target2.shape)
+
 
 if __name__ == '__main__':
     test_data_loading()
