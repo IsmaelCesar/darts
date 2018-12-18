@@ -25,7 +25,7 @@ import csv
 from math import sqrt
 import pandas as pd
 import matplotlib.pyplot as plt
-import autokeras as ak
+#import autokeras as ak
 
 #from keras import backend as K
 

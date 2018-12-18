@@ -97,6 +97,7 @@ def save(model, model_path):
 
 def load(model, model_path):
   model.load_state_dict(torch.load(model_path))
+  model.eval()#the eval method has to be called in order to load the model
 
 
 def drop_path(x, drop_prob):
