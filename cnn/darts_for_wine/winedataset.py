@@ -1,11 +1,12 @@
-from torch.utils.data.dataset import Dataset
-import numpy as np
 """
 Created on Tue Dec 5 21:10:04 2018
 @author: Ismael Cesar
 e-mail: ismael.c.s.a@hotmail.com
+
 """
+import numpy as np
 import torch
+from torch.utils.data.dataset    import Dataset
 from cnn.darts_for_wine.winesC20 import calload
 
 
