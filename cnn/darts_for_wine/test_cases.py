@@ -48,20 +48,22 @@ def carrega_modelo():
     print("Parametros modelo carregado:\n ", list(mNetwork.parameters()))
 
 
+def carrega_dados_vinho():
+    print("Carregando dados para ser rodado no modelo")
+    data_files = ["QWines-CsystemTR.pkl","QWinesEa-CsystemTR.pkl"]
+    dir_path = "../"
+    with  open(dir_path+data_files[0],'rb') as f:
+        ds,lbls,lbls_,names = pickle.load(f)
+        newDs = torch.FloatTensor(ds)
+        print(newDs.shape)
+        print(len(ds[0]))
 
 def test_data_loading():
     ds_names = ["QWines-CsystemTR","QWinesEa-CsystemTR"]
-    batch_size = 10
     m_data  = WinesDataset(ds_names)
-    num_train = len(m_data)
-    indices   = range(num_train)
-    #The subset random sampler is defined for the leave one out validation technique
-    train_queue = torch.utils.data.DataLoader(m_data,sampler=torch.utils.data.SubsetRandomSampler(indices[1:])
-                                                ,batch_size=batch_size,shuffle=False)
-    for i , (data,target1,target2) in enumerate(train_queue):
-        print("Curent data: \n",data.shape)
-        print("Curent target: \n", target1.shape)
-        print("Curent target_:\n ", target2.shape)
+    train_queue = torch.utils.data.DataLoader(m_data,batch_size=10,shuffle=True)
+
+    print(train_queue)
 
 if __name__ == '__main__':
     test_data_loading()
