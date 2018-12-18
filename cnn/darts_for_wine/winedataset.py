@@ -61,11 +61,14 @@ class WinesDataset(Dataset):
         """
         :param item:
         :return: A tuple with the tensor and its corresponding labels
+        The first indext has to be zero because when the data is loaded in to the object
+        the tensor generated in the constructor has shape [1,a,b,c](where a, b and c are integers)
+        and the data acctually is inside the a tensors in the shape
         """
-        return self.data[item], self.labels[item], self.labels_[item]
+        return (self.data[0][item], self.labels[0][item], self.labels_[0][item])
 
     def __len__(self):
         """
         :return: returns the size of the dataset
         """
-        return len(self.data)
+        return self.data.shape[1]
