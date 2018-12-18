@@ -3,12 +3,14 @@ import sys
 import numpy as np
 import torch
 import utils
+#import cnn.utils as utils
 import glob
 import random
 import logging
 import argparse
 import torch.nn as nn
 import genotypes
+#import cnn.genotypes as genotypes
 import torch.utils
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
@@ -16,6 +18,7 @@ import torch.backends.cudnn as cudnn
 
 from torch.autograd import Variable
 from model import NetworkImageNet as Network
+#from cnn.model import NetworkImageNet as Network
 
 
 parser = argparse.ArgumentParser("imagenet")

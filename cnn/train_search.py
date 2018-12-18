@@ -4,7 +4,8 @@ import time
 import glob
 import numpy as np
 import torch
-import cnn.utils as utils
+#import cnn.utils as utils
+import utils
 import logging
 import argparse
 import torch.nn as nn
@@ -14,8 +15,10 @@ import torchvision.datasets as dset
 import torch.backends.cudnn as cudnn
 
 from torch.autograd import Variable
-from cnn.model_search import Network
-from cnn.architect import Architect
+#from cnn.model_search import Network
+from model_search import Network
+#from cnn.architect import Architect
+from architect import Architect
 
 parser = argparse.ArgumentParser("cifar")
 parser.add_argument('--data', type=str, default='../data', help='location of the data corpus')
