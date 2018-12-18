@@ -25,7 +25,7 @@ import csv
 from math import sqrt
 import pandas as pd
 import matplotlib.pyplot as plt
-import autokeras as ak
+#import autokeras as ak
 
 #from keras import backend as K
 
@@ -205,6 +205,7 @@ def train_process(idx):
 
 def calload(sys,p,opt,load):
     global dataset,labels,names,last_column,numfiles,labels_
+    file_path = "../../data/wines/" #file path to the data folder of the DARTS implementation
     resetv()  
     if load:   
         k=0
@@ -214,7 +215,7 @@ def calload(sys,p,opt,load):
                 ldataset(fold_,i,k,p,opt)
                 k+=1
     else:
-        with open(opt + '.pkl', 'rb') as f_s: 
+        with open(file_path + opt + '.pkl', 'rb') as f_s:
             dataset,labels,labels_,names = pickle.load(f_s)
     dataset = np.array(dataset)
     labels = np.array(labels)
