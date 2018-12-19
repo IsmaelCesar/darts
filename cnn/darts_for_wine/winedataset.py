@@ -16,7 +16,7 @@ class WinesDataset(Dataset):
         Class to be used by the data loader for getting the data.
     """
 
-    def __init__(self,ds_names):
+    def __init__(self,file_path,ds_names):
         """
         :param:ds_names -> A list of strigns containing the name of the data sets
                             it can be a list containing just one name. But it has to be a lists
@@ -38,7 +38,7 @@ class WinesDataset(Dataset):
                 iterations = 0
                 for ds in ds_names:
                     #r stands for read.
-                    r_data, r_lbls, r_lbls_, r_names = calload(self.array_measurements,self.pic_,ds,self.load)
+                    r_data, r_lbls, r_lbls_, r_names = calload(self.array_measurements,self.pic_,file_path,ds,self.load)
                     if iterations == 0:
                         data    = r_data
                         labels  = r_lbls
@@ -65,7 +65,7 @@ class WinesDataset(Dataset):
         :param item:
         :return: A tuple with the tensor and its corresponding labels
         """
-        return (self.data[item],self.labels[item], self.labels_[item])
+        return (self.data[item],self.labels[item])
 
     def __len__(self):
         """
