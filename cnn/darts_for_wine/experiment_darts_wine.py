@@ -6,6 +6,7 @@ e-mail: ismael.c.s.a@hotmail.com
 import logging
 import argparse
 import torch
+import os
 
 import cnn.utils as utils
 from cnn.darts_for_wine.winedataset import WinesDataset
@@ -43,8 +44,9 @@ CLASSES_WINE = 4
 def run_experiment_darts_wine():
 
     files_path = "../../data/wines/"
-    ds_names = ["QWines-CsystemTR", "QWinesEa-CsystemTR"]
-    epochs  = args.epochs
+    #ds_names = ["QWines-CsystemTR", "QWinesEa-CsystemTR"]
+    ds_names = ["QWines-CsystemTR"]
+    #epochs  = args.epochs
     learning_rate = args.learning_rate
 
     criterion = torch.nn.CrossEntropyLoss
@@ -54,7 +56,7 @@ def run_experiment_darts_wine():
     #model.cuda()
 
     #Adam was chosen Because is fast and converges with good stability
-    optmizer = torch.optim.Adam(
+    optimizer = torch.optim.Adam(
         model.parameters(),
         lr=learning_rate,
         weight_decay=args.weight_decay
@@ -71,11 +73,29 @@ def run_experiment_darts_wine():
 
     valid_queue = torch.utils.data.DataLoader(ds_wine, sampler=torch.utils.data.SubsetRandomSampler(ds_indices[ds_split]))
 
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, float(args.epochs), eta_min=args.learning_rate_min)
+
     architecht = Architect(model,args)
 
-    #Reusing the train procedure of the DARTS implementation
-    train(train_queue,valid_queue,model,architecht,criterion,optmizer,learning_rate)
+    for epoch in  range(args.epochs):
+        scheduler.step()
 
+        lr = scheduler.get_lr()[0]
+        logging.info('epoch %d lr %e', epoch, lr)
+
+        genotype = model.genotype()
+        logging.info('genotype = %s', genotype)
+
+        #Reusing the train procedure of the DARTS implementation
+        train_acc, train_obj = train(train_queue,valid_queue,model,architecht,criterion,optimizer,learning_rate)
+        logging.info('train_acc %f', train_acc)
+
+
+        valid_acc, valid_obj = infer(valid_queue,model,criterion)
+        logging.info('valid_acc %f', valid_acc)
+
+    file_index = 1
+    utils.save(model,os.paht.join(args.sage,"wine_"+str(file_index)+".pt"))
 
 
 if __name__ == "__main__":
