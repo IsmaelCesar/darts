@@ -6,13 +6,17 @@ e-mail: ismael.c.s.a@hotmail.com
 import logging
 import argparse
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.autograd import Variable
+
 import os
 
 import cnn.utils as utils
-from cnn.darts_for_wine.winedataset import WinesDataset
-from cnn.model_search import Network
-from cnn.architect import Architect
-from cnn.train_search import train, infer
+from darts_for_wine.winedataset import WinesDataset
+from model_search import Network
+from architect import Architect
+
 
 parser = argparse.ArgumentParser("DARTS for wine classification")
 parser.add_argument('--data', type=str, default='../data', help='location of the data corpus')
@@ -67,16 +71,16 @@ def run_experiment_darts_wine():
 
     ds_lenght  = len(ds_wine)
     ds_indices = range(ds_lenght)
-    ds_split   = -2
+    ds_split   = -1
     train_queue = torch.utils.data.DataLoader(ds_wine,sampler=torch.utils.data.SubsetRandomSampler(ds_indices[ds_split:ds_lenght]),
                                               batch_size=args.batch_size)
 
-    valid_queue = torch.utils.data.DataLoader(ds_wine, sampler=torch.utils.data.SubsetRandomSampler(ds_indices[ds_split]))
+    valid_queue = torch.utils.data.DataLoader(ds_wine, sampler=torch.utils.data.SubsetRandomSampler(ds_indices[:ds_split]))
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, float(args.epochs), eta_min=args.learning_rate_min)
 
-    architecht = Architect(model,args)
-
+    #architecht = Architect(model,args)
+    #The loop has also been adapted to the Leave one out technique
     for epoch in  range(args.epochs):
         scheduler.step()
 
@@ -86,17 +90,98 @@ def run_experiment_darts_wine():
         genotype = model.genotype()
         logging.info('genotype = %s', genotype)
 
+        F.softmax(model.alphas_normal, dim=-1)
+        F.softmax(model.alphas_reduce, dim=-1)
+
         #Reusing the train procedure of the DARTS implementation
-        train_acc, train_obj = train(train_queue,valid_queue,model,architecht,criterion,optimizer,learning_rate)
+        train_acc, train_obj = train(train_queue,valid_queue,model,criterion,optimizer,learning_rate)
         logging.info('train_acc %f', train_acc)
 
 
-        valid_acc, valid_obj = infer(valid_queue,model,criterion)
-        logging.info('valid_acc %f', valid_acc)
+    valid_acc, valid_obj = infer(valid_queue,model,criterion)
+    logging.info('valid_acc %f', valid_acc)
 
     file_index = 1
-    utils.save(model,os.paht.join(args.sage,"wine_"+str(file_index)+".pt"))
+    utils.save(model,os.path.join(args.save,"wine_"+str(file_index)+".pt"))
 
+"""
+The train e infer procedure were addapted for the leave one out technique
+"""
+
+def train(train_queue, model,criterion, optimizer, lr):
+  """
+    :param train_queue: Data loader that randomly picks the samples in the Dataset, as defined in the previous procedure
+    :param valid_queue: Data loader that randomly picks the samples in the Dataset, as defined in the previous procedure
+    :param model:       Model of the network
+    :param criterion:   Criterion(Function over which the loss of the model shall be computed)
+    :param optimizer:  weights optimizer
+    :param lr: learning rate
+    :return: train_acc(train accuracy), train_obj(Object used to compute the train accuracy)
+  """
+  objs = utils.AvgrageMeter()
+  top1 = utils.AvgrageMeter()
+  top5 = utils.AvgrageMeter()
+
+  for step, (input, target) in enumerate(train_queue):
+    model.train()
+    n = input.size(0)
+
+    input = Variable(input, requires_grad=False)#.cuda()
+    target = Variable(target, requires_grad=False)#.cuda(async=True)
+
+    # get a random minibatch from the search queue with replacement
+    #input_search, target_search = next(iter(valid_queue))
+    #input_search = Variable(input_search, requires_grad=False)#.cuda()
+    #target_search = Variable(target_search, requires_grad=False)#.cuda(async=True)
+    #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
+
+    optimizer.zero_grad()
+    logits = model(input)
+    loss = criterion(logits, target)
+
+    loss.backward()
+    nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
+    optimizer.step()
+
+    prec1, prec5 = utils.accuracy(logits, target, topk=(1, 5))
+    objs.update(loss.data[0], n)
+    top1.update(prec1.data[0], n)
+    top5.update(prec5.data[0], n)
+
+    if step % args.report_freq == 0:
+      logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
+
+  return top1.avg, objs.avg
+
+def infer(valid_queue, model, criterion):
+  """
+  :param valid_queue: Data loader that randomly picks the samples in the Dataset, as defined in the previous procedure
+  :param model:      Model of the network
+  :param criterion:  Criterion(Function over which the loss of the model shall be computed)
+  :return: valid_acc(validation accuracy), valid_obj(Object used to compute the validation accuracy)
+  """
+  objs = utils.AvgrageMeter()
+  top1 = utils.AvgrageMeter()
+  top5 = utils.AvgrageMeter()
+  model.eval()
+
+  for step, (input, target) in enumerate(valid_queue):
+    input = Variable(input, volatile=True).cuda()
+    target = Variable(target, volatile=True).cuda(async=True)
+
+    logits = model(input)
+    loss = criterion(logits, target)
+
+    prec1, prec5 = utils.accuracy(logits, target, topk=(1, 5))
+    n = input.size(0)
+    objs.update(loss.data[0], n)
+    top1.update(prec1.data[0], n)
+    top5.update(prec5.data[0], n)
+
+    if step % args.report_freq == 0:
+      logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
+
+  return top1.avg, objs.avg
 
 if __name__ == "__main__":
     run_experiment_darts_wine()
