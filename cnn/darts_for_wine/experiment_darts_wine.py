@@ -94,7 +94,7 @@ def run_experiment_darts_wine():
         F.softmax(model.alphas_reduce, dim=-1)
 
         #Reusing the train procedure of the DARTS implementation
-        train_acc, train_obj = train(train_queue,valid_queue,model,criterion,optimizer,learning_rate)
+        train_acc, train_obj = train(train_queue,model,criterion,optimizer)
         logging.info('train_acc %f', train_acc)
 
 
@@ -108,7 +108,7 @@ def run_experiment_darts_wine():
 The train e infer procedure were addapted for the leave one out technique
 """
 
-def train(train_queue, model,criterion, optimizer, lr):
+def train(train_queue, model,criterion,optimizer):
   """
     :param train_queue: Data loader that randomly picks the samples in the Dataset, as defined in the previous procedure
     :param valid_queue: Data loader that randomly picks the samples in the Dataset, as defined in the previous procedure
@@ -136,7 +136,7 @@ def train(train_queue, model,criterion, optimizer, lr):
     #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
 
     optimizer.zero_grad()
-    logits = model(input)
+    logits = model(torch.FloatTensor(input))
     loss = criterion(logits, target)
 
     loss.backward()

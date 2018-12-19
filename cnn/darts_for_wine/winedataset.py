@@ -35,21 +35,23 @@ class WinesDataset(Dataset):
                 labels  = None
                 labels_ = None
                 names   = None
-                iterations = 0
+                iterations = True
                 for ds in ds_names:
                     #r stands for read.
                     r_data, r_lbls, r_lbls_, r_names = calload(self.array_measurements,self.pic_,file_path,ds,self.load)
-                    if iterations == 0:
-                        data    = r_data
-                        labels  = r_lbls
-                        labels_ = r_lbls_
-                        names   = r_names
-                        iterations += 1
-                    else:
-                        data    = np.append(data,r_data,0)
-                        labels  = np.append(labels, r_lbls, 0)
-                        labels_ = np.append(labels_, r_lbls_, 0)
-                        names   = np.append(names, r_names, 0)
+                    #For each sample in the data set create a four dimentional tensor with the shape [1,n_elements,lines,columns]
+                    for r_d,r_lbs,r_lbs_,r_nms in zip(r_data,r_lbls,r_lbls_,r_names):
+                        if iterations:
+                            data    = torch.FloatTensor([[r_d]])
+                            labels = torch.FloatTensor(r_lbs)
+                            labels_ = torch.FloatTensor(r_lbs_)
+                            names = [r_nms]
+                            iterations = False
+                        else:
+                            data = torch.cat((data, torch.FloatTensor([[r_d]])), dim=0)
+                            labels = torch.cat((labels, torch.FloatTensor(r_lbs)), dim=0)
+                            labels_ = torch.cat((labels, torch.FloatTensor(r_lbs_)), dim=0)
+                            names.append(r_nms)
 
                 self.data = torch.FloatTensor(data)       #Creating a tensor out of the data loaded
                 self.labels = torch.FloatTensor(labels)   #Creating a tensor out of the labels loaded
