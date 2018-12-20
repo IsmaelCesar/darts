@@ -154,7 +154,7 @@ def train(train_queue, model,criterion,optimizer,num_classes):
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 
-    prec1, prec5 = utils.accuracy(logits, torch.LongTensor([target]), topk=(1, num_classes - 1))
+    prec1, prec5 = utils.accuracy(logits, torch.LongTensor([target]), topk=(1, num_classes))
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
@@ -186,7 +186,7 @@ def infer(valid_queue, model, criterion,num_classes):
     logits = model(input)
     loss = criterion(logits, torch.LongTensor([target]))
 
-    prec1, prec5 = utils.accuracy(logits, torch.LongTensor([target]), topk=(1, num_classes-1))
+    prec1, prec5 = utils.accuracy(logits, torch.LongTensor([target]), topk=(1, num_classes))
     n = input.size(0)
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
