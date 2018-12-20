@@ -53,7 +53,7 @@ def run_experiment_darts_wine():
     #epochs  = args.epochs
     learning_rate = args.learning_rate
 
-    criterion = torch.nn.CrossEntropyLoss
+    criterion = nn.CrossEntropyLoss()
     #criterion.cuda()
 
     model = Network(args.init_channels,CLASSES_WINE,args.layers,criterion)
@@ -136,8 +136,8 @@ def train(train_queue, model,criterion,optimizer):
     #architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
 
     optimizer.zero_grad()
-    logits = model(torch.FloatTensor(input))
-    loss = criterion(logits, target)
+    logits = model(input)
+    loss = criterion(logits, torch.LongTensor([target]))
 
     loss.backward()
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)

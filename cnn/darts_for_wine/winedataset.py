@@ -43,19 +43,21 @@ class WinesDataset(Dataset):
                     for r_d,r_lbs,r_lbs_,r_nms in zip(r_data,r_lbls,r_lbls_,r_names):
                         if iterations:
                             data    = torch.FloatTensor([[r_d]])
-                            labels = torch.FloatTensor(r_lbs)
-                            labels_ = torch.FloatTensor(r_lbs_)
+                            labels = [r_lbs]
+                            labels_ = [r_lbs_]
                             names = [r_nms]
                             iterations = False
                         else:
                             data = torch.cat((data, torch.FloatTensor([[r_d]])), dim=0)
-                            labels = torch.cat((labels, torch.FloatTensor(r_lbs)), dim=0)
-                            labels_ = torch.cat((labels, torch.FloatTensor(r_lbs_)), dim=0)
+                            #labels = torch.cat((labels, torch.Tensor(r_lbs)), dim=0)
+                            labels.append(r_lbs)
+                            #labels_ = torch.cat((labels, torch.Tensor(r_lbs_)), dim=0)
+                            labels_.append(r_lbs_)
                             names.append(r_nms)
 
                 self.data = torch.FloatTensor(data)       #Creating a tensor out of the data loaded
-                self.labels = torch.FloatTensor(labels)   #Creating a tensor out of the labels loaded
-                self.labels_ = torch.FloatTensor(labels_) #Creating a tensor out of the labels loaded
+                self.labels = torch.Tensor(labels)   #Creating a tensor out of the labels loaded
+                self.labels_ = torch.Tensor(labels_) #Creating a tensor out of the labels loaded
                 self.names = names
             else:
                 raise Exception("The element in the constructor must be list of strings")
