@@ -43,15 +43,16 @@ parser.add_argument('--arch_learning_rate', type=float, default=3e-4, help='lear
 parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
 args = parser.parse_args()
 
-CLASSES_WINE = 4
+global CLASSES_WINE
 
 def run_experiment_darts_wine():
 
     files_path = "../../data/wines/"
     #ds_names = ["QWines-CsystemTR", "QWinesEa-CsystemTR"]
-    ds_names = ["QWines-CsystemTR"]
+    ds_names = ([["QWines-CsystemTR"],3],[["QWinesEa-CsystemTR"],4])
     #epochs  = args.epochs
     learning_rate = args.learning_rate
+    CLASSES_WINE = ds_names[0][1]
 
     criterion = nn.CrossEntropyLoss()
     #criterion.cuda()
@@ -66,7 +67,7 @@ def run_experiment_darts_wine():
         weight_decay=args.weight_decay
     )
 
-    ds_wine = WinesDataset(files_path,ds_names)
+    ds_wine = WinesDataset(files_path,ds_names[0][0])
     logging.info("The data set has been loaded")
 
     ds_lenght  = len(ds_wine)
@@ -94,7 +95,7 @@ def run_experiment_darts_wine():
         F.softmax(model.alphas_reduce, dim=-1)
 
         #Reusing the train procedure of the DARTS implementation
-        train_acc, train_obj = train(train_queue,model,criterion,optimizer)
+        train_acc, train_obj = train(train_queue,model,criterion,optimizer,CLASSES_WINE)
         logging.info('train_acc %f', train_acc)
 
 
@@ -108,7 +109,7 @@ def run_experiment_darts_wine():
 The train e infer procedure were addapted for the leave one out technique
 """
 
-def train(train_queue, model,criterion,optimizer):
+def train(train_queue, model,criterion,optimizer,num_classes):
   """
     :param train_queue: Data loader that randomly picks the samples in the Dataset, as defined in the previous procedure
     :param valid_queue: Data loader that randomly picks the samples in the Dataset, as defined in the previous procedure
@@ -143,10 +144,13 @@ def train(train_queue, model,criterion,optimizer):
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 
-    prec1, prec5 = utils.accuracy(logits, target, topk=(1, 5))
-    objs.update(loss.data[0], n)
-    top1.update(prec1.data[0], n)
-    top5.update(prec5.data[0], n)
+    prec1, prec5 = utils.accuracy(logits, torch.LongTensor([target]), topk=(1, num_classes - 1))
+    objs.update(loss.data, n)
+    top1.update(prec1.data, n)
+    top5.update(prec5.data, n)
+    #objs.update(loss.data[0], n)
+    #top1.update(prec1.data[0], n)
+    #top5.update(prec5.data[0], n)
 
     if step % args.report_freq == 0:
       logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
