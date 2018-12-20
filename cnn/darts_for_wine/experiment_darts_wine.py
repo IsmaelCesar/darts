@@ -63,10 +63,10 @@ def run_experiment_darts_wine():
     CLASSES_WINE = ds_names[0][1]
 
     criterion = nn.CrossEntropyLoss()
-    #criterion.cuda()
+    criterion.cuda()
 
     model = Network(args.init_channels,CLASSES_WINE,args.layers,criterion)
-    #model.cuda()
+    model.cuda()
 
     #Adam was chosen Because is fast and converges with good stability
     optimizer = torch.optim.Adam(
@@ -82,9 +82,11 @@ def run_experiment_darts_wine():
     ds_indices = range(ds_lenght)
     ds_split   = -1
     train_queue = torch.utils.data.DataLoader(ds_wine,sampler=torch.utils.data.SubsetRandomSampler(ds_indices[ds_split:ds_lenght]),
-                                              batch_size=args.batch_size)
+                                              batch_size=args.batch_size,
+                                              pin_memory=True,num_workers=2)
 
-    valid_queue = torch.utils.data.DataLoader(ds_wine, sampler=torch.utils.data.SubsetRandomSampler(ds_indices[:ds_split]))
+    valid_queue = torch.utils.data.DataLoader(ds_wine, sampler=torch.utils.data.SubsetRandomSampler(ds_indices[:ds_split]),
+                                             pin_memory=True, num_workers=2)
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, float(args.epochs), eta_min=args.learning_rate_min)
 
@@ -135,8 +137,8 @@ def train(train_queue, model,criterion,optimizer,num_classes):
     model.train()
     n = input.size(0)
 
-    input = Variable(input, requires_grad=False)#.cuda()
-    target = Variable(target, requires_grad=False)#.cuda(async=True)
+    input = Variable(input, requires_grad=False).cuda()
+    target = Variable(target, requires_grad=False).cuda(async=True)
 
     # get a random minibatch from the search queue with replacement
     #input_search, target_search = next(iter(valid_queue))
@@ -178,8 +180,8 @@ def infer(valid_queue, model, criterion,num_classes):
   model.eval()
 
   for step, (input, target) in enumerate(valid_queue):
-    input = Variable(input, volatile=True)#.cuda()
-    target = Variable(target, volatile=True)#.cuda(async=True)
+    input = Variable(input, volatile=True).cuda()
+    target = Variable(target, volatile=True).cuda(async=True)
 
     logits = model(input)
     loss = criterion(logits, torch.LongTensor([target]))
