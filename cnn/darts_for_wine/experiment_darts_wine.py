@@ -3,23 +3,24 @@ Created on Tue Dec 5 21:10:04 2018
 @author: Ismael Cesar
 e-mail: ismael.c.s.a@hotmail.com
 """
+import os
+import sys
 import logging
 import argparse
 import torch
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-
-import os
-import sys
-import cnn.utils as utils
+import torch.backends.cudnn as cudnn
+import utils as utils
 from darts_for_wine.winedataset import WinesDataset
 from model_search import Network
 from architect import Architect
 
 
 parser = argparse.ArgumentParser("DARTS for wine classification")
-parser.add_argument('--data', type=str, default='../data', help='location of the data corpus')
+parser.add_argument('--data', type=str, default='../../data/wines/', help='location of the data corpus')
 parser.add_argument('--batch_size', type=int, default=1, help='batch size')
 parser.add_argument('--learning_rate', type=float, default=0.025, help='init learning rate')
 parser.add_argument('--learning_rate_min', type=float, default=0.001, help='min learning rate')
@@ -54,8 +55,20 @@ logging.getLogger().addHandler(fh)
 global CLASSES_WINE
 
 def run_experiment_darts_wine():
+    if not torch.cuda.is_available():
+        logging.info('no gpu device available')
+        sys.exit(1)
 
-    files_path = "../../data/wines/"
+    np.random.seed(args.seed)
+    torch.cuda.set_device(args.gpu)
+    cudnn.benchmark = True
+    torch.manual_seed(args.seed)
+    cudnn.enabled = True
+    torch.cuda.manual_seed(args.seed)
+    logging.info('gpu device = %d' % args.gpu)
+    logging.info("args = %s", args)
+
+    dataset_files_path = args.data
     #ds_names = ["QWines-CsystemTR", "QWinesEa-CsystemTR"]
     ds_names = ([["QWines-CsystemTR"],3],[["QWinesEa-CsystemTR"],4])
     #epochs  = args.epochs
@@ -75,7 +88,7 @@ def run_experiment_darts_wine():
         weight_decay=args.weight_decay
     )
 
-    ds_wine = WinesDataset(files_path,ds_names[0][0])
+    ds_wine = WinesDataset(dataset_files_path,ds_names[0][0])
     logging.info("The data set has been loaded")
 
     ds_lenght  = len(ds_wine)
@@ -113,6 +126,7 @@ def run_experiment_darts_wine():
     logging.info('valid_acc %f', valid_acc)
 
     file_index = 1
+    #Salvando o modelo
     utils.save(model,os.path.join("wine_classes_"+str(CLASSES_WINE)+".pt"))#args.save,
 
 """
