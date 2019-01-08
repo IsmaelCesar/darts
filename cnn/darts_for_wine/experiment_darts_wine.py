@@ -55,7 +55,7 @@ logging.getLogger().addHandler(fh)
 global CLASSES_WINE
 
 def run_experiment_darts_wine():
-    
+
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
         sys.exit(1)
@@ -112,6 +112,8 @@ def run_experiment_darts_wine():
 
     mean_test_acc = utils.AvgrageMeter()
     mean_valid_acc = utils.AvgrageMeter()
+    #The STDD will be used to calculate the accuracy's standard deviation
+    stdd     = utils.StandardDeviationMeter()
 
     #The loop has also been adapted to the Leave one out technique
     for epoch in  range(ds_lenght):
@@ -145,10 +147,12 @@ def run_experiment_darts_wine():
         logging.info('average train_acc %f', mean_test_acc.avg)
 
         valid_acc, valid_obj = infer(valid_queue, model, criterion, CLASSES_WINE)
+        stdd.add_value(valid_acc)
         mean_valid_acc.update(valid_acc,ds_lenght)
         logging.info('average valid_acc %f', mean_valid_acc.avg)
 
     logging.info('total average of valid_acc %f', mean_valid_acc.avg)
+    logging.info('total standard deviation of valid_acc %f', stdd.calculate())
 
     file_index = 1
     #Saving the model
