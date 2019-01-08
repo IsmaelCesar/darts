@@ -55,7 +55,7 @@ logging.getLogger().addHandler(fh)
 global CLASSES_WINE
 
 def run_experiment_darts_wine():
-    """
+    
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
         sys.exit(1)
@@ -68,19 +68,17 @@ def run_experiment_darts_wine():
     torch.cuda.manual_seed(args.seed)
     logging.info('gpu device = %d' % args.gpu)
     logging.info("args = %s", args)
-    """
 
     dataset_files_path = args.data
     ds_names = ([["QWines-CsystemTR"],3],[["QWinesEa-CsystemTR"],4])
     CLASSES_WINE = ds_names[0][1]
 
     criterion = nn.CrossEntropyLoss()
-    #criterion.cuda()
+    criterion.cuda()
 
     model = Network(args.init_channels,CLASSES_WINE,args.layers,criterion)
-    #model.cuda()
+    model.cuda()
 
-    #Adam was chosen Because is fast and converges with good stability
     """
     optimizer = torch.optim.Adam(
         model.parameters(),
@@ -97,21 +95,39 @@ def run_experiment_darts_wine():
     ds_wine = WinesDataset(dataset_files_path,ds_names[0][0])
     logging.info("The data set has been loaded")
 
-    ds_lenght  = len(ds_wine)
-    ds_indices = range(ds_lenght)
-    ds_split   = -1
-    train_queue = torch.utils.data.DataLoader(ds_wine,sampler=torch.utils.data.SubsetRandomSampler(ds_indices[ds_split:ds_lenght]),
-                                              batch_size=args.batch_size,
-                                              pin_memory=True,num_workers=2)
+    #train_queue = torch.utils.data.DataLoader(ds_wine,sampler=torch.utils.data.SubsetRandomSampler(ds_indices[ds_split:ds_lenght]),
+    #                                          batch_size=args.batch_size,
+    #                                         pin_memory=True,num_workers=2)
 
-    valid_queue = torch.utils.data.DataLoader(ds_wine, sampler=torch.utils.data.SubsetRandomSampler(ds_indices[:ds_split]),
-                                             pin_memory=True, num_workers=2)
+    #valid_queue = torch.utils.data.DataLoader(ds_wine,
+    #                                          sampler=torch.utils.data.SubsetRandomSampler(ds_indices[:ds_split]),
+    #                                          pin_memory=True, num_workers=2)
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, float(args.epochs), eta_min=args.learning_rate_min)
 
+    ds_lenght = len(ds_wine)
+    loo_test_element_indx = 0
+
     #architecht = Architect(model,args)
+
+    mean_test_acc = utils.AvgrageMeter()
+    mean_valid_acc = utils.AvgrageMeter()
+
     #The loop has also been adapted to the Leave one out technique
-    for epoch in  range(args.epochs):
+    for epoch in  range(ds_lenght):
+
+        ds_indexes = list(range(ds_lenght))
+        del ds_indexes[loo_test_element_indx]
+
+        train_queue = torch.utils.data.DataLoader(ds_wine, sampler=torch.utils.data.SubsetRandomSampler(ds_indexes),
+                                                  batch_size=args.batch_size,
+                                                  pin_memory=True, num_workers=2)
+
+        valid_queue = torch.utils.data.DataLoader(ds_wine,
+                                                  sampler=torch.utils.data.SubsetRandomSampler([loo_test_element_indx]),
+                                                  pin_memory=True, num_workers=2)
+        loo_test_element_indx += 1
+
         scheduler.step()
 
         lr = scheduler.get_lr()[0]
@@ -125,14 +141,17 @@ def run_experiment_darts_wine():
 
         #Reusing the train procedure of the DARTS implementation
         train_acc, train_obj = train(train_queue,model,criterion,optimizer,CLASSES_WINE)
-        logging.info('train_acc %f', train_acc)
+        mean_test_acc.update(train_acc,ds_lenght)
+        logging.info('average train_acc %f', mean_test_acc.avg)
 
+        valid_acc, valid_obj = infer(valid_queue, model, criterion, CLASSES_WINE)
+        mean_valid_acc.update(valid_acc,ds_lenght)
+        logging.info('average valid_acc %f', mean_valid_acc.avg)
 
-    valid_acc, valid_obj = infer(valid_queue,model,criterion,CLASSES_WINE)
-    logging.info('valid_acc %f', valid_acc)
+    logging.info('total average of valid_acc %f', mean_valid_acc.avg)
 
     file_index = 1
-    #Salvando o modelo
+    #Saving the model
     utils.save(model,os.path.join("wine_classes_"+str(CLASSES_WINE)+".pt"))#args.save,
 
 """
@@ -157,8 +176,8 @@ def train(train_queue, model,criterion,optimizer,num_classes):
     model.train()
     n = input.size(0)
 
-    input = Variable(input, requires_grad=False)#.cuda()
-    target = Variable(target, requires_grad=False)#.cuda(async=True)
+    input = Variable(input, requires_grad=True).cuda()
+    target = Variable(target, requires_grad=True).cuda(async=True)
 
     # get a random minibatch from the search queue with replacement
     #input_search, target_search = next(iter(valid_queue))
@@ -200,8 +219,8 @@ def infer(valid_queue, model, criterion,num_classes):
   model.eval()
 
   for step, (input, target) in enumerate(valid_queue):
-    input = Variable(input, volatile=True)#.cuda()
-    target = Variable(target, volatile=True)#.cuda(async=True)
+    input = Variable(input, volatile=True).cuda()
+    target = Variable(target, volatile=True).cuda(async=True)
 
     logits = model(input)
     loss = criterion(logits, torch.LongTensor([target]))
