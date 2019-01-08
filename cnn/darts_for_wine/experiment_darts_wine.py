@@ -156,7 +156,7 @@ def run_experiment_darts_wine():
 
     file_index = 1
     #Saving the model
-    utils.save(model,os.path.join("wine_classes_"+str(CLASSES_WINE)+".pt"))#args.save,
+    utils.save(model,os.path.join("wine_classifier_"+str(CLASSES_WINE)+".pt"))#args.save,
 
 """
 The train e infer procedure were addapted for the leave one out technique
