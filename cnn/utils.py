@@ -22,6 +22,31 @@ class AvgrageMeter(object):
     self.avg = self.sum / self.cnt
 
 
+class StandardDeviationMeter(object):
+
+   def __init__(self):
+      self.reset()
+
+   def reset(self):
+       self.avg = 0
+       self.values = []
+
+   def add_value(self,n):
+       self.values.append(n)
+
+   def calculate_average(self):
+       sum = 0
+       for v in self.values:
+           sum += v/len(self.values)
+       self.avg = sum
+
+   def calculate(self):
+       self.calculate_average()
+       sum = 0
+       for v in self.values:
+            sum += np.power((v - self.avg),2)/len(self.values)
+       return  np.sqrt(sum)
+
 def accuracy(output, target, topk=(1,)):
   maxk = max(topk)
   batch_size = target.size(0)
