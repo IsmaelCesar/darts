@@ -14,10 +14,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
-import utils as utils
-from darts_for_wine.winedataset import WinesDataset
-from model_search import Network
-from architect import Architect
+import cnn.utils
+from cnn.darts_for_wine.winedataset import WinesDataset
+from cnn.model_search import Network
+from cnn.architect import Architect
 
 
 parser = argparse.ArgumentParser("DARTS for wine classification")
