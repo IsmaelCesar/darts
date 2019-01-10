@@ -1,4 +1,5 @@
 import os
+import csv
 import numpy as np
 import torch
 import shutil
@@ -29,6 +30,7 @@ class StandardDeviationMeter(object):
 
    def reset(self):
        self.avg = 0
+       self.standard_deviation = 0
        self.values = []
 
    def add_value(self,n):
@@ -45,7 +47,8 @@ class StandardDeviationMeter(object):
        sum = 0
        for v in self.values:
             sum += np.power((v - self.avg),2)/len(self.values)
-       return  np.sqrt(sum)
+       self.standard_deviation = np.sqrt(sum)
+       return self.standard_deviation
 
 def accuracy(output, target, topk=(1,)):
   maxk = max(topk)
@@ -144,3 +147,8 @@ def create_exp_dir(path, scripts_to_save=None):
       dst_file = os.path.join(path, 'scripts', os.path.basename(script))
       shutil.copyfile(script, dst_file)
 
+
+def write_csv(list,file_path):
+    with open(file_path,"w+") as csv_file:
+        csv_writer = csv.writer(csv_file,delimiter=',')
+        csv_writer.writerows(list)

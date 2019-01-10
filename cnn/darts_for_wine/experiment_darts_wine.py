@@ -4,6 +4,7 @@ Created on Tue Dec 5 21:10:04 2018
 e-mail: ismael.c.s.a@hotmail.com
 """
 import os
+import time
 import sys
 import logging
 import argparse
@@ -35,7 +36,7 @@ parser.add_argument('--model_path', type=str, default='saved_models', help='path
 parser.add_argument('--cutout', action='store_true', default=False, help='use cutout')
 parser.add_argument('--cutout_length', type=int, default=16, help='cutout length')
 parser.add_argument('--drop_path_prob', type=float, default=0.3, help='drop path probability')
-parser.add_argument('--save', type=str, default='EXP', help='experiment name')
+parser.add_argument('--save', type=str, default='EXP_DARTS_WINE', help='experiment name')
 parser.add_argument('--seed', type=int, default=2, help='random seed')
 parser.add_argument('--grad_clip', type=float, default=5, help='gradient clipping')
 parser.add_argument('--train_portion', type=float, default=0.5, help='portion of training data')
@@ -45,17 +46,21 @@ parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weigh
 args = parser.parse_args()
 
 
+args.save = 'search-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+utils.create_exp_dir(args.save)
+
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M:%S %p')
-fh = logging.FileHandler(os.path.join('log.txt'))#args.save ,
+fh = logging.FileHandler(os.path.join(args.save ,'log.txt'))
 fh.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(fh)
 
-global CLASSES_WINE
+global CLASSES_WINE, csv_list
+
 
 def run_experiment_darts_wine():
-
+    """
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
         sys.exit(1)
@@ -68,16 +73,18 @@ def run_experiment_darts_wine():
     torch.cuda.manual_seed(args.seed)
     logging.info('gpu device = %d' % args.gpu)
     logging.info("args = %s", args)
+    """
+    csv_list = [['avg_train_acc','ata_standard_deviation','valid_acc']]
 
     dataset_files_path = args.data
     ds_names = ([["QWines-CsystemTR"],3],[["QWinesEa-CsystemTR"],4])
     CLASSES_WINE = ds_names[0][1]
 
     criterion = nn.CrossEntropyLoss()
-    criterion.cuda()
+    #criterion.cuda()
 
     model = Network(args.init_channels,CLASSES_WINE,args.layers,criterion)
-    model.cuda()
+    #model.cuda()
 
     """
     optimizer = torch.optim.Adam(
@@ -142,21 +149,25 @@ def run_experiment_darts_wine():
         F.softmax(model.alphas_reduce, dim=-1)
 
         #Reusing the train procedure of the DARTS implementation
-        train_acc, train_obj = train(train_queue,model,criterion,optimizer,CLASSES_WINE)
+        train_acc, train_obj,train_stdd = train(train_queue,model,criterion,optimizer,CLASSES_WINE)
+
         mean_test_acc.update(train_acc,ds_lenght)
         logging.info('average train_acc %f', mean_test_acc.avg)
 
         valid_acc, valid_obj = infer(valid_queue, model, criterion, CLASSES_WINE)
         stdd.add_value(valid_acc)
+
+        csv_list.append([train_acc,stdd,valid_acc])
+
         mean_valid_acc.update(valid_acc,ds_lenght)
         logging.info('average valid_acc %f', mean_valid_acc.avg)
 
     logging.info('total average of valid_acc %f', mean_valid_acc.avg)
     logging.info('total standard deviation of valid_acc %f', stdd.calculate())
 
-    file_index = 1
     #Saving the model
-    utils.save(model,os.path.join("wine_classifier_"+str(CLASSES_WINE)+".pt"))#args.save,
+    utils.write_csv(csv_list,os.path.join(args.save,"experiments_measurements.csv"))
+    utils.save(model,os.path.join(args.save,"wine_classifier_"+str(CLASSES_WINE)+".pt"))
 
 """
 The train e infer procedure were addapted for the leave one out technique
@@ -175,13 +186,14 @@ def train(train_queue, model,criterion,optimizer,num_classes):
   objs = utils.AvgrageMeter()
   top1 = utils.AvgrageMeter()
   top5 = utils.AvgrageMeter()
+  stddm = utils.StandardDeviationMeter()
 
   for step, (input, target) in enumerate(train_queue):
     model.train()
     n = input.size(0)
 
-    input = Variable(input, requires_grad=True).cuda()
-    target = Variable(target, requires_grad=True).cuda(async=True)
+    input = Variable(input, requires_grad=True)#.cuda()
+    target = Variable(target, requires_grad=True)#.cuda(async=True)
 
     # get a random minibatch from the search queue with replacement
     #input_search, target_search = next(iter(valid_queue))
@@ -204,11 +216,14 @@ def train(train_queue, model,criterion,optimizer,num_classes):
     #objs.update(loss.data[0], n)
     #top1.update(prec1.data[0], n)
     #top5.update(prec5.data[0], n)
+    stddm.add_value(top1)
 
     if step % args.report_freq == 0:
       logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
 
-  return top1.avg, objs.avg
+  #Salvando topk
+  stddm.calculate()
+  return top1.avg,objs.avg,stddm.standard_deviation,
 
 def infer(valid_queue, model, criterion,num_classes):
   """
@@ -223,8 +238,8 @@ def infer(valid_queue, model, criterion,num_classes):
   model.eval()
 
   for step, (input, target) in enumerate(valid_queue):
-    input = Variable(input, volatile=True).cuda()
-    target = Variable(target, volatile=True).cuda(async=True)
+    input = Variable(input, volatile=True)#.cuda()
+    target = Variable(target, volatile=True)#.cuda(async=True)
 
     logits = model(input)
     loss = criterion(logits, torch.LongTensor([target]))
