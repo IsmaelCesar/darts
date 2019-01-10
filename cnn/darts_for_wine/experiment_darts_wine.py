@@ -123,13 +123,6 @@ def run_experiment_darts_wine():
     ds_wine = WinesDataset(ds_choice[1])
     logging.info("The data set has been loaded")
 
-    #train_queue = torch.utils.data.DataLoader(ds_wine,sampler=torch.utils.data.SubsetRandomSampler(ds_indices[ds_split:ds_lenght]),
-    #                                          batch_size=args.batch_size,
-    #                                         pin_memory=True,num_workers=2)
-
-    #valid_queue = torch.utils.data.DataLoader(ds_wine,
-    #                                          sampler=torch.utils.data.SubsetRandomSampler(ds_indices[:ds_split]),
-    #                                          pin_memory=True, num_workers=2)
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, float(args.epochs), eta_min=args.learning_rate_min)
 
