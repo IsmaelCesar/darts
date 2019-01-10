@@ -14,6 +14,8 @@ loading libraries and defining some variables
 """
 import os
 #os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
+import sys
+sys.path.append("/data")
 import logging
 import tensorflow as tf
 logging.getLogger("tensorflow").setLevel(logging.WARNING)
@@ -32,7 +34,7 @@ import csv
 from math import sqrt
 import pandas as pd
 import matplotlib.pyplot as plt
-import autokeras as ak
+#import autokeras as ak
 
 np.random.seed(1)
 tf.set_random_seed(1)
@@ -256,7 +258,7 @@ def calload(sys,p,opt,load):
                 ldataset(fold_,i,k,p,opt)
                 k+=1
     else:
-        with open('QWinesEa-Csystem' + opt + '.pkl', 'rb') as f_s: 
+        with open('../../data/wines/'+'QWinesEa-Csystem' + opt + '.pkl', 'rb') as f_s:
             dataset,labels,labels_,names = pickle.load(f_s)
     dataset = np.array(dataset)
     labels = np.array(labels)
