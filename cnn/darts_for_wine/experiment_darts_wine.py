@@ -20,6 +20,9 @@ from darts_for_wine.winedataset import WinesDataset
 from model_search import Network
 from architect import Architect
 
+from darts_for_wine.LoadQWinesEaCsystem import calload as calload_ds1
+from darts_for_wine.LoadQWinesCsystem   import calload as calload_ds2
+
 
 parser = argparse.ArgumentParser("DARTS for wine classification")
 parser.add_argument('--data', type=str, default='../../data/wines/', help='location of the data corpus')
@@ -78,8 +81,25 @@ def run_experiment_darts_wine():
     csv_list = [['avg_train_acc','ata_standard_deviation','valid_acc']]
 
     dataset_files_path = args.data
-    ds_names = ([["QWines-CsystemTR"],3],[["QWinesEa-CsystemTR"],4])
-    CLASSES_WINE = ds_names[0][1]
+    #Data set choice, 0 -> QWines-CsystemTR, and 1 ->"QWinesEa-CsystemTR"
+    ds_choice = [{#'QWines-CsystemTR'
+                        'array_measurements':[4,5,13],
+                        'pic_':0,
+                        'opt':'TR',
+                        'load':0,
+                        'class_number':3,
+                        'procedure':calload_ds1
+                    },
+                  {#'QWinesEa-CsystemTR'
+                        'array_measurements':[4,6,5,13],
+                        'pic_':0,
+                        'opt':'TR',
+                        'load':0,
+                        'class_number': 4,
+                        'procedure': calload_ds2
+                    }]
+
+    CLASSES_WINE = ds_choice[0]['class_number']
 
     criterion = nn.CrossEntropyLoss()
     #criterion.cuda()
@@ -100,7 +120,7 @@ def run_experiment_darts_wine():
         momentum=args.momentum,
         weight_decay=args.weight_decay)
 
-    ds_wine = WinesDataset(dataset_files_path,ds_names[0][0])
+    ds_wine = WinesDataset(ds_choice[1])
     logging.info("The data set has been loaded")
 
     #train_queue = torch.utils.data.DataLoader(ds_wine,sampler=torch.utils.data.SubsetRandomSampler(ds_indices[ds_split:ds_lenght]),

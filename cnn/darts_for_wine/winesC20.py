@@ -236,9 +236,9 @@ ttvar = [3,	43,	51,	141, 22,	9,	11,	13,	10,	10,	10,	10,	10,	11,	11,	11,	10,	11,	
 #ttvar = [4,	43,	65,	51,	141,	28,	9,	11,	13,	10,	10,	11,	12,	11,	10,	11,	10,	10,	10,	10,	11,	11,	11,	10,	11,	11,	10,	11,	12,	11,	10,	11,	11,	11] ##Wines thersholds + Ethanol
 ngr=ttvar[0]
 ncl=ttvar[ngr+1]
-calload([4,5,13],pic_,"../../data/wines/",'QWines-CsystemTR',0) #QWines-Csystem [4,5,13] QWinesEa-Csystem [4,6,5,13]
-sizeT=len(dataset)
-train_process('LOO')
+#calload([4,5,13],pic_,"../../data/wines/",'QWines-CsystemTR',0) #QWines-Csystem [4,5,13] QWinesEa-Csystem [4,6,5,13]
+#sizeT=len(dataset)
+#train_process('LOO')
 
 
 
