@@ -6,6 +6,7 @@ e-mail: ismael.c.s.a@hotmail.com
 import os
 import time
 import sys
+sys.path.append("../")
 import logging
 import argparse
 import torch
@@ -14,10 +15,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
-import cnn.utils
-from cnn.darts_for_wine.winedataset import WinesDataset
-from cnn.model_search import Network
-from cnn.architect import Architect
+import utils
+from darts_for_wine.winedataset import WinesDataset
+from model_search import Network
+from architect import Architect
 
 
 parser = argparse.ArgumentParser("DARTS for wine classification")

@@ -7,7 +7,7 @@ e-mail: ismael.c.s.a@hotmail.com
 import numpy as np
 import torch
 from torch.utils.data.dataset    import Dataset
-from cnn.darts_for_wine.winesC20 import calload
+from darts_for_wine.winesC20 import calload
 
 
 
