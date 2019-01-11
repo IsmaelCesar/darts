@@ -281,7 +281,7 @@ The script begins here.
 ttvar = [3,	43,	51,	141, 22, 9,	11,	13,	10,	10,	10,	10,	10,	11,	11,	11,	10,	11,	11,	10,	11,	12,	11,	10,	11,	11,	11]  #Wines thersholds
 ngr=ttvar[0]
 ncl=ttvar[ngr+1]
-#calload([4,5,13],pic_,'TR',0) #QWines-Csystem [4,5,13]
-#sizeT=len(dataset)
-#train_process('LOO')
+calload([4,5,13],pic_,'TR',0) #QWines-Csystem [4,5,13]
+sizeT=len(dataset)
+train_process('LOO')
 

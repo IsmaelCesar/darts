@@ -120,7 +120,7 @@ def run_experiment_darts_wine():
         momentum=args.momentum,
         weight_decay=args.weight_decay)
 
-    ds_wine = WinesDataset(ds_choice[1])
+    ds_wine = WinesDataset(ds_choice[0])
     logging.info("The data set has been loaded")
 
 

@@ -18,8 +18,14 @@ class WinesDataset(Dataset):
 
     def __init__(self,chosen_ds_dict):
         """
-        :param:ds_names -> A list of strigns containing the name of the data sets
-                            it can be a list containing just one name. But it has to be a lists
+        :param:chosen_ds_dict -> A dict with the following parameters:{
+                                'array_measurements':array with te number of measurements of each bottle,
+                                'pic_': Set to 1 if desired to use pictures and 0 if otherwise,
+                                'opt':'TR',
+                                'load':Set to 1 if the data still needs to be loaded, 0 otherwise,
+                                'class_number': number of classes,
+                                'procedure': procedure to be used when loading the data set
+                                }
         """
         if(type(chosen_ds_dict) == dict):
 
