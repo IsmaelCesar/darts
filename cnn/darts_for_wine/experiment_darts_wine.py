@@ -129,9 +129,6 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,clas
     #The loop has also been adapted to the Leave one out technique
     for epoch in  range(args.epochs):
 
-
-        del ds_indexes[loo_test_element_indx]
-
         scheduler.step()
 
         lr = scheduler.get_lr()[0]
