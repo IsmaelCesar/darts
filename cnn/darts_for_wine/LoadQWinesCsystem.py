@@ -32,6 +32,7 @@ import csv
 from math import sqrt
 import pandas as pd
 import matplotlib.pyplot as plt
+from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
 #import autokeras as ak
 
 np.random.seed(1)
@@ -220,7 +221,7 @@ def train_process(idx):
                 num_classes=cat_train_label.shape[1]
                 
                 ##Put here the Convolutive CNN              
-                
+                run_experiment(train_data, train_label, test_data, test_label, num_classes)
                
         etime_ = time.time() - tic
         etime[str(final_measurement)].append(etime_)
