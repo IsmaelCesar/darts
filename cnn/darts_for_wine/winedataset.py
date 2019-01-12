@@ -16,6 +16,10 @@ class WinesDataset(Dataset):
         Class to be used by the data loader for getting the data.
     """
 
+    def __init__(self,data,labels):
+        self.data = torch.FloatTensor(data)
+        self.labels = torch.FloatTensor(labels)
+
     def __init__(self,chosen_ds_dict):
         """
         :param:chosen_ds_dict -> A dict with the following parameters:{

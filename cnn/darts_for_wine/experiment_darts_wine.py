@@ -63,7 +63,7 @@ logging.getLogger().addHandler(fh)
 global CLASSES_WINE, csv_list
 
 
-def run_experiment_darts_wine():
+def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,classes_number):
     """
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
@@ -80,26 +80,10 @@ def run_experiment_darts_wine():
     """
     csv_list = [['avg_train_acc','ata_standard_deviation','valid_acc']]
 
-    dataset_files_path = args.data
-    #Data set choice, 0 -> QWines-CsystemTR, and 1 ->"QWinesEa-CsystemTR"
-    ds_choice = [{#'QWines-CsystemTR'
-                        'array_measurements':[4,5,13],
-                        'pic_':0,
-                        'opt':'TR',
-                        'load':0,
-                        'class_number':3,
-                        'procedure':calload_ds1
-                    },
-                  {#'QWinesEa-CsystemTR'
-                        'array_measurements':[4,6,5,13],
-                        'pic_':0,
-                        'opt':'TR',
-                        'load':0,
-                        'class_number': 4,
-                        'procedure': calload_ds2
-                    }]
+    CLASSES_WINE =  classes_number
 
-    CLASSES_WINE = ds_choice[0]['class_number']
+    dataset_files_path = args.data
+
 
     criterion = nn.CrossEntropyLoss()
     #criterion.cuda()
@@ -120,36 +104,33 @@ def run_experiment_darts_wine():
         momentum=args.momentum,
         weight_decay=args.weight_decay)
 
-    ds_wine = WinesDataset(ds_choice[0])
+    train_ds_wine = WinesDataset(train_data,train_labels)
+    test_ds_wine  = WinesDataset(test_data,test_labels)
+
     logging.info("The data set has been loaded")
-
-
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, float(args.epochs), eta_min=args.learning_rate_min)
 
-    ds_lenght = len(ds_wine)
+    ds_lenght = len(train_ds_wine)
     loo_test_element_indx = 0
 
     #architecht = Architect(model,args)
 
-    mean_test_acc = utils.AvgrageMeter()
-    mean_valid_acc = utils.AvgrageMeter()
+    train_queue = torch.utils.data.DataLoader(train_ds_wine, sampler=torch.utils.data.SubsetRandomSampler(list(range(len(train_ds_wine)))),
+                                              batch_size=args.batch_size,
+                                              pin_memory=True, num_workers=2)
+
+    valid_queue = torch.utils.data.DataLoader(test_ds_wine,
+                                              sampler=torch.utils.data.SubsetRandomSampler(list(range(len(test_ds_wine)))),
+                                              pin_memory=True, num_workers=2)
+
     #The STDD will be used to calculate the accuracy's standard deviation
     stdd     = utils.StandardDeviationMeter()
 
     #The loop has also been adapted to the Leave one out technique
-    for epoch in  range(ds_lenght):
+    for epoch in  range(args.epochs):
 
-        ds_indexes = list(range(ds_lenght))
+
         del ds_indexes[loo_test_element_indx]
-
-        train_queue = torch.utils.data.DataLoader(ds_wine, sampler=torch.utils.data.SubsetRandomSampler(ds_indexes),
-                                                  batch_size=args.batch_size,
-                                                  pin_memory=True, num_workers=2)
-
-        valid_queue = torch.utils.data.DataLoader(ds_wine,
-                                                  sampler=torch.utils.data.SubsetRandomSampler([loo_test_element_indx]),
-                                                  pin_memory=True, num_workers=2)
-        loo_test_element_indx += 1
 
         scheduler.step()
 
@@ -165,19 +146,7 @@ def run_experiment_darts_wine():
         #Reusing the train procedure of the DARTS implementation
         train_acc, train_obj,train_stdd = train(train_queue,model,criterion,optimizer,CLASSES_WINE)
 
-        mean_test_acc.update(train_acc,ds_lenght)
-        logging.info('average train_acc %f', mean_test_acc.avg)
-
-        valid_acc, valid_obj = infer(valid_queue, model, criterion, CLASSES_WINE)
-        stdd.add_value(valid_acc)
-
-        csv_list.append([train_acc,stdd,valid_acc])
-
-        mean_valid_acc.update(valid_acc,ds_lenght)
-        logging.info('average valid_acc %f', mean_valid_acc.avg)
-
-    logging.info('total average of valid_acc %f', mean_valid_acc.avg)
-    logging.info('total standard deviation of valid_acc %f', stdd.calculate())
+        test_acc, test_obj  = infer(valid_queue,model,criterion,CLASSES_WINE)
 
     #Saving the model
     utils.write_csv(csv_list,os.path.join(args.save,"experiments_measurements.csv"))
