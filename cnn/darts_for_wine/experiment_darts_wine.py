@@ -63,7 +63,7 @@ logging.getLogger().addHandler(fh)
 global CLASSES_WINE, csv_list
 
 
-def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,classes_number):
+def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epochs,classes_number):
     """
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
@@ -126,7 +126,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,clas
     stdd     = utils.StandardDeviationMeter()
 
     #The loop has also been adapted to the Leave one out technique
-    for epoch in  range(args.epochs):
+    for epoch in  range(epochs):
 
         scheduler.step()
 

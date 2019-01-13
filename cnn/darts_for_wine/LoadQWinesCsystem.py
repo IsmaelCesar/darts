@@ -198,30 +198,30 @@ def train_process(idx):
             train_set = np.array(train_set)  
             #Finish the LOO 
        
-            for k in range(repetions):
+            #for k in range(repetions):
                                              
-                #Data shuffle
-                train_data, train_label = sklearn.utils.shuffle(train_set[:,ini_value:final_measurement,:], tr_labels)        
-                test_data, test_label = sklearn.utils.shuffle(test_set[:,ini_value:final_measurement,:], te_labels)        
-                                
-#                #preprocess
-                flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
-                flat_test_data = test_data.reshape(test_data.shape[0], test_data.shape[1] * last_column)
-                scaler = preprocessing.StandardScaler().fit(flat_train_data)
-                flat_train_data = scaler.transform(flat_train_data)
-                flat_test_data = scaler.transform(flat_test_data)
+            #Data shuffle
+            train_data, train_label = sklearn.utils.shuffle(train_set[:,ini_value:final_measurement,:], tr_labels)
+            test_data, test_label = sklearn.utils.shuffle(test_set[:,ini_value:final_measurement,:], te_labels)
 
-                train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
-                test_data = flat_test_data.reshape(test_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
-                #input_shape = (train_data.shape[1],train_data.shape[2],1)
-              
-                # convert class vectors to binary class matrices
-                cat_train_label = keras.utils.to_categorical(train_label,num_classes=ngr)
-                cat_test_label = keras.utils.to_categorical(test_label,num_classes=ngr)
-                num_classes=cat_train_label.shape[1]
-                
-                ##Put here the Convolutive CNN              
-                run_experiment_darts_wine(train_data, train_label, test_data, test_label, num_classes)
+#                #preprocess
+            flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
+            flat_test_data = test_data.reshape(test_data.shape[0], test_data.shape[1] * last_column)
+            scaler = preprocessing.StandardScaler().fit(flat_train_data)
+            flat_train_data = scaler.transform(flat_train_data)
+            flat_test_data = scaler.transform(flat_test_data)
+
+            train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
+            test_data = flat_test_data.reshape(test_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
+            #input_shape = (train_data.shape[1],train_data.shape[2],1)
+
+            # convert class vectors to binary class matrices
+            cat_train_label = keras.utils.to_categorical(train_label,num_classes=ngr)
+            cat_test_label = keras.utils.to_categorical(test_label,num_classes=ngr)
+            num_classes=cat_train_label.shape[1]
+
+            ##Put here the Convolutive CNN
+            run_experiment_darts_wine(train_data, train_label, test_data, test_label, num_classes)
                
         etime_ = time.time() - tic
         etime[str(final_measurement)].append(etime_)
