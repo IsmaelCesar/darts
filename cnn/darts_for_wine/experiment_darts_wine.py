@@ -20,8 +20,8 @@ from darts_for_wine.winedataset import WinesDataset
 from model_search import Network
 from architect import Architect
 
-from darts_for_wine.LoadQWinesEaCsystem import calload as calload_ds1
-from darts_for_wine.LoadQWinesCsystem   import calload as calload_ds2
+#from darts_for_wine.LoadQWinesEaCsystem import calload as calload_ds1
+#from darts_for_wine.LoadQWinesCsystem   import calload as calload_ds2
 
 
 parser = argparse.ArgumentParser("DARTS for wine classification")
