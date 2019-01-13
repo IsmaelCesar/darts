@@ -17,7 +17,7 @@ class WinesDataset(Dataset):
     """
 
     def __init__(self,data,labels):
-        self.data = torch.FloatTensor(data)
+        self.data = torch.FloatTensor(data.reshape(data.shape[0],1,data.shape[1],data.shape[2]))
         self.labels = torch.FloatTensor(labels)
 
 
