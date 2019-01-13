@@ -78,7 +78,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,clas
     logging.info('gpu device = %d' % args.gpu)
     logging.info("args = %s", args)
     """
-    csv_list = [['avg_train_acc','ata_standard_deviation','valid_acc']]
+    csv_list = [['avg_train_acc','ata_standard_deviation','valid_acc','valid_stdd']]
 
     CLASSES_WINE =  classes_number
 
@@ -119,8 +119,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,clas
                                               batch_size=args.batch_size,
                                               pin_memory=True, num_workers=2)
 
-    valid_queue = torch.utils.data.DataLoader(test_ds_wine,
-                                              sampler=torch.utils.data.RandomSampler(test_ds_wine,replacement=False),
+    valid_queue = torch.utils.data.DataLoader(test_ds_wine,sampler=torch.utils.data.RandomSampler(test_ds_wine,replacement=False),
                                               pin_memory=True, num_workers=2)
 
     #The STDD will be used to calculate the accuracy's standard deviation
@@ -143,11 +142,15 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,clas
         #Reusing the train procedure of the DARTS implementation
         train_acc, train_obj,train_stdd = train(train_queue,model,criterion,optimizer,CLASSES_WINE)
 
-        test_acc, test_obj  = infer(valid_queue,model,criterion,CLASSES_WINE)
+        test_acc, test_obj, test_stdd   = infer(valid_queue,model,criterion,CLASSES_WINE)
+
+        csv_list.append([train_acc,train_stdd,test_acc,test_stdd])
 
     #Saving the model
     utils.write_csv(csv_list,os.path.join(args.save,"experiments_measurements.csv"))
     utils.save(model,os.path.join(args.save,"wine_classifier_"+str(CLASSES_WINE)+".pt"))
+
+    return csv_list
 
 """
 The train e infer procedure were addapted for the leave one out technique
@@ -215,6 +218,7 @@ def infer(valid_queue, model, criterion,num_classes):
   objs = utils.AvgrageMeter()
   top1 = utils.AvgrageMeter()
   top5 = utils.AvgrageMeter()
+  stddm = utils.StandardDeviationMeter()
   model.eval()
 
   for step, (input, target) in enumerate(valid_queue):
@@ -229,6 +233,7 @@ def infer(valid_queue, model, criterion,num_classes):
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
+    stddm.add_value(top1)
     # objs.update(loss.data[0], n)
     # top1.update(prec1.data[0], n)
     # top5.update(prec5.data[0], n)
@@ -236,7 +241,8 @@ def infer(valid_queue, model, criterion,num_classes):
     if step % args.report_freq == 0:
       logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
 
-  return top1.avg, objs.avg
+  stddm.calculate()
+  return top1.avg, objs.avg, stddm.standard_deviation
 
 if __name__ == "__main__":
     run_experiment_darts_wine()
