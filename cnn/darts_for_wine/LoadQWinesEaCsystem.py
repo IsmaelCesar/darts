@@ -201,7 +201,7 @@ def train_process(idx):
             #Finish the LOO 
        
             #for k in range(repetions):
-                                             
+            repetitions = 10 #repetitions
             #Data shuffle
             train_data, train_label = sklearn.utils.shuffle(train_set[:,ini_value:final_measurement,:], tr_labels)
             test_data, test_label = sklearn.utils.shuffle(test_set[:,ini_value:final_measurement,:], te_labels)
@@ -223,7 +223,7 @@ def train_process(idx):
             num_classes=cat_train_label.shape[1]
 
             ##Put here the Convolutive CNN
-            results_list = run_experiment_darts_wine(train_data,train_label,test_data,test_label,num_classes)
+            results_list = run_experiment_darts_wine(train_data,train_label,test_data,test_label,repetions,num_classes)
 
             test_results[str(final_measurement)].append(results_list[0][1:])
             train_results[str(final_measurement)].append(results_list[2][1:])

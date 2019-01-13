@@ -221,7 +221,7 @@ def train_process(idx):
             num_classes=cat_train_label.shape[1]
 
             ##Put here the Convolutive CNN
-            run_experiment_darts_wine(train_data, train_label, test_data, test_label, num_classes)
+            run_experiment_darts_wine(train_data, train_label, test_data, test_label,repetions,num_classes)
                
         etime_ = time.time() - tic
         etime[str(final_measurement)].append(etime_)
