@@ -15,7 +15,7 @@ loading libraries and defining some variables
 import os
 #os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
 import sys
-sys.path.append("/data")
+
 sys.path.append("../")
 import logging
 import tensorflow as tf
