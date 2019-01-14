@@ -16,6 +16,7 @@ import os
 #os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
 import sys
 sys.path.append("/data")
+sys.path.append("../")
 import logging
 import tensorflow as tf
 logging.getLogger("tensorflow").setLevel(logging.WARNING)
