@@ -198,7 +198,7 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     #objs.update(loss.data[0], n)
     #top1.update(prec1.data[0], n)
     #top5.update(prec5.data[0], n)
-    stddm.add_value(top1)
+    stddm.add_value(top1.avg)
 
     if step % args.report_freq == 0:
       logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
