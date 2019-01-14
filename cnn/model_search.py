@@ -6,7 +6,6 @@ from torch.autograd import Variable
 from genotypes import PRIMITIVES
 from genotypes import Genotype
 
-
 class MixedOp(nn.Module):
   """
     Module contains the implementations defined in the operations.py module
@@ -122,7 +121,8 @@ class Network(nn.Module):
 
     C_curr = stem_multiplier*C
     self.stem = nn.Sequential(
-      nn.Conv2d(3, C_curr, 3, padding=1, bias=False),
+      #The number of input channels have been changed from 3 to C
+      nn.Conv2d(C, C_curr, 3, padding=1, bias=False),
       nn.BatchNorm2d(C_curr)
     )
  

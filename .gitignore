@@ -126,3 +126,10 @@ tags
 
 \.idea/
 *.pt
+
+#Adding other local files
+cnn/darts_for_wine/test_cases.py
+cnn/darts_for_wine/log.txt
+
+
+cnn/darts_for_wine/out_LoadQWinesEaCsystemLOO\.pkl

@@ -32,7 +32,8 @@ import csv
 from math import sqrt
 import pandas as pd
 import matplotlib.pyplot as plt
-import autokeras as ak
+from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine
+#import autokeras as ak
 
 np.random.seed(1)
 tf.set_random_seed(1)
@@ -142,7 +143,7 @@ def ldataset(folder,lab,k_,pic,opt):
             #del a
     os.chdir(actualDir)
     # Saving the objects:
-    with open('QWinesEa-Csystem' + opt + '.pkl', 'wb') as f:  
+    with open('QWines-Csystem' + opt + '.pkl', 'wb') as f:  
         pickle.dump([dataset,labels,labels_,names], f)
     print('loaded ' + folder)
 
@@ -197,30 +198,32 @@ def train_process(idx):
             train_set = np.array(train_set)  
             #Finish the LOO 
        
-            for k in range(repetions):
+            #for k in range(repetions):
                                              
-                #Data shuffle
-                train_data, train_label = sklearn.utils.shuffle(train_set[:,ini_value:final_measurement,:], tr_labels)        
-                test_data, test_label = sklearn.utils.shuffle(test_set[:,ini_value:final_measurement,:], te_labels)        
-                                
-#                #preprocess
-                flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
-                flat_test_data = test_data.reshape(test_data.shape[0], test_data.shape[1] * last_column)
-                scaler = preprocessing.StandardScaler().fit(flat_train_data)
-                flat_train_data = scaler.transform(flat_train_data)
-                flat_test_data = scaler.transform(flat_test_data)
+            #Data shuffle
+            train_data, train_label = sklearn.utils.shuffle(train_set[:,ini_value:final_measurement,:], tr_labels)
+            test_data, test_label = sklearn.utils.shuffle(test_set[:,ini_value:final_measurement,:], te_labels)
 
-                train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
-                test_data = flat_test_data.reshape(test_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
-                #input_shape = (train_data.shape[1],train_data.shape[2],1)
-              
-                # convert class vectors to binary class matrices
-                cat_train_label = keras.utils.to_categorical(train_label,num_classes=ngr)
-                cat_test_label = keras.utils.to_categorical(test_label,num_classes=ngr)
-                num_classes=cat_train_label.shape[1]
-                
-                ##Put here the Convolutive CNN              
-                
+#                #preprocess
+            flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
+            flat_test_data = test_data.reshape(test_data.shape[0], test_data.shape[1] * last_column)
+            scaler = preprocessing.StandardScaler().fit(flat_train_data)
+            flat_train_data = scaler.transform(flat_train_data)
+            flat_test_data = scaler.transform(flat_test_data)
+
+            train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
+            test_data = flat_test_data.reshape(test_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
+            #input_shape = (train_data.shape[1],train_data.shape[2],1)
+
+            # convert class vectors to binary class matrices
+            cat_train_label = keras.utils.to_categorical(train_label,num_classes=ngr)
+            cat_test_label = keras.utils.to_categorical(test_label,num_classes=ngr)
+            num_classes=cat_train_label.shape[1]
+
+            ##Put here the Convolutive CNN
+            results_list = run_experiment_darts_wine(train_data, train_label, test_data, test_label,repetions,num_classes)
+            test_results[str(final_measurement)].append(np.array(results_list)[1:, 0])
+            train_results[str(final_measurement)].append(np.array(results_list)[1:, 2])
                
         etime_ = time.time() - tic
         etime[str(final_measurement)].append(etime_)
@@ -256,7 +259,7 @@ def calload(sys,p,opt,load):
                 ldataset(fold_,i,k,p,opt)
                 k+=1
     else:
-        with open('QWinesEa-Csystem' + opt + '.pkl', 'rb') as f_s: 
+        with open('../../data/wines/'+'QWines-Csystem' + opt + '.pkl', 'rb') as f_s:
             dataset,labels,labels_,names = pickle.load(f_s)
     dataset = np.array(dataset)
     labels = np.array(labels)
@@ -278,10 +281,10 @@ def calload(sys,p,opt,load):
 SECTION 1.
 The script begins here. 
 """
-ttvar = [4,	43,	65,	51,	141,	28,	9,	11,	13,	10,	10,	11,	12,	11,	10,	11,	10,	10,	10,	10,	11,	11,	11,	10,	11,	11,	10,	11,	12,	11,	10,	11,	11,	11] ##Wines thersholds + Ethanol
+ttvar = [3,	43,	51,	141, 22, 9,	11,	13,	10,	10,	10,	10,	10,	11,	11,	11,	10,	11,	11,	10,	11,	12,	11,	10,	11,	11,	11]  #Wines thersholds
 ngr=ttvar[0]
 ncl=ttvar[ngr+1]
-calload([4,6,5,13],pic_,'TR',0) #QWinesEa-Csystem [4,6,5,13]
+calload([4,5,13],pic_,'TR',0) #QWines-Csystem [4,5,13]
 sizeT=len(dataset)
-train_process('LOO') 
+train_process('LOO')
 

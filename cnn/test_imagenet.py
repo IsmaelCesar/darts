@@ -2,13 +2,15 @@ import os
 import sys
 import numpy as np
 import torch
-import utils
+#import utils
+import cnn.utils as utils
 import glob
 import random
 import logging
 import argparse
 import torch.nn as nn
-import genotypes
+#import genotypes
+import cnn.genotypes as genotypes
 import torch.utils
 import torchvision.datasets as dset
 import torchvision.transforms as transforms

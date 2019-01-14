@@ -4,7 +4,7 @@ import time
 import glob
 import numpy as np
 import torch
-import cnn.utils as utils
+import utils
 import logging
 import argparse
 import torch.nn as nn
@@ -14,8 +14,8 @@ import torchvision.datasets as dset
 import torch.backends.cudnn as cudnn
 
 from torch.autograd import Variable
-from cnn.model_search import Network
-from cnn.architect import Architect
+from model_search import Network
+from architect import Architect
 
 parser = argparse.ArgumentParser("cifar")
 parser.add_argument('--data', type=str, default='../data', help='location of the data corpus')
@@ -127,6 +127,15 @@ def main():
 
 
 def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
+  """
+      :param train_queue: Data loader that randomly picks the samples in the Dataset, as defined in the previous procedure
+      :param valid_queue: Data loader that randomly picks the samples in the Dataset, as defined in the previous procedure
+      :param model:       Model of the network
+      :param criterion:   Criterion(Function over which the loss of the model shall be computed)
+      :param optimizer:  weights optimizer
+      :param lr: learning rate
+      :return: train_acc(train accuracy), train_obj(Object used to compute the train accuracy)
+    """
   objs = utils.AvgrageMeter()
   top1 = utils.AvgrageMeter()
   top5 = utils.AvgrageMeter()
@@ -135,13 +144,13 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     model.train()
     n = input.size(0)
 
-    input = Variable(input, requires_grad=False).cuda()
-    target = Variable(target, requires_grad=False).cuda(async=True)
+    input = Variable(input, requires_grad=False)#.cuda()
+    target = Variable(target, requires_grad=False)#.cuda(async=True)
 
     # get a random minibatch from the search queue with replacement
     input_search, target_search = next(iter(valid_queue))
-    input_search = Variable(input_search, requires_grad=False).cuda()
-    target_search = Variable(target_search, requires_grad=False).cuda(async=True)
+    input_search = Variable(input_search, requires_grad=False)#.cuda()
+    target_search = Variable(target_search, requires_grad=False)#.cuda(async=True)
 
     architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
 
@@ -165,6 +174,12 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
 
 
 def infer(valid_queue, model, criterion):
+  """
+    :param valid_queue: Data loader that randomly picks the samples in the Dataset, as defined in the previous procedure
+    :param model:      Model of the network
+    :param criterion:  Criterion(Function over which the loss of the model shall be computed)
+    :return: valid_acc(validation accuracy), valid_obj(Object used to compute the validation accuracy)
+    """
   objs = utils.AvgrageMeter()
   top1 = utils.AvgrageMeter()
   top5 = utils.AvgrageMeter()
