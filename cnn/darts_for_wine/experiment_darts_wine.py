@@ -185,13 +185,13 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
 
     optimizer.zero_grad()
     logits = model(input)
-    loss = criterion(logits,torch.LongTensor([target]))
+    loss = criterion(logits,torch.cuda.LongTensor([target]))
 
     loss.backward()
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 
-    prec1, prec5 = utils.accuracy(logits, torch.LongTensor([target]), topk=(1, num_classes))
+    prec1, prec5 = utils.accuracy(logits, torch.cuda.LongTensor([target]), topk=(1, num_classes))
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
