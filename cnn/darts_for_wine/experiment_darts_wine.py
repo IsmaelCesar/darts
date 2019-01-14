@@ -64,7 +64,6 @@ global CLASSES_WINE, csv_list
 
 
 def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epochs,classes_number):
-    """
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
         sys.exit(1)
@@ -77,7 +76,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
     torch.cuda.manual_seed(args.seed)
     logging.info('gpu device = %d' % args.gpu)
     logging.info("args = %s", args)
-    """
+
     csv_list = [['avg_train_acc','ata_standard_deviation','valid_acc','valid_stdd']]
 
     CLASSES_WINE =  classes_number
@@ -86,10 +85,10 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
 
 
     criterion = nn.CrossEntropyLoss()
-    criterion#.cuda()
+    criterion.cuda()
 
     model = Network(args.init_channels,CLASSES_WINE,args.layers,criterion)
-    model#.cuda()
+    model.cuda()
 
     """
     optimizer = torch.optim.Adam(
@@ -175,13 +174,13 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     model.train()
     n = input.size(0)
 
-    input = Variable(input, requires_grad=False)#.cuda()
-    target = Variable(target, requires_grad=False)#.cuda(async=True)
+    input = Variable(input, requires_grad=False).cuda()
+    target = Variable(target, requires_grad=False).cuda(async=True)
 
     #get a random minibatch from the search queue with replacement
     input_search, target_search = next(iter(valid_queue))
-    input_search = Variable(input_search, requires_grad=False)#.cuda()
-    target_search = Variable(target_search, requires_grad=False)#.cuda(async=True)
+    input_search = Variable(input_search, requires_grad=False).cuda()
+    target_search = Variable(target_search, requires_grad=False).cuda(async=True)
     architect.step(input,torch.LongTensor([target]), input_search, torch.LongTensor([target_search]), lr, optimizer, unrolled=args.unrolled)
 
     optimizer.zero_grad()
@@ -222,8 +221,8 @@ def infer(valid_queue, model, criterion,num_classes):
   model.eval()
 
   for step, (input, target) in enumerate(valid_queue):
-    input = Variable(input, volatile=True)#.cuda()
-    target = Variable(target, volatile=True)#.cuda(async=True)
+    input = Variable(input, volatile=True).cuda()
+    target = Variable(target, volatile=True).cuda(async=True)
 
     logits = model(input)
     loss = criterion(logits, torch.LongTensor([target]))
