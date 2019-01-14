@@ -232,7 +232,7 @@ def infer(valid_queue, model, criterion,num_classes):
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
-    stddm.add_value(top1)
+    stddm.add_value(top1.avg)
     # objs.update(loss.data[0], n)
     # top1.update(prec1.data[0], n)
     # top5.update(prec5.data[0], n)
