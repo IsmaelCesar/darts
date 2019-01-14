@@ -178,10 +178,10 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     target = Variable(target, requires_grad=False).cuda(async=True)
 
     #get a random minibatch from the search queue with replacement
-    input_search, target_search = next(iter(valid_queue))
-    input_search = Variable(input_search, requires_grad=False).cuda()
-    target_search = Variable(target_search, requires_grad=False).cuda(async=True)
-    architect.step(input,torch.LongTensor([target]), input_search, torch.LongTensor([target_search]), lr, optimizer, unrolled=args.unrolled)
+    #input_search, target_search = next(iter(valid_queue))
+    #input_search = Variable(input_search, requires_grad=False).cuda()
+    #target_search = Variable(target_search, requires_grad=False).cuda(async=True)
+    #architect.step(input,torch.LongTensor([target]), input_search, torch.LongTensor([target_search]), lr, optimizer, unrolled=args.unrolled)
 
     optimizer.zero_grad()
     logits = model(input)
