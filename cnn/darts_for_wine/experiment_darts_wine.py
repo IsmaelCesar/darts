@@ -64,7 +64,6 @@ global CLASSES_WINE, csv_list
 
 
 def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epochs,classes_number):
-
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
         sys.exit(1)
@@ -140,7 +139,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
         F.softmax(model.alphas_reduce, dim=-1)
 
         #Reusing the train procedure of the DARTS implementation
-        train_acc, train_obj,train_stdd = train(train_queue,model,criterion,optimizer,CLASSES_WINE)
+        train_acc, train_obj,train_stdd = 1,1,1#train(train_queue,model,criterion,optimizer,CLASSES_WINE)
 
         test_acc, test_obj, test_stdd   = infer(valid_queue,model,criterion,CLASSES_WINE)
 
