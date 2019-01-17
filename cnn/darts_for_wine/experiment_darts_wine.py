@@ -188,20 +188,20 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
 
     optimizer.zero_grad()
     logits = model(input)
-    loss = criterion(logits,torch.LongTensor([target]))
+    loss = criterion(logits,torch.cuda.LongTensor([target]))
 
     loss.backward()
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 
-    prec1, prec5 = utils.accuracy(logits, torch.LongTensor([target]), topk=(1, num_classes))
+    prec1, prec5 = utils.accuracy(logits, torch.cuda.LongTensor([target]), topk=(1, num_classes))
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
     #objs.update(loss.data[0], n)
     #top1.update(prec1.data[0], n)
     #top5.update(prec5.data[0], n)
-    stddm.add_value(top1)
+    stddm.add_value(top1.avg)
 
     if step % args.report_freq == 0:
       logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
@@ -228,14 +228,14 @@ def infer(valid_queue, model, criterion,num_classes):
     target = Variable(target, volatile=True).cuda(async=True)
 
     logits = model(input)
-    loss = criterion(logits, torch.LongTensor([target]))
+    loss = criterion(logits, torch.cuda.LongTensor([target]))
 
-    prec1, prec5 = utils.accuracy(logits, torch.LongTensor([target]), topk=(1, num_classes))
+    prec1, prec5 = utils.accuracy(logits, torch.cuda.LongTensor([target]), topk=(1, num_classes))
     n = input.size(0)
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
-    stddm.add_value(top1)
+    stddm.add_value(top1.avg)
     # objs.update(loss.data[0], n)
     # top1.update(prec1.data[0], n)
     # top5.update(prec5.data[0], n)

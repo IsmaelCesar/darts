@@ -15,7 +15,7 @@ loading libraries and defining some variables
 import os
 #os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
 import sys
-sys.path.append("/data")
+
 sys.path.append("../")
 import logging
 import tensorflow as tf
@@ -224,7 +224,7 @@ def train_process(idx):
             num_classes=cat_train_label.shape[1]
 
             ##Put here the Convolutive CNN
-            results_list = run_experiment_darts_wine(train_data,train_label,test_data,test_label,repetions,num_classes)
+            results_list = run_experiment_darts_wine(train_data,train_label,test_data,test_label,repetitions,num_classes)
             test_results[str(final_measurement)].append(np.array(results_list)[1:, 0])
             train_results[str(final_measurement)].append(np.array(results_list)[1:, 2])
 
