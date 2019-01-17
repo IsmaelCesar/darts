@@ -77,6 +77,9 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
     logging.info('gpu device = %d' % args.gpu)
     logging.info("args = %s", args)
 
+    #Changing report freq
+    args.report_freq = 2
+
     csv_list = [['avg_train_acc','ata_standard_deviation','valid_acc','valid_stdd']]
 
     CLASSES_WINE =  classes_number
