@@ -20,9 +20,6 @@ from darts_for_wine.winedataset import WinesDataset
 from model_search import Network
 from architect import Architect
 
-#from darts_for_wine.LoadQWinesEaCsystem import calload as calload_ds1
-#from darts_for_wine.LoadQWinesCsystem   import calload as calload_ds2
-
 
 parser = argparse.ArgumentParser("DARTS for wine classification")
 parser.add_argument('--data', type=str, default='../../data/wines/', help='location of the data corpus')
@@ -63,7 +60,8 @@ logging.getLogger().addHandler(fh)
 global CLASSES_WINE, csv_list
 
 
-def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epochs,classes_number):
+def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epochs,classes_number,model,window_n):
+
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
         sys.exit(1)
@@ -77,8 +75,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
     logging.info('gpu device = %d' % args.gpu)
     logging.info("args = %s", args)
 
-    #Changing report freq
-    args.report_freq = 2
+    logging.info("\n\t WINDOW + %s\n",window_n)
 
     csv_list = [['avg_train_acc','ata_standard_deviation','valid_acc','valid_stdd']]
 
@@ -90,8 +87,9 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
     criterion = nn.CrossEntropyLoss()
     criterion.cuda()
 
-    model = Network(args.init_channels,CLASSES_WINE,args.layers,criterion)
-    model.cuda()
+    if(not model):
+        model = Network(args.init_channels,CLASSES_WINE,args.layers,criterion)
+        model.cuda()
 
     """
     optimizer = torch.optim.Adam(
@@ -143,16 +141,16 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
 
         #Reusing the train procedure of the DARTS implementation
         train_acc, train_obj,train_stdd = train(train_queue,valid_queue,model,lr,architecht,criterion,optimizer,CLASSES_WINE)
-
+        #train_acc, train_obj, train_stdd = 2.0,2.0,3.0
         test_acc, test_obj, test_stdd   = infer(valid_queue,model,criterion,CLASSES_WINE)
 
-        csv_list.append([train_acc,train_stdd,test_acc,test_stdd])
+        csv_list.append([train_acc.item(),train_stdd.item(),test_acc.item(),test_stdd.item()])
 
     #Saving the model
     utils.write_csv(csv_list,os.path.join(args.save,"experiments_measurements.csv"))
-    utils.save(model,os.path.join(args.save,"wine_classifier_"+str(CLASSES_WINE)+".pt"))
+    utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
 
-    return csv_list
+    return csv_list,model
 
 """
 The train e infer procedure were addapted for the leave one out technique
@@ -177,23 +175,24 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     model.train()
     n = input.size(0)
 
-    input = Variable(input, requires_grad=False).cuda()
-    target = Variable(target, requires_grad=False).cuda(async=True)
+    input = Variable(input, requires_grad=True).cuda()
+    target = Variable(target, requires_grad=True).cuda(async=True)
 
     #get a random minibatch from the search queue with replacement
     #input_search, target_search = next(iter(valid_queue))
-    #input_search = Variable(input_search, requires_grad=False).cuda()
-    #target_search = Variable(target_search, requires_grad=False).cuda(async=True)
+    #input_search = Variable(input_search, requires_grad=False)#.cuda()
+    #target_search = Variable(target_search, requires_grad=False)#.cuda(async=True)
     #architect.step(input,torch.LongTensor([target]), input_search, torch.LongTensor([target_search]), lr, optimizer, unrolled=args.unrolled)
 
     optimizer.zero_grad()
     logits = model(input)
+    # torch.cuda.LongTensor([target])
     loss = criterion(logits,torch.cuda.LongTensor([target]))
-
     loss.backward()
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 
+    # torch.cuda.LongTensor([target])
     prec1, prec5 = utils.accuracy(logits, torch.cuda.LongTensor([target]), topk=(1, num_classes))
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
@@ -217,6 +216,9 @@ def infer(valid_queue, model, criterion,num_classes):
   :param criterion:  Criterion(Function over which the loss of the model shall be computed)
   :return: valid_acc(validation accuracy), valid_obj(Object used to compute the validation accuracy)
   """
+  # Changing report freq
+  #infer_report_freq = 1
+
   objs = utils.AvgrageMeter()
   top1 = utils.AvgrageMeter()
   top5 = utils.AvgrageMeter()
@@ -228,8 +230,10 @@ def infer(valid_queue, model, criterion,num_classes):
     target = Variable(target, volatile=True).cuda(async=True)
 
     logits = model(input)
+    #torch.LongTensor([target])
     loss = criterion(logits, torch.cuda.LongTensor([target]))
 
+    #torch.LongTensor([target])
     prec1, prec5 = utils.accuracy(logits, torch.cuda.LongTensor([target]), topk=(1, num_classes))
     n = input.size(0)
     objs.update(loss.data, n)
@@ -240,8 +244,8 @@ def infer(valid_queue, model, criterion,num_classes):
     # top1.update(prec1.data[0], n)
     # top5.update(prec5.data[0], n)
 
-    if step % args.report_freq == 0:
-      logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
+    #if step % infer_report_freq == 0:
+    logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
 
   stddm.calculate()
   return top1.avg, objs.avg, stddm.standard_deviation

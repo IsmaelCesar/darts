@@ -148,7 +148,8 @@ def create_exp_dir(path, scripts_to_save=None):
       shutil.copyfile(script, dst_file)
 
 
-def write_csv(list,file_path):
-    with open(file_path,"w+") as csv_file:
+def write_csv(list,file_path,mode="a+"):
+    with open(file_path,mode) as csv_file:
         csv_writer = csv.writer(csv_file,delimiter=',')
         csv_writer.writerows(list)
+        csv_file.close()

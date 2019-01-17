@@ -178,6 +178,7 @@ def train_process(idx):
        
         #In this section is to perform the LOO 
         for i in range(ncl):
+        #for i in range(2):
             test_set=[]
             train_set=[]
             tr_labels=[]
@@ -202,7 +203,7 @@ def train_process(idx):
             #Finish the LOO 
        
             #for k in range(repetions):
-            repetitions = 10 #repetitions
+            repetitions = 1 #repetitions
             #Data shuffle
             train_data, train_label = sklearn.utils.shuffle(train_set[:,ini_value:final_measurement,:], tr_labels)
             test_data, test_label = sklearn.utils.shuffle(test_set[:,ini_value:final_measurement,:], te_labels)
@@ -224,9 +225,12 @@ def train_process(idx):
             num_classes=cat_train_label.shape[1]
 
             ##Put here the Convolutive CNN
-            results_list = run_experiment_darts_wine(train_data,train_label,test_data,test_label,repetitions,num_classes)
-            test_results[str(final_measurement)].append(np.array(results_list)[1:, 0])
-            train_results[str(final_measurement)].append(np.array(results_list)[1:, 2])
+            model = None
+            results_list,model = run_experiment_darts_wine(train_data,train_label,test_data,test_label,repetitions,
+                                                           num_classes,model,final_measurement)
+            test_results[str(final_measurement)].append(float(np.array(results_list)[1:, 0]))
+            train_results[str(final_measurement)].append(float(np.array(results_list)[1:, 2]))
+
 
         etime_ = time.time() - tic
         etime[str(final_measurement)].append(etime_)
