@@ -176,7 +176,8 @@ def train_process(idx):
         
         indx=0
        
-        #In this section is to perform the LOO 
+        #In this section is to perform the LOO
+        model = None
         for i in range(ncl):
             test_set=[]
             train_set=[]
