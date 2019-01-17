@@ -90,6 +90,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
     if(model == None):
         model = Network(args.init_channels,CLASSES_WINE,args.layers,criterion)
         model.cuda()
+        logging.info("A new model has been created")
 
     """
     optimizer = torch.optim.Adam(
