@@ -10,6 +10,7 @@ sys.path.append("../")
 import logging
 import argparse
 import torch
+import torch.utils.data as torchdata
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
@@ -116,11 +117,11 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
 
     architecht = Architect(model,args)
 
-    train_queue = torch.utils.data.DataLoader(train_ds_wine, sampler=torch.utils.data.SequentialSampler(train_ds_wine),
+    train_queue = torch.utils.data.DataLoader(train_ds_wine,sampler=torchdata.sampler.SequentialSampler(train_ds_wine),
                                               batch_size=args.batch_size,
                                               pin_memory=True, num_workers=2)
 
-    valid_queue = torch.utils.data.DataLoader(test_ds_wine,sampler=torch.utils.data.SequentialSampler(test_ds_wine),
+    valid_queue = torch.utils.data.DataLoader(test_ds_wine,sampler=torchdata.sampler.SequentialSampler(test_ds_wine),
                                               pin_memory=True, num_workers=2)
 
     #The STDD will be used to calculate the accuracy's standard deviation
