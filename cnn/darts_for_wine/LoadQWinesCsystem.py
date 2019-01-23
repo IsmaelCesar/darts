@@ -16,6 +16,8 @@ import os
 import sys
 sys.path.append("/data")
 sys.path.append("../")
+#import torch
+#torch.multiprocessing.set_start_method('spawn', force=True)
 #os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
 import logging
 import tensorflow as tf

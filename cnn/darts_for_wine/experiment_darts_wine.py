@@ -48,7 +48,7 @@ parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weigh
 args = parser.parse_args()
 
 
-args.save = 'search-{}-{}-LoadQWinesEaCsystem'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+args.save = 'search-{}-{}-LoadQWinesCsystem'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 utils.create_exp_dir(args.save)
 
 log_format = '%(asctime)s %(message)s'
@@ -62,7 +62,7 @@ global CLASSES_WINE, csv_list
 
 
 def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epochs,classes_number,model,window_n):
-
+    
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
         sys.exit(1)
@@ -75,6 +75,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
     torch.cuda.manual_seed(args.seed)
     logging.info('gpu device = %d' % args.gpu)
     logging.info("args = %s", args)
+    
 
     logging.info("\n\t WINDOW + %s\n",window_n)
 
