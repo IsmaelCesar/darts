@@ -17,18 +17,17 @@ class WinesDataset(Dataset):
     """
 
     def __init__(self,data,labels):
-        self.data = torch.cuda.FloatTensor(data.reshape(data.shape[0], 1, data.shape[1], data.shape[2]))
-        self.labels = torch.cuda.FloatTensor(labels)
-        #self.data = torch.FloatTensor(data.reshape(data.shape[0], 1, data.shape[1], data.shape[2]))
-        #self.labels = torch.FloatTensor(labels)
-
+        self.data = torch.from_numpy(data.reshape(data.shape[0], 1, data.shape[1], data.shape[2])).float()
+        self.labels = torch.from_numpy(labels.reshape(data.shape[0], 1, data.shape[1], data.shape[2])).float()
+        #self.data = torch.cuda.FloatTensor(data.reshape(data.shape[0], 1, data.shape[1], data.shape[2]))
+        #self.labels = torch.cuda.FloatTensor(labels)
 
     def __getitem__(self, item):
         """
         :param item:
         :return: A tuple with the tensor and its corresponding labels
         """
-        return (self.data[item],self.labels[item])
+        return (self.data[item].cuda(),self.labels[item].cuda())
 
     def __len__(self):
         """
