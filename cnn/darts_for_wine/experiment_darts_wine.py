@@ -235,10 +235,10 @@ def infer(valid_queue, model, criterion,num_classes):
     target = Variable(target, volatile=True).cuda(async=True)
 
     logits = model(input)
-    #torch.LongTensor([target])
+    #torch.cuda.LongTensor([target])
     loss = criterion(logits, torch.cuda.LongTensor([target]))
 
-    #torch.LongTensor([target])
+    #torch.cuda.LongTensor([target])
     prec1, prec5 = utils.accuracy(logits, torch.cuda.LongTensor([target]), topk=(1, num_classes))
     n = input.size(0)
     objs.update(loss.data, n)

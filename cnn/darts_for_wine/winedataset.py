@@ -18,7 +18,7 @@ class WinesDataset(Dataset):
 
     def __init__(self,data,labels):
         self.data = torch.from_numpy(data.reshape(data.shape[0], 1, data.shape[1], data.shape[2])).float()
-        self.labels = torch.from_numpy(labels.reshape(data.shape[0], 1, data.shape[1], data.shape[2])).float()
+        self.labels = torch.from_numpy(labels).float()
         #self.data = torch.cuda.FloatTensor(data.reshape(data.shape[0], 1, data.shape[1], data.shape[2]))
         #self.labels = torch.cuda.FloatTensor(labels)
 
