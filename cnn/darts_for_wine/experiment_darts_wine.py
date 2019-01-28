@@ -49,6 +49,8 @@ args = parser.parse_args()
 
 
 args.save = 'search-{}-{}-LoadQWinesCsystem'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+global CLASSES_WINE, csv_list
+
 utils.create_exp_dir(args.save)
 
 log_format = '%(asctime)s %(message)s'
@@ -58,7 +60,7 @@ fh = logging.FileHandler(os.path.join(args.save ,'log.txt'))
 fh.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(fh)
 
-global CLASSES_WINE, csv_list
+
 
 
 def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epochs,classes_number,model,window_n):
@@ -233,10 +235,10 @@ def infer(valid_queue, model, criterion,num_classes):
     target = Variable(target, volatile=True).cuda(async=True)
 
     logits = model(input)
-    #torch.LongTensor([target])
+    #torch.cuda.LongTensor([target])
     loss = criterion(logits, torch.cuda.LongTensor([target]))
 
-    #torch.LongTensor([target])
+    #torch.cuda.LongTensor([target])
     prec1, prec5 = utils.accuracy(logits, torch.cuda.LongTensor([target]), topk=(1, num_classes))
     n = input.size(0)
     objs.update(loss.data, n)
