@@ -26,7 +26,7 @@ class WinesDataset(Dataset):
             self.labels.append(l)
 
         self.data = torch.cuda.FloatTensor(self.data)
-        self.labels = torch.cuda.Tensor(self.labels)
+        self.labels = torch.cuda.IntTensor(self.labels)
 
     def __getitem__(self, item):
         """
