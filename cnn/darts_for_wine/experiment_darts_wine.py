@@ -48,7 +48,7 @@ parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weigh
 args = parser.parse_args()
 
 
-args.save = 'search-{}-{}-LoadQWinesCsystem'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+args.save = 'search-{}-{}-LoadQWinesEaCsystem'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 global CLASSES_WINE, csv_list
 
 utils.create_exp_dir(args.save)
@@ -122,10 +122,10 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
 
     train_queue = torch.utils.data.DataLoader(train_ds_wine,sampler=torchdata.sampler.SequentialSampler(train_ds_wine),
                                               batch_size=args.batch_size,
-                                              pin_memory=True, num_workers=2)
+                                              pin_memory=False, num_workers=0)
 
     valid_queue = torch.utils.data.DataLoader(test_ds_wine,sampler=torchdata.sampler.SequentialSampler(test_ds_wine),
-                                              pin_memory=True, num_workers=2)
+                                              pin_memory=False, num_workers=0)
 
     #The STDD will be used to calculate the accuracy's standard deviation
     stdd     = utils.StandardDeviationMeter()
