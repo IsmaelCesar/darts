@@ -205,7 +205,7 @@ def train_process(idx):
             #Finish the LOO 
        
             #for k in range(repetions):
-            repetitions = 1 #repetitions
+            repetitions = 5 #repetitions
             #Data shuffle
             train_data, train_label = sklearn.utils.shuffle(train_set[:,ini_value:final_measurement,:], tr_labels)
             test_data, test_label = sklearn.utils.shuffle(test_set[:,ini_value:final_measurement,:], te_labels)

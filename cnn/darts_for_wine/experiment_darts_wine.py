@@ -48,7 +48,7 @@ parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weigh
 args = parser.parse_args()
 
 
-args.save = 'search-{}-{}-LoadQWinesCsystem'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+args.save = 'search-{}-{}-LoadQWinesEaCsystem'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 global CLASSES_WINE, csv_list
 
 utils.create_exp_dir(args.save)
@@ -96,10 +96,10 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
         model.cuda()
         logging.info("A new model has been created")
 
-    """
+    """ 
     optimizer = torch.optim.Adam(
         model.parameters(),
-        lr=learning_rate,
+        lr=args.learning_rate,
         weight_decay=args.weight_decay
     )
     """
@@ -108,7 +108,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
         args.learning_rate,
         momentum=args.momentum,
         weight_decay=args.weight_decay)
-
+   
     train_ds_wine = WinesDataset(train_data,train_labels)
     test_ds_wine  = WinesDataset(test_data,test_labels)
 
