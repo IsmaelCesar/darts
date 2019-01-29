@@ -96,10 +96,10 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
         model.cuda()
         logging.info("A new model has been created")
 
-    """
+    
     optimizer = torch.optim.Adam(
         model.parameters(),
-        lr=learning_rate,
+        lr=args.learning_rate,
         weight_decay=args.weight_decay
     )
     """
@@ -108,7 +108,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
         args.learning_rate,
         momentum=args.momentum,
         weight_decay=args.weight_decay)
-
+    """
     train_ds_wine = WinesDataset(train_data,train_labels)
     test_ds_wine  = WinesDataset(test_data,test_labels)
 
@@ -184,10 +184,10 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     target = Variable(target, requires_grad=False).cuda(async=True)
 
     #get a random minibatch from the search queue with replacement
-    #input_search, target_search = next(iter(valid_queue))
-    #input_search = Variable(input_search, requires_grad=False)#.cuda()
-    #target_search = Variable(target_search, requires_grad=False)#.cuda(async=True)
-    #architect.step(input,torch.LongTensor([target]), input_search, torch.LongTensor([target_search]), lr, optimizer, unrolled=args.unrolled)
+    input_search, target_search = next(iter(valid_queue))
+    input_search = Variable(input_search, requires_grad=False)#.cuda()
+    target_search = Variable(target_search, requires_grad=False)#.cuda(async=True)
+    architect.step(input,torch.cuda.LongTensor([target]), input_search, torch.cuda.LongTensor([target_search]), lr, optimizer, unrolled=args.unrolled)
 
     optimizer.zero_grad()
     logits = model(input)
