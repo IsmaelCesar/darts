@@ -31,7 +31,7 @@ parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
 parser.add_argument('--weight_decay', type=float, default=3e-4, help='weight decay')
 parser.add_argument('--report_freq', type=float, default=50, help='report frequency')
 parser.add_argument('--gpu', type=int, default=0, help='gpu device id')
-parser.add_argument('--epochs', type=int, default=10, help='num of training epochs')
+parser.add_argument('--epochs', type=int, default=50, help='num of training epochs')
 parser.add_argument('--init_channels', type=int, default=1, help='num of init channels')#the initial channels of the data is one
 parser.add_argument('--layers', type=int, default=8, help='total number of layers')
 parser.add_argument('--model_path', type=str, default='saved_models', help='path to save the model')
@@ -63,7 +63,7 @@ logging.getLogger().addHandler(fh)
 
 
 
-def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epochs,classes_number,model,window_n):
+def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_list,classes_number,model,window_n):
 
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
@@ -80,8 +80,6 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
 
 
     logging.info("\n\t WINDOW + %s\n",window_n)
-
-    csv_list = [['avg_train_acc','ata_standard_deviation','valid_acc','valid_stdd']]
 
     CLASSES_WINE =  classes_number
 
@@ -128,10 +126,10 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
                                               pin_memory=False, num_workers=0)
 
     #The STDD will be used to calculate the accuracy's standard deviation
-    stdd     = utils.StandardDeviationMeter()
+    #stdd     = utils.StandardDeviationMeter()
 
     #The loop has also been adapted to the Leave one out technique
-    for epoch in  range(epochs):
+    for epoch in  range(args.epochs):
 
         scheduler.step()
 
@@ -152,7 +150,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
         csv_list.append([train_acc.item(),train_stdd.item(),test_acc.item(),test_stdd.item()])
 
     #Saving the model
-    utils.write_csv(csv_list,os.path.join(args.save,"experiments_measurements.csv"))
+    utils.write_csv(csv_list,os.path.join(args.save,"experiments_measurements_window_"+str(window_n)+".csv"))
     utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
 
     return csv_list,model
@@ -175,41 +173,44 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
   top1 = utils.AvgrageMeter()
   top5 = utils.AvgrageMeter()
   stddm = utils.StandardDeviationMeter()
+  manual_report_freq = 5
 
   for step, (input, target) in enumerate(train_queue):
     model.train()
     n = input.size(0)
 
-    #input = Variable(input, requires_grad=False).cuda()
-    #target = Variable(target, requires_grad=False).cuda(async=True)
 
-    with torch.no_grad():
-        #get a random minibatch from the search queue with replacement
-        input_search, target_search = next(iter(valid_queue))
-        #input_search = Variable(input_search, requires_grad=False).cuda()
-        #target_search = Variable(target_search, requires_grad=False).cuda(async=True)
-        architect.step(input,torch.cuda.LongTensor([target]), input_search, torch.cuda.LongTensor([target_search]), lr, optimizer, unrolled=args.unrolled)
+    input.cuda()
+    target.cuda()
+    input = Variable(input, requires_grad=False).cuda()
+    target = Variable(target, requires_grad=False).cuda(async=True)
 
-        optimizer.zero_grad()
-        logits = model(input)
-        # torch.cuda.LongTensor([target])
-        loss = criterion(logits,torch.cuda.LongTensor([target]))
-        loss.backward()
-        nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
-        optimizer.step()
+    #get a random minibatch from the search queue with replacement
+    input_search, target_search = next(iter(valid_queue))
+    input_search = Variable(input_search, requires_grad=False).cuda()
+    target_search = Variable(target_search, requires_grad=False).cuda(async=True)
+    architect.step(input,torch.cuda.LongTensor([target]), input_search, torch.cuda.LongTensor([target_search]), lr, optimizer, unrolled=args.unrolled)
 
-        # torch.cuda.LongTensor([target])
-        prec1, prec5 = utils.accuracy(logits, torch.cuda.LongTensor([target]), topk=(1, num_classes))
-        objs.update(loss.data, n)
-        top1.update(prec1.data, n)
-        top5.update(prec5.data, n)
-        #objs.update(loss.data[0], n)
-        #top1.update(prec1.data[0], n)
-        #top5.update(prec5.data[0], n)
-        stddm.add_value(top1.avg)
+    optimizer.zero_grad()
+    logits = model(input)
+    # torch.cuda.LongTensor([target])
+    loss = criterion(logits,torch.cuda.LongTensor([target]))
+    loss.backward()
+    nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
+    optimizer.step()
 
-        if step % args.report_freq == 0:
-          logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
+    # torch.cuda.LongTensor([target])
+    prec1, prec5 = utils.accuracy(logits, torch.cuda.LongTensor([target]), topk=(1, num_classes))
+    objs.update(loss.data, n)
+    top1.update(prec1.data, n)
+    top5.update(prec5.data, n)
+    #objs.update(loss.data[0], n)
+    #top1.update(prec1.data[0], n)
+    #top5.update(prec5.data[0], n)
+    stddm.add_value(top1.avg)
+
+    if step % manual_report_freq == 0:
+      logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
 
   #Salvando topk
   stddm.calculate()
@@ -232,6 +233,9 @@ def infer(valid_queue, model, criterion,num_classes):
   model.eval()
 
   for step, (input, target) in enumerate(valid_queue):
+    input.cuda()
+    target.cuda()
+
     input = Variable(input, volatile=True).cuda()
     target = Variable(target, volatile=True).cuda(async=True)
 
