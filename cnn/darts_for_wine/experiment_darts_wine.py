@@ -87,6 +87,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
 
 
     criterion = nn.CrossEntropyLoss()
+    #criterion  = nn.MSELoss()
     criterion.cuda()
 
     if(model == None):
@@ -184,18 +185,19 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     input_search, target_search = next(iter(valid_queue))
     input_search = Variable(input_search, requires_grad=False).cuda()
     target_search = Variable(target_search, requires_grad=False).cuda(async=True)
-    architect.step(input,torch.cuda.LongTensor([target]), input_search, torch.cuda.LongTensor([target_search]), lr, optimizer, unrolled=args.unrolled)
+    #torch.cuda.LongTensor([target])
+    architect.step(input,target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
 
     optimizer.zero_grad()
     logits = model(input)
     # torch.cuda.LongTensor([target])
-    loss = criterion(logits,torch.cuda.LongTensor([target]))
+    loss = criterion(logits,target)
     loss.backward()
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 
     # torch.cuda.LongTensor([target])
-    prec1, prec5 = utils.accuracy(logits, torch.cuda.LongTensor([target]), topk=(1, num_classes))
+    prec1, prec5 = utils.accuracy(logits, target, topk=(1, num_classes))
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
@@ -236,10 +238,10 @@ def infer(valid_queue, model, criterion,num_classes):
 
     logits = model(input)
     #torch.cuda.LongTensor([target])
-    loss = criterion(logits, torch.cuda.LongTensor([target]))
+    loss = criterion(logits, target)
 
     #torch.cuda.LongTensor([target])
-    prec1, prec5 = utils.accuracy(logits, torch.cuda.LongTensor([target]), topk=(1, num_classes))
+    prec1, prec5 = utils.accuracy(logits, target, topk=(1, num_classes))
     n = input.size(0)
     objs.update(loss.data, n)
     top1.update(prec1.data, n)

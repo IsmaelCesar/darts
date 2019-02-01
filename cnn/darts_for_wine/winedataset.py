@@ -33,7 +33,7 @@ class WinesDataset(Dataset):
                 self.labels.append(l)
 
             self.data = torch.FloatTensor(self.data)
-            self.labels = torch.IntTensor(self.labels)
+            self.labels = torch.LongTensor(self.labels)
 
         else:
             self.data = torch.from_numpy(data.reshape(data.shape[0], 1, data.shape[1], data.shape[2]))
