@@ -118,12 +118,12 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
 
     architecht = Architect(model,args)
 
-    train_queue = torch.utils.data.DataLoader(train_ds_wine,sampler=torchdata.sampler.SequentialSampler(train_ds_wine),
+    train_queue = torch.utils.data.DataLoader(train_ds_wine,sampler=torchdata.sampler.RandomSampler(train_ds_wine),
                                               batch_size=args.batch_size,
-                                              pin_memory=False, num_workers=0)
+                                              pin_memory=True, num_workers=4)
 
-    valid_queue = torch.utils.data.DataLoader(test_ds_wine,sampler=torchdata.sampler.SequentialSampler(test_ds_wine),
-                                              pin_memory=False, num_workers=0)
+    valid_queue = torch.utils.data.DataLoader(test_ds_wine,sampler=torchdata.sampler.RandomSampler(test_ds_wine),
+                                              pin_memory=True, num_workers=4)
 
     #The STDD will be used to calculate the accuracy's standard deviation
     #stdd     = utils.StandardDeviationMeter()
@@ -206,7 +206,7 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     #objs.update(loss.data[0], n)
     #top1.update(prec1.data[0], n)
     #top5.update(prec5.data[0], n)
-    stddm.add_value(top1.avg)
+    stddm.add_value(top1.avg.item())
 
     if step % manual_report_freq == 0:
       logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
@@ -248,7 +248,7 @@ def infer(valid_queue, model, criterion,num_classes):
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
-    stddm.add_value(top1.avg)
+    stddm.add_value(top1.avg.item())
     # objs.update(loss.data[0], n)
     # top1.update(prec1.data[0], n)
     # top5.update(prec5.data[0], n)
