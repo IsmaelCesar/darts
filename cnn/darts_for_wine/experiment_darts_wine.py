@@ -183,33 +183,33 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     #input = Variable(input, requires_grad=False).cuda()
     #target = Variable(target, requires_grad=False).cuda(async=True)
 
-    with torch.no_grad():
-        #get a random minibatch from the search queue with replacement
-        input_search, target_search = next(iter(valid_queue))
-        #input_search = Variable(input_search, requires_grad=False).cuda()
-        #target_search = Variable(target_search, requires_grad=False).cuda(async=True)
-        architect.step(input,torch.cuda.LongTensor([target]), input_search, torch.cuda.LongTensor([target_search]), lr, optimizer, unrolled=args.unrolled)
+   
+    #get a random minibatch from the search queue with replacement
+    input_search, target_search = next(iter(valid_queue))
+    nput_search = Variable(input_search, requires_grad=False).cuda()
+    target_search = Variable(target_search, requires_grad=False).cuda(async=True)
+    architect.step(input,torch.cuda.LongTensor([target]), input_search, torch.cuda.LongTensor([target_search]), lr, optimizer, unrolled=args.unrolled)
 
-        optimizer.zero_grad()
-        logits = model(input)
-        # torch.cuda.LongTensor([target])
-        loss = criterion(logits,torch.cuda.LongTensor([target]))
-        loss.backward()
-        nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
-        optimizer.step()
+    optimizer.zero_grad()
+    logits = model(input)
+    # torch.cuda.LongTensor([target])
+    loss = criterion(logits,torch.cuda.LongTensor([target]))
+    loss.backward()
+    nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
+    optimizer.step()
 
-        # torch.cuda.LongTensor([target])
-        prec1, prec5 = utils.accuracy(logits, torch.cuda.LongTensor([target]), topk=(1, num_classes))
-        objs.update(loss.data, n)
-        top1.update(prec1.data, n)
-        top5.update(prec5.data, n)
-        #objs.update(loss.data[0], n)
-        #top1.update(prec1.data[0], n)
-        #top5.update(prec5.data[0], n)
-        stddm.add_value(top1.avg)
+    # torch.cuda.LongTensor([target])
+    prec1, prec5 = utils.accuracy(logits, torch.cuda.LongTensor([target]), topk=(1, num_classes))
+    objs.update(loss.data, n)
+    top1.update(prec1.data, n)
+    top5.update(prec5.data, n)
+    #objs.update(loss.data[0], n)
+    #top1.update(prec1.data[0], n)
+    #top5.update(prec5.data[0], n)
+    stddm.add_value(top1.avg)
 
-        if step % args.report_freq == 0:
-          logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
+    if step % args.report_freq == 0:
+       logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
 
   #Salvando topk
   stddm.calculate()
