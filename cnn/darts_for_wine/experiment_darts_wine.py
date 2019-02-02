@@ -176,7 +176,6 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     model.train()
     n = input.size(0)
 
-
     input.cuda()
     target.cuda()
     input = Variable(input, requires_grad=False).cuda()

@@ -181,8 +181,8 @@ class Network(nn.Module):
               constructor of the class
     """
     logits = self(input)
-    logits.squeeze_()
-    target.squeeze_()
+    #logits.squeeze_()
+    #target.squeeze_()
     return self._criterion(logits, target) 
 
   def _initialize_alphas(self):
