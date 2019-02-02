@@ -229,7 +229,7 @@ def train_process(idx):
             num_classes=cat_train_label.shape[1]
 
             ##Put here the Convolutive CNN
-            results_list,model = run_experiment_darts_wine(train_data,train_label,test_data,test_label,csv_list,
+            results_list,model = run_experiment_darts_wine(train_data,cat_train_label,test_data,cat_test_label,csv_list,
                                                            num_classes,model,final_measurement)
             test_results[str(final_measurement)].append(np.array(results_list)[1:, 0].astype(float))
             train_results[str(final_measurement)].append(np.array(results_list)[1:, 2].astype(float))

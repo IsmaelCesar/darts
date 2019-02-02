@@ -152,7 +152,7 @@ class Network(nn.Module):
     self._initialize_alphas()
 
   def new(self):
-    model_new = Network(self._C, self._num_classes, self._layers, self._criterion).cuda()
+    model_new = Network(self._C, self._num_classes, self._layers, self._criterion)#.cuda()
     for x, y in zip(model_new.arch_parameters(), self.arch_parameters()):
         x.data.copy_(y.data)
     return model_new
@@ -181,6 +181,8 @@ class Network(nn.Module):
               constructor of the class
     """
     logits = self(input)
+    logits.squeeze_()
+    target.squeeze_()
     return self._criterion(logits, target) 
 
   def _initialize_alphas(self):

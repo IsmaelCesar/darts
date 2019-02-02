@@ -31,7 +31,7 @@ parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
 parser.add_argument('--weight_decay', type=float, default=3e-4, help='weight decay')
 parser.add_argument('--report_freq', type=float, default=50, help='report frequency')
 parser.add_argument('--gpu', type=int, default=0, help='gpu device id')
-parser.add_argument('--epochs', type=int, default=50, help='num of training epochs')
+parser.add_argument('--epochs', type=int, default=10, help='num of training epochs')#because LOO cross-validation is being used
 parser.add_argument('--init_channels', type=int, default=1, help='num of init channels')#the initial channels of the data is one
 parser.add_argument('--layers', type=int, default=8, help='total number of layers')
 parser.add_argument('--model_path', type=str, default='saved_models', help='path to save the model')
@@ -62,9 +62,8 @@ logging.getLogger().addHandler(fh)
 
 
 
-
 def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_list,classes_number,model,window_n):
-
+    
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
         sys.exit(1)
@@ -88,26 +87,22 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
 
     ##criterion = nn.MSELoss()
     criterion = nn.CrossEntropyLoss()
+    #criterion  = nn.MSELoss()
     criterion.cuda()
 
     if(model == None):
-        model = Network(args.init_channels,CLASSES_WINE,args.layers,criterion)
-        #model.cuda()
+        model = Network(args.init_channels,CLASSES_WINE,5,criterion)#args.layers defalut is 8
+        model.cuda()
         logging.info("A new model has been created")
-
-    """ 
-    optimizer = torch.optim.Adam(
-        model.parameters(),
-        lr=args.learning_rate,
-        weight_decay=args.weight_decay
-    )
-    """
+    
+    
     optimizer = torch.optim.SGD(
         model.parameters(),
         args.learning_rate,
         momentum=args.momentum,
         weight_decay=args.weight_decay)
-   
+    
+
     train_ds_wine = WinesDataset(train_data,train_labels)
     test_ds_wine  = WinesDataset(test_data,test_labels)
 
@@ -150,6 +145,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
 
         csv_list.append([train_acc.item(),train_stdd.item(),test_acc.item(),test_stdd.item()])
 
+
     #Saving the model
     utils.write_csv(csv_list,os.path.join(args.save,"experiments_measurements_window_"+str(window_n)+".csv"))
     utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
@@ -180,6 +176,7 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     model.train()
     n = input.size(0)
 
+
     input.cuda()
     target.cuda()
     input = Variable(input, requires_grad=False).cuda()
@@ -189,7 +186,8 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     input_search, target_search = next(iter(valid_queue))
     input_search = Variable(input_search, requires_grad=False).cuda()
     target_search = Variable(target_search, requires_grad=False).cuda(async=True)
-    architect.step(input,target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)#cuda.LongTensor
+    #torch.cuda.LongTensor([target])
+    architect.step(input,target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
 
     optimizer.zero_grad()
     logits = model(input)
@@ -233,6 +231,7 @@ def infer(valid_queue, model, criterion,num_classes):
   model.eval()
 
   for step, (input, target) in enumerate(valid_queue):
+
     input.cuda()
     target.cuda()
 

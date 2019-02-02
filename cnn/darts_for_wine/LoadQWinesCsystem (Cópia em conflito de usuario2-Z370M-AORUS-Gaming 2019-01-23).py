@@ -16,8 +16,6 @@ import os
 import sys
 sys.path.append("/data")
 sys.path.append("../")
-#import torch
-#torch.multiprocessing.set_start_method('spawn', force=True)
 #os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
 import logging
 import tensorflow as tf
@@ -169,13 +167,9 @@ def train_process(idx):
     test_results = {}
     etime = {}
     tic = time.time()
-
-
-
+    
     for final_measurement in range(start_value, end_value+1, step):
-
-        csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
-
+        
         train_results[str(final_measurement)] = []
         test_results[str(final_measurement)] = []
         etime[str(final_measurement)] = []              
@@ -207,7 +201,7 @@ def train_process(idx):
             test_set = np.array(test_set)  
             train_set = np.array(train_set)  
             #Finish the LOO 
-            #repetitions = 10  # repetitions
+            repetitions = 10  # repetitions
             #for k in range(repetions):
                                              
             #Data shuffle
@@ -226,15 +220,15 @@ def train_process(idx):
             #input_shape = (train_data.shape[1],train_data.shape[2],1)
 
             # convert class vectors to binary class matrices
-            cat_train_label = keras.utils.to_categorical(train_label,num_classes=num_classes)
-            cat_test_label = keras.utils.to_categorical(test_label,num_classes=num_classes)
+            cat_train_label = keras.utils.to_categorical(train_label,num_classes=ngr)
+            cat_test_label = keras.utils.to_categorical(test_label,num_classes=ngr)
             num_classes=cat_train_label.shape[1]
 
             ##Put here the Convolutive CNN
-            results_list, model = run_experiment_darts_wine(train_data, cat_train_label, test_data,cat_test_label, csv_list,
+            results_list, model = run_experiment_darts_wine(train_data, train_label, test_data, test_label, repetitions,
                                                             num_classes, model, final_measurement)
-            test_results[str(final_measurement)].append(np.array(results_list)[1:, 0].astype(float))
-            train_results[str(final_measurement)].append(np.array(results_list)[1:, 2].astype(float))
+            test_results[str(final_measurement)].append(float(np.array(results_list)[1:, 0]))
+            train_results[str(final_measurement)].append(float(np.array(results_list)[1:, 2]))
                
         etime_ = time.time() - tic
         etime[str(final_measurement)].append(etime_)
