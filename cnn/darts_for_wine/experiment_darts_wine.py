@@ -10,6 +10,7 @@ sys.path.append("../")
 import logging
 import argparse
 import torch
+import torch.utils.data as torchdata
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
@@ -19,9 +20,6 @@ import utils
 from darts_for_wine.winedataset import WinesDataset
 from model_search import Network
 from architect import Architect
-
-#from darts_for_wine.LoadQWinesEaCsystem import calload as calload_ds1
-#from darts_for_wine.LoadQWinesCsystem   import calload as calload_ds2
 
 
 parser = argparse.ArgumentParser("DARTS for wine classification")
@@ -33,7 +31,7 @@ parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
 parser.add_argument('--weight_decay', type=float, default=3e-4, help='weight decay')
 parser.add_argument('--report_freq', type=float, default=50, help='report frequency')
 parser.add_argument('--gpu', type=int, default=0, help='gpu device id')
-parser.add_argument('--epochs', type=int, default=10, help='num of training epochs')
+parser.add_argument('--epochs', type=int, default=10, help='num of training epochs')#because LOO cross-validation is being used
 parser.add_argument('--init_channels', type=int, default=1, help='num of init channels')#the initial channels of the data is one
 parser.add_argument('--layers', type=int, default=8, help='total number of layers')
 parser.add_argument('--model_path', type=str, default='saved_models', help='path to save the model')
@@ -50,7 +48,9 @@ parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weigh
 args = parser.parse_args()
 
 
-args.save = 'search-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+args.save = 'search-{}-{}-LoadQWinesEaCsystem'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+global CLASSES_WINE, csv_list
+
 utils.create_exp_dir(args.save)
 
 log_format = '%(asctime)s %(message)s'
@@ -60,11 +60,10 @@ fh = logging.FileHandler(os.path.join(args.save ,'log.txt'))
 fh.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(fh)
 
-global CLASSES_WINE, csv_list
 
 
-def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epochs,classes_number):
-    """
+def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_list,classes_number,model,window_n):
+    
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
         sys.exit(1)
@@ -77,11 +76,9 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
     torch.cuda.manual_seed(args.seed)
     logging.info('gpu device = %d' % args.gpu)
     logging.info("args = %s", args)
-    """
-    #Changing report freq
-    args.report_freq = 1
 
-    csv_list = [['avg_train_acc','ata_standard_deviation','valid_acc','valid_stdd']]
+
+    logging.info("\n\t WINDOW + %s\n",window_n)
 
     CLASSES_WINE =  classes_number
 
@@ -89,23 +86,21 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
 
 
     criterion = nn.CrossEntropyLoss()
-    #criterion.cuda()
+    #criterion  = nn.MSELoss()
+    criterion.cuda()
 
-    model = Network(args.init_channels,CLASSES_WINE,args.layers,criterion)
-    #model.cuda()
-
-    """
-    optimizer = torch.optim.Adam(
-        model.parameters(),
-        lr=learning_rate,
-        weight_decay=args.weight_decay
-    )
-    """
+    if(model == None):
+        model = Network(args.init_channels,CLASSES_WINE,5,criterion)#args.layers defalut is 8
+        model.cuda()
+        logging.info("A new model has been created")
+    
+    
     optimizer = torch.optim.SGD(
         model.parameters(),
         args.learning_rate,
         momentum=args.momentum,
         weight_decay=args.weight_decay)
+    
 
     train_ds_wine = WinesDataset(train_data,train_labels)
     test_ds_wine  = WinesDataset(test_data,test_labels)
@@ -118,18 +113,18 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
 
     architecht = Architect(model,args)
 
-    train_queue = torch.utils.data.DataLoader(train_ds_wine, sampler=torch.utils.data.SequentialSampler(train_ds_wine),
+    train_queue = torch.utils.data.DataLoader(train_ds_wine,sampler=torchdata.sampler.RandomSampler(train_ds_wine),
                                               batch_size=args.batch_size,
-                                              pin_memory=True, num_workers=2)
+                                              pin_memory=True, num_workers=4)
 
-    valid_queue = torch.utils.data.DataLoader(test_ds_wine,sampler=torch.utils.data.SequentialSampler(test_ds_wine),
-                                              pin_memory=True, num_workers=2)
+    valid_queue = torch.utils.data.DataLoader(test_ds_wine,sampler=torchdata.sampler.RandomSampler(test_ds_wine),
+                                              pin_memory=True, num_workers=4)
 
     #The STDD will be used to calculate the accuracy's standard deviation
-    stdd     = utils.StandardDeviationMeter()
+    #stdd     = utils.StandardDeviationMeter()
 
     #The loop has also been adapted to the Leave one out technique
-    for epoch in  range(epochs):
+    for epoch in  range(args.epochs):
 
         scheduler.step()
 
@@ -143,17 +138,18 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,epoc
         F.softmax(model.alphas_reduce, dim=-1)
 
         #Reusing the train procedure of the DARTS implementation
-        #train_acc, train_obj,train_stdd = train(train_queue,valid_queue,model,lr,architecht,criterion,optimizer,CLASSES_WINE)
-        train_acc , train_obj, train_stdd = 2,2,2
+        train_acc, train_obj,train_stdd = train(train_queue,valid_queue,model,lr,architecht,criterion,optimizer,CLASSES_WINE)
+        #train_acc, train_obj, train_stdd = 2.0,2.0,3.0
         test_acc, test_obj, test_stdd   = infer(valid_queue,model,criterion,CLASSES_WINE)
 
-        csv_list.append([train_acc,train_stdd,test_acc.item(),test_stdd.item])
+        csv_list.append([train_acc.item(),train_stdd.item(),test_acc.item(),test_stdd.item()])
+
 
     #Saving the model
-    utils.write_csv(csv_list,os.path.join(args.save,"experiments_measurements.csv"))
-    utils.save(model,os.path.join(args.save,"wine_classifier_"+str(CLASSES_WINE)+".pt"))
+    utils.write_csv(csv_list,os.path.join(args.save,"experiments_measurements_window_"+str(window_n)+".csv"))
+    utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
 
-    return csv_list
+    return csv_list,model
 
 """
 The train e infer procedure were addapted for the leave one out technique
@@ -173,38 +169,44 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
   top1 = utils.AvgrageMeter()
   top5 = utils.AvgrageMeter()
   stddm = utils.StandardDeviationMeter()
+  manual_report_freq = 5
 
   for step, (input, target) in enumerate(train_queue):
     model.train()
     n = input.size(0)
 
-    input = Variable(input, requires_grad=False)#.cuda()
-    target = Variable(target, requires_grad=False)#.cuda(async=True)
+
+    input.cuda()
+    target.cuda()
+    input = Variable(input, requires_grad=False).cuda()
+    target = Variable(target, requires_grad=False).cuda(async=True)
 
     #get a random minibatch from the search queue with replacement
-    #input_search, target_search = next(iter(valid_queue))
-    #input_search = Variable(input_search, requires_grad=False).cuda()
-    #target_search = Variable(target_search, requires_grad=False).cuda(async=True)
-    #architect.step(input,torch.LongTensor([target]), input_search, torch.LongTensor([target_search]), lr, optimizer, unrolled=args.unrolled)
+    input_search, target_search = next(iter(valid_queue))
+    input_search = Variable(input_search, requires_grad=False).cuda()
+    target_search = Variable(target_search, requires_grad=False).cuda(async=True)
+    #torch.cuda.LongTensor([target])
+    architect.step(input,target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
 
     optimizer.zero_grad()
     logits = model(input)
-    loss = criterion(logits,torch.LongTensor([target]))
-
+    # torch.cuda.LongTensor([target])
+    loss = criterion(logits,target)
     loss.backward()
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 
-    prec1, prec5 = utils.accuracy(logits, torch.LongTensor([target]), topk=(1, num_classes))
+    # torch.cuda.LongTensor([target])
+    prec1, prec5 = utils.accuracy(logits, target, topk=(1, num_classes))
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
     #objs.update(loss.data[0], n)
     #top1.update(prec1.data[0], n)
     #top5.update(prec5.data[0], n)
-    stddm.add_value(top1)
+    stddm.add_value(top1.avg.item())
 
-    if step % args.report_freq == 0:
+    if step % manual_report_freq == 0:
       logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
 
   #Salvando topk
@@ -218,6 +220,9 @@ def infer(valid_queue, model, criterion,num_classes):
   :param criterion:  Criterion(Function over which the loss of the model shall be computed)
   :return: valid_acc(validation accuracy), valid_obj(Object used to compute the validation accuracy)
   """
+  # Changing report freq
+  #infer_report_freq = 1
+
   objs = utils.AvgrageMeter()
   top1 = utils.AvgrageMeter()
   top5 = utils.AvgrageMeter()
@@ -225,24 +230,30 @@ def infer(valid_queue, model, criterion,num_classes):
   model.eval()
 
   for step, (input, target) in enumerate(valid_queue):
-    input = Variable(input, volatile=True)#.cuda()
-    target = Variable(target, volatile=True)#.cuda(async=True)
+
+    input.cuda()
+    target.cuda()
+
+    input = Variable(input, volatile=True).cuda()
+    target = Variable(target, volatile=True).cuda(async=True)
 
     logits = model(input)
-    loss = criterion(logits, torch.LongTensor([target]))
+    #torch.cuda.LongTensor([target])
+    loss = criterion(logits, target)
 
-    prec1, prec5 = utils.accuracy(logits, torch.LongTensor([target]), topk=(1, num_classes))
+    #torch.cuda.LongTensor([target])
+    prec1, prec5 = utils.accuracy(logits, target, topk=(1, num_classes))
     n = input.size(0)
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
-    stddm.add_value(top1)
+    stddm.add_value(top1.avg.item())
     # objs.update(loss.data[0], n)
     # top1.update(prec1.data[0], n)
     # top5.update(prec5.data[0], n)
 
-    if step % args.report_freq == 0:
-      logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
+    #if step % infer_report_freq == 0:
+    logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
 
   stddm.calculate()
   return top1.avg, objs.avg, stddm.standard_deviation

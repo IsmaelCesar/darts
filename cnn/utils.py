@@ -56,6 +56,7 @@ def accuracy(output, target, topk=(1,)):
 
   _, pred = output.topk(maxk, 1, True, True)
   pred = pred.t()
+
   correct = pred.eq(target.view(1, -1).expand_as(pred))
 
   res = []
@@ -148,7 +149,8 @@ def create_exp_dir(path, scripts_to_save=None):
       shutil.copyfile(script, dst_file)
 
 
-def write_csv(list,file_path):
-    with open(file_path,"w+") as csv_file:
+def write_csv(list,file_path,mode="a+"):
+    with open(file_path,mode) as csv_file:
         csv_writer = csv.writer(csv_file,delimiter=',')
         csv_writer.writerows(list)
+        csv_file.close()

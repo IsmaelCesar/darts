@@ -15,7 +15,7 @@ loading libraries and defining some variables
 import os
 #os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
 import sys
-sys.path.append("/data")
+
 sys.path.append("../")
 import logging
 import tensorflow as tf
@@ -36,6 +36,7 @@ from math import sqrt
 import pandas as pd
 import matplotlib.pyplot as plt
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine
+
 #import autokeras as ak
 
 np.random.seed(1)
@@ -169,6 +170,8 @@ def train_process(idx):
     tic = time.time()
     
     for final_measurement in range(start_value, end_value+1, step):
+
+        csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
         
         train_results[str(final_measurement)] = []
         test_results[str(final_measurement)] = []
@@ -176,8 +179,10 @@ def train_process(idx):
         
         indx=0
        
-        #In this section is to perform the LOO 
+        #In this section is to perform the LOO
+        model = None
         for i in range(ncl):
+        #for i in range(2):
             test_set=[]
             train_set=[]
             tr_labels=[]
@@ -202,7 +207,7 @@ def train_process(idx):
             #Finish the LOO 
        
             #for k in range(repetions):
-            repetitions = 10 #repetitions
+            #repetitions = 5 #repetitions
             #Data shuffle
             train_data, train_label = sklearn.utils.shuffle(train_set[:,ini_value:final_measurement,:], tr_labels)
             test_data, test_label = sklearn.utils.shuffle(test_set[:,ini_value:final_measurement,:], te_labels)
@@ -224,9 +229,11 @@ def train_process(idx):
             num_classes=cat_train_label.shape[1]
 
             ##Put here the Convolutive CNN
-            results_list = run_experiment_darts_wine(train_data,train_label,test_data,test_label,repetions,num_classes)
-            test_results[str(final_measurement)].append(np.array(results_list)[1:, 0])
-            train_results[str(final_measurement)].append(np.array(results_list)[1:, 2])
+            results_list,model = run_experiment_darts_wine(train_data,cat_train_label,test_data,cat_test_label,csv_list,
+                                                           num_classes,model,final_measurement)
+            test_results[str(final_measurement)].append(np.array(results_list)[1:, 0].astype(float))
+            train_results[str(final_measurement)].append(np.array(results_list)[1:, 2].astype(float))
+
 
         etime_ = time.time() - tic
         etime[str(final_measurement)].append(etime_)
