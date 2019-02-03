@@ -31,7 +31,7 @@ parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
 parser.add_argument('--weight_decay', type=float, default=3e-4, help='weight decay')
 parser.add_argument('--report_freq', type=float, default=50, help='report frequency')
 parser.add_argument('--gpu', type=int, default=0, help='gpu device id')
-parser.add_argument('--epochs', type=int, default=1, help='num of training epochs')#because LOO cross-validation is being used
+parser.add_argument('--epochs', type=int, default=10, help='num of training epochs')#because LOO cross-validation is being used
 parser.add_argument('--init_channels', type=int, default=1, help='num of init channels')#the initial channels of the data is one
 parser.add_argument('--layers', type=int, default=8, help='total number of layers')
 parser.add_argument('--model_path', type=str, default='saved_models', help='path to save the model')
@@ -143,7 +143,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
         #train_acc, train_obj, train_stdd = 2.0,2.0,3.0
         test_acc, test_obj, test_stdd   = infer(valid_queue,model,criterion,CLASSES_WINE)
 
-        csv_list = csv_list + [train_acc.item(),train_stdd.item(),test_acc.item(),test_stdd.item()]
+        csv_list = csv_list + [[train_acc.item(),train_stdd.item(),test_acc.item(),test_stdd.item()]]
 
 
     #Saving the model
