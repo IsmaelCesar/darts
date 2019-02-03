@@ -227,8 +227,8 @@ def train_process(idx):
             #input_shape = (train_data.shape[1],train_data.shape[2],1)
 
             # convert class vectors to binary class matrices
-            cat_train_label = keras.utils.to_categorical(train_label,num_classes=num_classes)
-            cat_test_label = keras.utils.to_categorical(test_label,num_classes=num_classes)
+            cat_train_label = keras.utils.to_categorical(train_label,ngr)
+            cat_test_label = keras.utils.to_categorical(test_label,ngr)
             num_classes=cat_train_label.shape[1]
 
             ##Put here the Convolutive CNN
