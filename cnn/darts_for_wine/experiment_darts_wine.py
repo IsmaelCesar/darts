@@ -49,7 +49,7 @@ args = parser.parse_args()
 
 
 args.save = 'search-{}-{}-LoadQWinesEaCsystem'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
-global CLASSES_WINE, csv_list
+global CLASSES_WINE
 
 utils.create_exp_dir(args.save)
 
@@ -62,8 +62,8 @@ logging.getLogger().addHandler(fh)
 
 
 
-def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_list,classes_number,model,window_n):
-    
+def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_list,classes_number,model,window_n,iteration):
+
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
         sys.exit(1)
@@ -143,11 +143,12 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
         #train_acc, train_obj, train_stdd = 2.0,2.0,3.0
         test_acc, test_obj, test_stdd   = infer(valid_queue,model,criterion,CLASSES_WINE)
 
-        csv_list.append([train_acc.item(),train_stdd.item(),test_acc.item(),test_stdd.item()])
+        csv_list = csv_list + [[train_acc.item(),train_stdd.item(),test_acc.item(),test_stdd.item()]]
 
 
     #Saving the model
-    utils.write_csv(csv_list,os.path.join(args.save,"experiments_measurements_window_"+str(window_n)+".csv"))
+    utils.write_csv(csv_list,os.path.join(args.save,"experiments_measurements_window_"+str(window_n)+".csv"),
+                                                                                   first_iteration=iteration)
     utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
 
     return csv_list,model
@@ -257,6 +258,8 @@ def infer(valid_queue, model, criterion,num_classes):
 
   stddm.calculate()
   return top1.avg, objs.avg, stddm.standard_deviation
+
+
 
 if __name__ == "__main__":
     run_experiment_darts_wine()

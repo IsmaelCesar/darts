@@ -163,12 +163,12 @@ def train_process(idx):
     global ini_value,last_column,numfiles
     global tr_labels, tr_names, te_dataset, te_labels, te_names 
     global ttvar,ngr,ncl,sizeT,train_set,test_set,flat_train_data,train_label,test_label,train_data,test_data
-       
+
     train_results = {}
     test_results = {}
     etime = {}
     tic = time.time()
-    
+
     for final_measurement in range(start_value, end_value+1, step):
 
         csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
@@ -181,6 +181,7 @@ def train_process(idx):
        
         #In this section is to perform the LOO
         model = None
+        is_first_iteration = True
         for i in range(ncl):
         #for i in range(2):
             test_set=[]
@@ -199,20 +200,20 @@ def train_process(idx):
                     train_set.append(dataset[k])
                     tr_labels.append(labels[k])
                     h+=1
-            
+
             tr_labels = np.array(tr_labels)
             te_labels = np.array(te_labels)
-            test_set = np.array(test_set)  
-            train_set = np.array(train_set)  
-            #Finish the LOO 
-       
+            test_set = np.array(test_set)
+            train_set = np.array(train_set)
+            #Finish the LOO
+
             #for k in range(repetions):
             #repetitions = 5 #repetitions
             #Data shuffle
             train_data, train_label = sklearn.utils.shuffle(train_set[:,ini_value:final_measurement,:], tr_labels)
             test_data, test_label = sklearn.utils.shuffle(test_set[:,ini_value:final_measurement,:], te_labels)
 
-#                #preprocess
+        #                #preprocess
             flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
             flat_test_data = test_data.reshape(test_data.shape[0], test_data.shape[1] * last_column)
             scaler = preprocessing.StandardScaler().fit(flat_train_data)
@@ -230,10 +231,10 @@ def train_process(idx):
 
             ##Put here the Convolutive CNN
             results_list,model = run_experiment_darts_wine(train_data,train_label,test_data,test_label,csv_list,
-                                                           num_classes,model,final_measurement)
-            test_results[str(final_measurement)].append(np.array(results_list)[1:, 0].astype(float))
-            train_results[str(final_measurement)].append(np.array(results_list)[1:, 2].astype(float))
-
+                                                       num_classes,model,final_measurement,is_first_iteration)
+            test_results[str(final_measurement)]  += np.array(results_list)[1:, 0].astype(float).tolist()
+            train_results[str(final_measurement)] += np.array(results_list)[1:, 2].astype(float).tolist()
+            is_first_iteration = False
 
         etime_ = time.time() - tic
         etime[str(final_measurement)].append(etime_)

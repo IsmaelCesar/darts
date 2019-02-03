@@ -184,6 +184,7 @@ def train_process(idx):
        
         #In this section is to perform the LOO
         model = None
+        is_first_iteration = True
         for i in range(ncl):
             test_set=[]
             train_set=[]
@@ -201,20 +202,20 @@ def train_process(idx):
                     train_set.append(dataset[k])
                     tr_labels.append(labels[k])
                     h+=1
-            
+
             tr_labels = np.array(tr_labels)
             te_labels = np.array(te_labels)
-            test_set = np.array(test_set)  
-            train_set = np.array(train_set)  
-            #Finish the LOO 
+            test_set = np.array(test_set)
+            train_set = np.array(train_set)
+            #Finish the LOO
             #repetitions = 10  # repetitions
             #for k in range(repetions):
-                                             
+
             #Data shuffle
             train_data, train_label = sklearn.utils.shuffle(train_set[:,ini_value:final_measurement,:], tr_labels)
             test_data, test_label = sklearn.utils.shuffle(test_set[:,ini_value:final_measurement,:], te_labels)
 
-#                #preprocess
+    #                #preprocess
             flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
             flat_test_data = test_data.reshape(test_data.shape[0], test_data.shape[1] * last_column)
             scaler = preprocessing.StandardScaler().fit(flat_train_data)
@@ -232,9 +233,10 @@ def train_process(idx):
 
             ##Put here the Convolutive CNN
             results_list, model = run_experiment_darts_wine(train_data, train_label, test_data,test_label, csv_list,
-                                                            num_classes, model, final_measurement)
+                                                            num_classes, model, final_measurement,is_first_iteration)
             test_results[str(final_measurement)].append(np.array(results_list)[1:, 0].astype(float))
             train_results[str(final_measurement)].append(np.array(results_list)[1:, 2].astype(float))
+            is_first_iteration = False
                
         etime_ = time.time() - tic
         etime[str(final_measurement)].append(etime_)
