@@ -234,8 +234,8 @@ def train_process(idx):
             ##Put here the Convolutive CNN
             results_list, model = run_experiment_darts_wine(train_data, train_label, test_data,test_label, csv_list,
                                                             num_classes, model, final_measurement,is_first_iteration)
-            test_results[str(final_measurement)].append(np.array(results_list)[1:, 0].astype(float))
-            train_results[str(final_measurement)].append(np.array(results_list)[1:, 2].astype(float))
+            test_results[str(final_measurement)]+=np.array(results_list)[1:, 0].astype(float).tolist()
+            train_results[str(final_measurement)]+=np.array(results_list)[1:, 2].astype(float)
             is_first_iteration = False
                
         etime_ = time.time() - tic
