@@ -48,7 +48,7 @@ parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weigh
 args = parser.parse_args()
 
 
-args.save = 'search-{}-{}-LoadQWinesEaCsystem'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+args.save = 'search-{}-{}-B5system'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 global CLASSES_WINE
 
 utils.create_exp_dir(args.save)
@@ -171,7 +171,7 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
   top1 = utils.AvgrageMeter()
   top5 = utils.AvgrageMeter()
   stddm = utils.StandardDeviationMeter()
-  manual_report_freq = 5
+  manual_report_freq = 10
 
   for step, (input, target) in enumerate(train_queue):
     model.train()
@@ -230,6 +230,8 @@ def infer(valid_queue, model, criterion,num_classes):
   stddm = utils.StandardDeviationMeter()
   model.eval()
 
+  manual_report_freq = 10
+
   for step, (input, target) in enumerate(valid_queue):
 
     input.cuda()
@@ -253,8 +255,8 @@ def infer(valid_queue, model, criterion,num_classes):
     # top1.update(prec1.data[0], n)
     # top5.update(prec5.data[0], n)
 
-    #if step % infer_report_freq == 0:
-    logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
+    if step % manual_report_freq == 0:
+        logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
 
   stddm.calculate()
   return top1.avg, objs.avg, stddm.standard_deviation
