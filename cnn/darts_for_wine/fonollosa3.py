@@ -263,8 +263,8 @@ def train_process(idx):
         att_lr = learning_rate
         tmp_test_acc=0
         logging.info("\n\t WINDOW + %s\n", final_measurement)
-        #for k in range(repetions):
-        for k in range(2):
+        for k in range(repetions):
+        #for k in range(2):
             logging.info('epoch %d lr %e', k, att_lr)
             _ , lr = train_model(final_measurement,k,lr,is_first_iteration=first_iteration)
             att_lr = lr
