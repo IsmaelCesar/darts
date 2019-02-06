@@ -38,7 +38,6 @@ import csv
 
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
 from darts_for_wine.experiment_darts_wine import args
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 global tic
 global actualDir,dataset,labels,names,train_results
@@ -151,7 +150,7 @@ def train_model(final_measurement,k_,is_first_iteration=True):
     global repetions,labels,tic,idx_,tmp_test_acc
     global ini_value,file_name,last_column,numfiles
     # Added by ismael
-    global model
+    global model,csv_list
     #split train and test data
     train_data, test_data, train_label, test_label = train_test_split(dataset[:,ini_value:final_measurement,:], labels, test_size = 0.5)
      
@@ -172,12 +171,11 @@ def train_model(final_measurement,k_,is_first_iteration=True):
     cat_test_label = to_categorical(test_label)
 
     iteration = is_first_iteration
-    csv_list =[['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
     classes_number = 4
     ## ********** Put here the Convolutive CNN  **********
     history,model = run_experiment(train_data, train_label, test_data, test_label, csv_list, classes_number, model,
                                                                                          final_measurement, iteration)
-    
+
     # #creating the model
     # K.clear_session()
     # model = models.Sequential()
@@ -242,7 +240,7 @@ def train_process(idx):
     global start_value,end_value,step,test_results,train_results
     global repetions,labels,tic,idx_,tmp_test_acc,file_name
     #Added by ismael
-    global model
+    global model,csv_list
     idx_=idx
     tic = time()
     
@@ -253,7 +251,7 @@ def train_process(idx):
         model = None #added by Ismael
         first_iteration = True #added by Ismael
         args.epochs = 1 #seting inner script epochs to one in order to use the fonollosa script epochs
-
+        csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
         tmp_test_acc=0      
         for k in range(repetions):
             train_model(final_measurement,k,is_first_iteration=first_iteration)

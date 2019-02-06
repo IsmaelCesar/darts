@@ -259,7 +259,5 @@ def infer(valid_queue, model, criterion,num_classes):
   stddm.calculate()
   return top1.avg, objs.avg, stddm.standard_deviation
 
-
-
 if __name__ == "__main__":
     run_experiment_darts_wine()
