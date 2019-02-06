@@ -260,14 +260,12 @@ def train_process(idx):
         args.epochs = 1 #seting inner script epochs to one in order to use the fonollosa script epochs
         csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
         lr = learning_rate
-        att_lr = learning_rate
         tmp_test_acc=0
         logging.info("\n\t WINDOW + %s\n", final_measurement)
         for k in range(repetions):
         #for k in range(2):
-            logging.info('epoch %d lr %e', k, att_lr)
+            logging.info('epoch %d lr %e', k, lr)
             _ , lr = train_model(final_measurement,k,lr,is_first_iteration=first_iteration)
-            att_lr = lr
             first_iteration = False #added by Ismael
             #early stopping
             if tmp_test_acc==1:
