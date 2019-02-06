@@ -38,7 +38,8 @@ import csv
 
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
 from darts_for_wine.experiment_darts_wine import args
-
+from darts_for_wine.experiment_darts_wine import learning_rate
+from darts_for_wine.experiment_darts_wine import logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 global tic
 global actualDir,dataset,labels,names,train_results
@@ -61,6 +62,7 @@ def resetv():
     global actualDir,dataset,labels,names,train_results
     global test_results,start_value,step,end_value,repetions
     global ini_value,file_name,first_column,samp
+    global learning_rate #added by ismael
     file_name = os.path.basename(__file__)
     path_name = os.path.realpath(__file__)
     actualDir = path_name[:-len(file_name)]
@@ -81,6 +83,8 @@ def resetv():
     repetions = 10 #Set up the epochs
     train_results = {}
     test_results = {}
+    #added by ismael
+    learning_rate = learning_rate
 
 """
 4.2.
@@ -146,7 +150,7 @@ def ldataset(folder,i,pic):
         pickle.dump([dataset,labels,names], f)
     print('loaded' + folder)
 
-def train_model(final_measurement,k_,is_first_iteration=True):
+def train_model(final_measurement,k_,lr,is_first_iteration=True):
     global start_value,end_value,step,test_results,train_results
     global repetions,labels,tic,idx_,tmp_test_acc
     global ini_value,file_name,last_column,numfiles
@@ -168,14 +172,14 @@ def train_model(final_measurement,k_,is_first_iteration=True):
     train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1], train_data.shape[2], 1)
     test_data = flat_test_data.reshape(test_data.shape[0], train_data.shape[1], train_data.shape[2], 1)
     ####################################################################################################
-    cat_train_label = to_categorical(train_label)
-    cat_test_label = to_categorical(test_label)
+    #cat_train_label = to_categorical(train_label)
+    #cat_test_label = to_categorical(test_label)
 
     iteration = is_first_iteration
     classes_number = 4
     ## ********** Put here the Convolutive CNN  **********
-    history,model = run_experiment(train_data, train_label, test_data, test_label, csv_list, classes_number, model,
-                                                                                         final_measurement, iteration)
+    history,model,lr = run_experiment(train_data, train_label, test_data, test_label, csv_list, classes_number, model,
+                                                                            final_measurement, iteration,lr)
     test_results[str(final_measurement)] += np.array(history)[1:, 0].astype(float).tolist()
     train_results[str(final_measurement)] += np.array(history)[1:, 2].astype(float).tolist()
 
@@ -232,7 +236,7 @@ def train_model(final_measurement,k_,is_first_iteration=True):
 #    print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))      
 #    
          
-    return history
+    return history,lr
 
 """
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -243,7 +247,7 @@ def train_process(idx):
     global start_value,end_value,step,test_results,train_results
     global repetions,labels,tic,idx_,tmp_test_acc,file_name
     #Added by ismael
-    global model,csv_list
+    global model,csv_list,learning_rate
     idx_=idx
     tic = time()
     
@@ -255,15 +259,20 @@ def train_process(idx):
         first_iteration = True #added by Ismael
         args.epochs = 1 #seting inner script epochs to one in order to use the fonollosa script epochs
         csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
-        tmp_test_acc=0      
+        lr = learning_rate
+        att_lr = learning_rate
+        tmp_test_acc=0
+        logging.info("\n\t WINDOW + %s\n", final_measurement)
         for k in range(repetions):
         #for k in range(2):
-            train_model(final_measurement,k,is_first_iteration=first_iteration)
+            logging.info('epoch %d lr %e', k, att_lr)
+            _ , lr = train_model(final_measurement,k,lr,is_first_iteration=first_iteration)
+            att_lr = lr
             first_iteration = False #added by Ismael
             #early stopping
             if tmp_test_acc==1:
                 break
-           
+        learning_rate = args.learning_rate
   
     etime = time() - tic
     print("execution time: "+str(etime))
