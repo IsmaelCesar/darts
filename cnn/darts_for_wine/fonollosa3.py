@@ -38,6 +38,7 @@ import csv
 
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
 from darts_for_wine.experiment_darts_wine import args
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 global tic
 global actualDir,dataset,labels,names,train_results
@@ -175,6 +176,8 @@ def train_model(final_measurement,k_,is_first_iteration=True):
     ## ********** Put here the Convolutive CNN  **********
     history,model = run_experiment(train_data, train_label, test_data, test_label, csv_list, classes_number, model,
                                                                                          final_measurement, iteration)
+    test_results[str(final_measurement)] += np.array(history)[1:, 0].astype(float).tolist()
+    train_results[str(final_measurement)] += np.array(history)[1:, 2].astype(float).tolist()
 
     # #creating the model
     # K.clear_session()
@@ -253,7 +256,8 @@ def train_process(idx):
         args.epochs = 1 #seting inner script epochs to one in order to use the fonollosa script epochs
         csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
         tmp_test_acc=0      
-        for k in range(repetions):
+        #for k in range(repetions):
+        for k in range(2):
             train_model(final_measurement,k,is_first_iteration=first_iteration)
             first_iteration = False #added by Ismael
             #early stopping
@@ -265,10 +269,10 @@ def train_process(idx):
     print("execution time: "+str(etime))
     
     ##Printing partial outcomes  
-    #for dict_value in test_results.keys():
-    #    print('test:')
-    #    mean_acc_test = np.mean(test_results[dict_value])
-    #    print(dict_value, mean_acc_test)
+    for dict_value in test_results.keys():
+        print('test:')
+        mean_acc_test = np.mean(test_results[dict_value])
+        print(dict_value, mean_acc_test)
     #for dict_value in train_results.keys():
     #    print('train:')
     #    mean_acc_train = np.mean(train_results[dict_value])
