@@ -31,9 +31,9 @@ parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
 parser.add_argument('--weight_decay', type=float, default=3e-4, help='weight decay')
 parser.add_argument('--report_freq', type=float, default=50, help='report frequency')
 parser.add_argument('--gpu', type=int, default=0, help='gpu device id')
-parser.add_argument('--epochs', type=int, default=10, help='num of training epochs')#because LOO cross-validation is being used
+parser.add_argument('--epochs', type=int, default=5, help='num of training epochs')#because LOO cross-validation is being used
 parser.add_argument('--init_channels', type=int, default=1, help='num of init channels')#the initial channels of the data is one
-parser.add_argument('--layers', type=int, default=8, help='total number of layers')
+parser.add_argument('--layers', type=int, default=5, help='total number of layers')
 parser.add_argument('--model_path', type=str, default='saved_models', help='path to save the model')
 parser.add_argument('--cutout', action='store_true', default=False, help='use cutout')
 parser.add_argument('--cutout_length', type=int, default=16, help='cutout length')
@@ -91,7 +91,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
     criterion.cuda()
 
     if(model == None):
-        model = Network(args.init_channels,CLASSES_WINE,5,criterion)#args.layers defalut is 8
+        model = Network(args.init_channels,CLASSES_WINE,args.layers,criterion)
         model.cuda()
         logging.info("A new model has been created")
     
@@ -171,7 +171,7 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
   top1 = utils.AvgrageMeter()
   top5 = utils.AvgrageMeter()
   stddm = utils.StandardDeviationMeter()
-  manual_report_freq = 10
+  manual_report_freq = 2
 
   for step, (input, target) in enumerate(train_queue):
     model.train()
@@ -230,7 +230,7 @@ def infer(valid_queue, model, criterion,num_classes):
   stddm = utils.StandardDeviationMeter()
   model.eval()
 
-  manual_report_freq = 10
+  manual_report_freq = 5
 
   for step, (input, target) in enumerate(valid_queue):
 

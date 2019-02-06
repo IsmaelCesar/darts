@@ -78,7 +78,7 @@ def resetv():
     start_value = int(12000/samp) #int(5500/samp) 
     step = int(7000/samp) 
     end_value = int(19000/samp) + 1  #19000 -> 19289 samples size of B5_GMe_F050_R1.txt file
-    repetions = 5  #Set up the epochs
+    repetions = 10 #Set up the epochs
     train_results = {}
     test_results = {}
 
@@ -256,8 +256,8 @@ def train_process(idx):
         args.epochs = 1 #seting inner script epochs to one in order to use the fonollosa script epochs
         csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
         tmp_test_acc=0      
-        #for k in range(repetions):
-        for k in range(2):
+        for k in range(repetions):
+        #for k in range(2):
             train_model(final_measurement,k,is_first_iteration=first_iteration)
             first_iteration = False #added by Ismael
             #early stopping
