@@ -37,6 +37,7 @@ from keras.models import model_from_json
 import csv
 
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
+from darts_for_wine.experiment_darts_wine import args
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 global tic
@@ -149,6 +150,8 @@ def train_model(final_measurement,k_,is_first_iteration=True):
     global start_value,end_value,step,test_results,train_results
     global repetions,labels,tic,idx_,tmp_test_acc
     global ini_value,file_name,last_column,numfiles
+    # Added by ismael
+    global model
     #split train and test data
     train_data, test_data, train_label, test_label = train_test_split(dataset[:,ini_value:final_measurement,:], labels, test_size = 0.5)
      
@@ -164,16 +167,15 @@ def train_model(final_measurement,k_,is_first_iteration=True):
     #Re Reshaping the data.
     train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1], train_data.shape[2], 1)
     test_data = flat_test_data.reshape(test_data.shape[0], train_data.shape[1], train_data.shape[2], 1)
-
+    ####################################################################################################
     cat_train_label = to_categorical(train_label)
     cat_test_label = to_categorical(test_label)
 
     iteration = is_first_iteration
-    model = None
     csv_list =[['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
-    classes_number = 10
+    classes_number = 4
     ## ********** Put here the Convolutive CNN  **********
-    history = run_experiment(flat_train_data, train_label, flat_test_data, test_label, csv_list, classes_number, model,
+    history,model = run_experiment(train_data, train_label, test_data, test_label, csv_list, classes_number, model,
                                                                                          final_measurement, iteration)
     
     # #creating the model
@@ -239,20 +241,26 @@ The main function to train the model
 def train_process(idx):
     global start_value,end_value,step,test_results,train_results
     global repetions,labels,tic,idx_,tmp_test_acc,file_name
+    #Added by ismael
+    global model
     idx_=idx
     tic = time()
     
     for final_measurement in range(start_value, end_value+1, step):
         test_results[str(final_measurement)] = []
         train_results[str(final_measurement)] = []
-      
+
+        model = None #added by Ismael
+        first_iteration = True #added by Ismael
+        args.epochs = 1 #seting inner script epochs to one in order to use the fonollosa script epochs
+
         tmp_test_acc=0      
-        #for k in range(repetions):
-        k=0
-        train_model(final_measurement,k)
-        #early stopping
-        if tmp_test_acc==1:
-            break
+        for k in range(repetions):
+            train_model(final_measurement,k,is_first_iteration=first_iteration)
+            first_iteration = False #added by Ismael
+            #early stopping
+            if tmp_test_acc==1:
+                break
            
   
     etime = time() - tic

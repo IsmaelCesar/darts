@@ -140,7 +140,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
 
         #Reusing the train procedure of the DARTS implementation
         train_acc, train_obj,train_stdd = train(train_queue,valid_queue,model,lr,architecht,criterion,optimizer,CLASSES_WINE)
-        #train_acc, train_obj, train_stdd = 2.0,2.0,3.0
+        #train_acc, train_obj, train_stdd = torch.FloatTensor([2.0]),torch.FloatTensor([2.0]),torch.FloatTensor([3.0])
         test_acc, test_obj, test_stdd   = infer(valid_queue,model,criterion,CLASSES_WINE)
 
         csv_list = csv_list + [[train_acc.item(),train_stdd.item(),test_acc.item(),test_stdd.item()]]
@@ -186,18 +186,18 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     input_search, target_search = next(iter(valid_queue))
     input_search = Variable(input_search, requires_grad=False).cuda()
     target_search = Variable(target_search, requires_grad=False).cuda(async=True)
-    #torch.cuda.LongTensor([target])
+
     architect.step(input,target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
 
     optimizer.zero_grad()
     logits = model(input)
-    # torch.cuda.LongTensor([target])
+
     loss = criterion(logits,target)
     loss.backward()
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 
-    # torch.cuda.LongTensor([target])
+
     prec1, prec5 = utils.accuracy(logits, target,topk=(1,num_classes//2))
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
@@ -239,11 +239,11 @@ def infer(valid_queue, model, criterion,num_classes):
     target = Variable(target, volatile=True).cuda(async=True)
 
     logits = model(input)
-    #torch.cuda.LongTensor([target])
+
     loss = criterion(logits, target)
 
-    #torch.cuda.LongTensor([target])
-    prec1, prec5 = utils.accuracy(logits, target,topk=(1,num_classes//2))#cuda.LongTensor
+
+    prec1, prec5 = utils.accuracy(logits, target,topk=(1,num_classes//2))
     n = input.size(0)
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
