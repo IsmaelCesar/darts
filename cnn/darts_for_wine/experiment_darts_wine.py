@@ -46,7 +46,7 @@ parser.add_argument('--unrolled', action='store_true', default=False, help='use 
 parser.add_argument('--arch_learning_rate', type=float, default=3e-4, help='learning rate for arch encoding')
 parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
 args = parser.parse_args()
-
+learning_rate = args.learning_rate
 
 args.save = 'search-{}-{}-B5system'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 global CLASSES_WINE
@@ -62,7 +62,8 @@ logging.getLogger().addHandler(fh)
 
 
 
-def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_list,classes_number,model,window_n,iteration):
+def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_list,classes_number,model,
+                              window_n,iteration,learning_rate):
 
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
@@ -78,7 +79,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
     logging.info("args = %s", args)
 
 
-    logging.info("\n\t WINDOW + %s\n",window_n)
+    #logging.info("\n\t WINDOW + %s\n",window_n)
 
     CLASSES_WINE =  classes_number
 
@@ -98,7 +99,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
     
     optimizer = torch.optim.SGD(
         model.parameters(),
-        args.learning_rate,
+        learning_rate,
         momentum=args.momentum,
         weight_decay=args.weight_decay)
     
@@ -130,7 +131,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
         scheduler.step()
 
         lr = scheduler.get_lr()[0]
-        logging.info('epoch %d lr %e', epoch, lr)
+        #logging.info('epoch %d lr %e', epoch, lr)
 
         genotype = model.genotype()
         logging.info('genotype = %s', genotype)
@@ -151,7 +152,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
                                                                                    first_iteration=iteration)
     utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
 
-    return csv_list,model
+    return csv_list,model,scheduler.get_lr()[0]
 
 """
 The train e infer procedure were addapted for the leave one out technique
@@ -263,3 +264,5 @@ def infer(valid_queue, model, criterion,num_classes):
 
 if __name__ == "__main__":
     run_experiment_darts_wine()
+elif __name__=="__experiment_darts_wine__":
+    learning_rate = args.learning_rate
