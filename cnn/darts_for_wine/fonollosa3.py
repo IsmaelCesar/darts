@@ -157,7 +157,7 @@ def train_model(final_measurement,k_,lr,is_first_iteration=True):
     # Added by ismael
     global model,csv_list
     #split train and test data
-    train_data, test_data, train_label, test_label = train_test_split(dataset[:,ini_value:final_measurement,:], labels, test_size = 0.5)
+    train_data, test_data, train_label, test_label = train_test_split(dataset[:,ini_value:final_measurement,:], labels, test_size = 0.3)
      
     #preprocess
     flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
