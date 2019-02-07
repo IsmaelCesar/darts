@@ -140,8 +140,8 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
         F.softmax(model.alphas_reduce, dim=-1)
 
         #Reusing the train procedure of the DARTS implementation
-        #train_acc, train_obj,train_stdd = train(train_queue,valid_queue,model,lr,architecht,criterion,optimizer,CLASSES_WINE)
-        train_acc, train_obj, train_stdd = torch.FloatTensor([2.0]),torch.FloatTensor([2.0]),torch.FloatTensor([3.0])
+        train_acc, train_obj,train_stdd = train(train_queue,valid_queue,model,lr,architecht,criterion,optimizer,CLASSES_WINE)
+        #train_acc, train_obj, train_stdd = torch.FloatTensor([2.0]),torch.FloatTensor([2.0]),torch.FloatTensor([3.0])
         test_acc, test_obj, test_stdd   = infer(valid_queue,model,criterion,CLASSES_WINE)
 
         csv_list = csv_list + [[train_acc.item(),train_stdd.item(),test_acc.item(),test_stdd.item()]]
