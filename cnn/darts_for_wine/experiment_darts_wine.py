@@ -63,7 +63,7 @@ logging.getLogger().addHandler(fh)
 
 
 def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_list,classes_number,model,
-                              window_n,iteration,learning_rate):
+                              window_n,iteration,arg_lr):
 
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
@@ -99,7 +99,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
     
     optimizer = torch.optim.SGD(
         model.parameters(),
-        learning_rate,
+        arg_lr,
         momentum=args.momentum,
         weight_decay=args.weight_decay)
     
@@ -264,5 +264,4 @@ def infer(valid_queue, model, criterion,num_classes):
 
 if __name__ == "__main__":
     run_experiment_darts_wine()
-elif __name__=="__experiment_darts_wine__":
-    learning_rate = args.learning_rate
+
