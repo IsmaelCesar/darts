@@ -78,7 +78,6 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
     logging.info('gpu device = %d' % args.gpu)
     logging.info("args = %s", args)
 
-
     #logging.info("\n\t WINDOW + %s\n",window_n)
 
     CLASSES_WINE =  classes_number
@@ -89,11 +88,11 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
     ##criterion = nn.MSELoss()
     criterion = nn.CrossEntropyLoss()
     #criterion  = nn.MSELoss()
-    criterion.cuda()
+    #criterion.cuda()
 
     if(model == None):
         model = Network(args.init_channels,CLASSES_WINE,args.layers,criterion)
-        model.cuda()
+        #model.cuda()
         logging.info("A new model has been created")
     
     

@@ -277,9 +277,9 @@ def train_process(idx):
     
     ##Printing partial outcomes  
     for dict_value in test_results.keys():
-        print('test:')
+        logging.info('test:')
         mean_acc_test = np.mean(test_results[dict_value])
-        print(dict_value, mean_acc_test)
+        logging.info(dict_value, mean_acc_test)
     #for dict_value in train_results.keys():
     #    print('train:')
     #    mean_acc_train = np.mean(train_results[dict_value])
