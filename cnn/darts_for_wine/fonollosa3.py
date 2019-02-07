@@ -79,7 +79,7 @@ def resetv():
     start_value = int(12000/samp) #int(5500/samp) 
     step = int(7000/samp) 
     end_value = int(19000/samp) + 1  #19000 -> 19289 samples size of B5_GMe_F050_R1.txt file
-    repetions = 10 #Set up the epochs
+    repetions = 20 #Set up the epochs
     train_results = {}
     test_results = {}
 
@@ -154,7 +154,7 @@ def train_model(final_measurement,k_,is_first_iteration=True):
     # Added by ismael
     global model,csv_list,lr,scheduler
     #split train and test data
-    train_data, test_data, train_label, test_label = train_test_split(dataset[:,ini_value:final_measurement,:], labels, test_size = 0.3)
+    train_data, test_data, train_label, test_label = train_test_split(dataset[:,ini_value:final_measurement,:], labels, test_size = 0.5)
      
     #preprocess
     flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
@@ -277,9 +277,9 @@ def train_process(idx):
     ##Printing partial outcomes
     logging.info("Patial outcomes:")
     for dict_value in test_results.keys():
-        print('test:')
+        logging.info('test:')
         mean_acc_test = np.mean(test_results[dict_value])
-        print(dict_value, mean_acc_test)
+        logging.info(dict_value+': ' + str(mean_acc_test))
     #for dict_value in train_results.keys():
     #    print('train:')
     #    mean_acc_train = np.mean(train_results[dict_value])
