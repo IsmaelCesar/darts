@@ -46,7 +46,6 @@ parser.add_argument('--unrolled', action='store_true', default=False, help='use 
 parser.add_argument('--arch_learning_rate', type=float, default=3e-4, help='learning rate for arch encoding')
 parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
 args = parser.parse_args()
-#learning_rate = args.learning_rate
 
 args.save = 'search-{}-{}-B5system'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 global CLASSES_WINE
@@ -63,7 +62,7 @@ logging.getLogger().addHandler(fh)
 
 
 def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_list,classes_number,model,
-                              window_n,iteration,arg_lr):
+                              window_n,iteration,arg_lr,arg_scheduler):
 
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
@@ -82,9 +81,6 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
     #logging.info("\n\t WINDOW + %s\n",window_n)
 
     CLASSES_WINE =  classes_number
-
-    dataset_files_path = args.data
-
 
     ##criterion = nn.MSELoss()
     criterion = nn.CrossEntropyLoss()
@@ -108,7 +104,11 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
     test_ds_wine  = WinesDataset(test_data,test_labels)
 
     logging.info("The data set has been loaded")
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, float(args.epochs), eta_min=args.learning_rate_min)
+
+    if(arg_scheduler == None):
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, float(10), eta_min=args.learning_rate_min)
+    else:
+        scheduler = arg_scheduler
 
     ds_lenght = len(train_ds_wine)
     loo_test_element_indx = 0
@@ -140,8 +140,8 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
         F.softmax(model.alphas_reduce, dim=-1)
 
         #Reusing the train procedure of the DARTS implementation
-        train_acc, train_obj,train_stdd = train(train_queue,valid_queue,model,lr,architecht,criterion,optimizer,CLASSES_WINE)
-        #train_acc, train_obj, train_stdd = torch.FloatTensor([2.0]),torch.FloatTensor([2.0]),torch.FloatTensor([3.0])
+        #train_acc, train_obj,train_stdd = train(train_queue,valid_queue,model,lr,architecht,criterion,optimizer,CLASSES_WINE)
+        train_acc, train_obj, train_stdd = torch.FloatTensor([2.0]),torch.FloatTensor([2.0]),torch.FloatTensor([3.0])
         test_acc, test_obj, test_stdd   = infer(valid_queue,model,criterion,CLASSES_WINE)
 
         csv_list = csv_list + [[train_acc.item(),train_stdd.item(),test_acc.item(),test_stdd.item()]]
@@ -152,7 +152,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
                                                                                    first_iteration=iteration)
     utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
 
-    return csv_list,model,scheduler.get_lr()[0]
+    return csv_list,model,scheduler
 
 """
 The train e infer procedure were addapted for the leave one out technique
