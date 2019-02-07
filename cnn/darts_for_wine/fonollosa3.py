@@ -275,7 +275,8 @@ def train_process(idx):
     etime = time() - tic
     print("execution time: "+str(etime))
     
-    ##Printing partial outcomes  
+    ##Printing partial outcomes
+    logging.info("Patial outcomes:")
     for dict_value in test_results.keys():
         logging.info('test:')
         mean_acc_test = np.mean(test_results[dict_value])
