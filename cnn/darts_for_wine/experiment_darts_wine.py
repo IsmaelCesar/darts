@@ -46,7 +46,7 @@ parser.add_argument('--unrolled', action='store_true', default=False, help='use 
 parser.add_argument('--arch_learning_rate', type=float, default=3e-4, help='learning rate for arch encoding')
 parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
 args = parser.parse_args()
-learning_rate = args.learning_rate
+#learning_rate = args.learning_rate
 
 args.save = 'search-{}-{}-B5system'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 global CLASSES_WINE

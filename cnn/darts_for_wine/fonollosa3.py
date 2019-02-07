@@ -38,7 +38,7 @@ import csv
 
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
 from darts_for_wine.experiment_darts_wine import args
-from darts_for_wine.experiment_darts_wine import learning_rate
+#from darts_for_wine.experiment_darts_wine import learning_rate
 from darts_for_wine.experiment_darts_wine import logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 global tic
@@ -84,7 +84,7 @@ def resetv():
     train_results = {}
     test_results = {}
     #added by ismael
-    learning_rate = learning_rate
+    learning_rate = args.learning_rate
 
 """
 4.2.
@@ -236,7 +236,7 @@ def train_model(final_measurement,k_,lr,is_first_iteration=True):
 #    print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))      
 #    
          
-    return history,lr
+    return lr
 
 """
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -247,7 +247,7 @@ def train_process(idx):
     global start_value,end_value,step,test_results,train_results
     global repetions,labels,tic,idx_,tmp_test_acc,file_name
     #Added by ismael
-    global model,csv_list,learning_rate
+    global model,csv_list
     idx_=idx
     tic = time()
     
@@ -259,18 +259,18 @@ def train_process(idx):
         first_iteration = True #added by Ismael
         args.epochs = 1 #seting inner script epochs to one in order to use the fonollosa script epochs
         csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
-        lr = learning_rate
+        lr = args.learning_rate
         tmp_test_acc=0
         logging.info("\n\t WINDOW + %s\n", final_measurement)
         for k in range(repetions):
         #for k in range(2):
             logging.info('epoch %d lr %e', k, lr)
-            _ , lr = train_model(final_measurement,k,lr,is_first_iteration=first_iteration)
+            lr = train_model(final_measurement,k,lr,is_first_iteration=first_iteration)
             first_iteration = False #added by Ismael
             #early stopping
             if tmp_test_acc==1:
                 break
-        learning_rate = args.learning_rate
+        #learning_rate = args.learning_rate
   
     etime = time() - tic
     print("execution time: "+str(etime))
