@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import pickle
 import numpy as  np
 from cnn.darts_for_wine.winedataset import WinesDataset
+from utils import CSVListBuilder
 
 class AnotherNet(nn.Module):
     def __init__(self):
@@ -72,6 +73,17 @@ def test_data_loading():
         print("Shape of the target1: \n", target1.shape)
         print("Shape of the target2: \n", target2.shape)
 
+def testing_perclass_acc_computation():
+    list_builder = CSVListBuilder(4)
+    for epoch in range(10):
+        target = torch.randint(4,(10,))
+        prediction = torch.rand(10,3)
+
+        csv = list_builder.compute_perclass_accuracy(target, prediction, len(target), epoch)
+
+        csv = list_builder.compute_perclass_accuracy(target,prediction,len(target),epoch,is_train=False)
+
+        print(csv)
 
 if __name__ == '__main__':
-    test_data_loading()
+    testing_perclass_acc_computation()

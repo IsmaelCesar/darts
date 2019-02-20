@@ -50,7 +50,7 @@ class StandardDeviationMeter(object):
        self.standard_deviation = np.sqrt(sum)
        return self.standard_deviation
 
-class CSVListBuilder():
+class PerclassAccuracyMetter():
     """
     Class dedicated for bulding the list to the CSV file
     """
