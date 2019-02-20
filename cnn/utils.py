@@ -50,6 +50,57 @@ class StandardDeviationMeter(object):
        self.standard_deviation = np.sqrt(sum)
        return self.standard_deviation
 
+class CSVListBuilder():
+    """
+    Class dedicated for bulding the list to the CSV file
+    """
+    def __init__(self,num_classes):
+
+        csv_list = [['train_acc']]
+        valid_acc_added = 0
+
+        while valid_acc_added < 2:
+            for i in  range(num_classes):
+                csv_list[0] += ["class"+str(i)+"_acc"]
+
+            valid_acc_added += 1
+
+            if valid_acc_added == 1:
+                csv_list[0] += ["valid_acc"]
+
+        csv_list.append(np.zeros(num_classes * 2 + 2).tolist())
+        self.csv_list = csv_list
+        self.current_epoch = 0
+        self.num_classes = num_classes
+
+    def compute_perclass_accuracy(self,taget,predictions,batch_size,epoch,is_train=True):
+        """
+        :param taget: Target value(s) from the Data set
+        :param predictions:  Predictions made by the model
+        :param batch_size:   Batch size
+        :param epoch:        Learning epoch
+        :param offset:       skipping train_acc e valid_acc values
+        :return:             CSV list updated
+        """
+
+        _,indexes = torch.max(predictions,1)
+
+        if self.current_epoch < epoch:
+            self.csv_list.append(np.zeros(len(self.csv_list[-1])).tolist())
+            self.current_epoch = epoch
+
+        offset = 1
+
+        if not is_train :
+            offset = self.num_classes + 2
+
+        for idx,tgt in zip(indexes,taget):
+            if idx == tgt:
+                self.csv_list[epoch+1][offset+idx.item()] += 1
+            self.csv_list[epoch+1][offset+idx.item()] /= batch_size
+
+        return self.csv_list
+
 def accuracy(output, target, topk=(1,)):
   maxk = max(topk)
   batch_size = target.size(0)
