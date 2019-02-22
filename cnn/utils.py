@@ -22,34 +22,6 @@ class AvgrageMeter(object):
     self.cnt += n
     self.avg = self.sum / self.cnt
 
-
-class StandardDeviationMeter(object):
-
-   def __init__(self):
-      self.reset()
-
-   def reset(self):
-       self.avg = 0
-       self.standard_deviation = 0
-       self.values = []
-
-   def add_value(self,n):
-       self.values.append(n)
-
-   def calculate_average(self):
-       sum = 0
-       for v in self.values:
-           sum += v/len(self.values)
-       self.avg = sum
-
-   def calculate(self):
-       self.calculate_average()
-       sum = 0
-       for v in self.values:
-            sum += np.power((v - self.avg),2)/len(self.values)
-       self.standard_deviation = np.sqrt(sum)
-       return self.standard_deviation
-
 class PerclassAccuracyMetter():
     """
     Class dedicated for bulding the list to the CSV file
@@ -72,6 +44,7 @@ class PerclassAccuracyMetter():
         self.csv_list = csv_list
         self.current_epoch = 0
         self.num_classes = num_classes
+        self.first_iteration = False
 
     def compute_perclass_accuracy(self,taget,predictions,batch_size,epoch,is_train=True):
         """
@@ -96,10 +69,35 @@ class PerclassAccuracyMetter():
 
         for idx,tgt in zip(indexes,taget):
             if idx == tgt:
-                self.csv_list[epoch+1][offset+idx.item()] += 1
-            self.csv_list[epoch+1][offset+idx.item()] /= batch_size
+                self.csv_list[epoch+1][offset+idx] += 1
+            self.csv_list[epoch+1][offset+idx] /= batch_size
 
         return self.csv_list
+
+    def write_csv(self,file_path, mode="a+"):
+        if (self.first_iteration):
+            mode = 'w+'
+            with open(file_path, mode) as csv_file:
+                csv_writer = csv.writer(csv_file, delimiter=',')
+                csv_writer.writerows(self.csv_list)
+                csv_file.close()
+        else:
+            new_list = self.csv_list[1:]
+            with open(file_path, mode) as csv_file:
+                csv_writer = csv.writer(csv_file, delimiter=',')
+                csv_writer.writerows(new_list)
+                csv_file.close()
+
+    def include_top1_avg_acc(self,top1,is_train=True):
+        """
+        :param top1: Value that includes top1 prediction average accuracy
+        """
+        offset = 0
+        if not is_train:
+          offset = self.num_classes+1
+
+        self.csv_list[self.current_epoch][offset] = top1
+
 
 def accuracy(output, target, topk=(1,)):
   maxk = max(topk)
@@ -199,17 +197,3 @@ def create_exp_dir(path, scripts_to_save=None):
       dst_file = os.path.join(path, 'scripts', os.path.basename(script))
       shutil.copyfile(script, dst_file)
 
-
-def write_csv(list,file_path,first_iteration=True,mode="a+"):
-    if(first_iteration):
-        mode = 'w+'
-        with open(file_path,mode) as csv_file:
-            csv_writer = csv.writer(csv_file,delimiter=',')
-            csv_writer.writerows(list)
-            csv_file.close()
-    else:
-        list = list[1:]
-        with open(file_path,mode) as csv_file:
-            csv_writer = csv.writer(csv_file,delimiter=',')
-            csv_writer.writerows(list)
-            csv_file.close()

@@ -37,7 +37,8 @@ import csv
 from math import sqrt
 import pandas as pd
 import matplotlib.pyplot as plt
-from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine
+from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
+from utils import PerclassAccuracyMetter
 #import autokeras as ak
 
 np.random.seed(1)
@@ -174,7 +175,7 @@ def train_process(idx):
 
     for final_measurement in range(start_value, end_value+1, step):
 
-        csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
+        perclass_metter = PerclassAccuracyMetter(ngr)
 
         train_results[str(final_measurement)] = []
         test_results[str(final_measurement)] = []
@@ -184,7 +185,8 @@ def train_process(idx):
        
         #In this section is to perform the LOO
         model = None
-        is_first_iteration = True
+        perclass_metter.first_iteration = True
+
         for i in range(ncl):
             test_set=[]
             train_set=[]
@@ -232,11 +234,11 @@ def train_process(idx):
             num_classes=cat_train_label.shape[1]
 
             ##Put here the Convolutive CNN
-            results_list, model = run_experiment_darts_wine(train_data, train_label, test_data,test_label, csv_list,
-                                                            num_classes, model, final_measurement,is_first_iteration)
+            results_list, model = run_experiment(train_data, train_label, test_data,test_label, perclass_metter,
+                                                            num_classes, model, final_measurement)
             test_results[str(final_measurement)]+=np.array(results_list)[1:, 0].astype(float).tolist()
             train_results[str(final_measurement)]+=np.array(results_list)[1:, 2].astype(float).tolist()
-            is_first_iteration = False
+            perclass_metter.first_iteration = False
                
         etime_ = time.time() - tic
         etime[str(final_measurement)].append(etime_)

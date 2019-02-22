@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import pickle
 import numpy as  np
 from cnn.darts_for_wine.winedataset import WinesDataset
-from utils import CSVListBuilder
+from utils import PerclassAccuracyMetter
 
 class AnotherNet(nn.Module):
     def __init__(self):
