@@ -22,7 +22,7 @@ class AvgrageMeter(object):
     self.cnt += n
     self.avg = self.sum / self.cnt
 
-class PerclassAccuracyMetter():
+class PerclassAccuracyMetter(object):
     """
     Class dedicated for bulding the list to the CSV file
     """
@@ -30,10 +30,10 @@ class PerclassAccuracyMetter():
 
         csv_list = [['train_acc']]
         valid_acc_added = 0
-
         while valid_acc_added < 2:
             for i in  range(num_classes):
                 csv_list[0] += ["class"+str(i)+"_acc"]
+
 
             valid_acc_added += 1
 
@@ -45,6 +45,7 @@ class PerclassAccuracyMetter():
         self.current_epoch = 0
         self.num_classes = num_classes
         self.first_iteration = False
+        self.reset_perclass_params()
 
     def compute_perclass_accuracy(self,taget,predictions,batch_size,epoch,is_train=True):
         """
@@ -57,20 +58,25 @@ class PerclassAccuracyMetter():
         """
 
         _,indexes = torch.max(predictions,1)
-
         if self.current_epoch < epoch:
-            self.csv_list.append(np.zeros(len(self.csv_list[-1])).tolist())
+            self.csv_list.append(np.zeros(self.num_classes+2).tolist())
             self.current_epoch = epoch
 
         offset = 1
+        offset_perclass_params = 0
 
         if not is_train :
             offset = self.num_classes + 2
+            offset_perclass_params = self.num_classes
 
         for idx,tgt in zip(indexes,taget):
             if idx == tgt:
                 self.csv_list[epoch+1][offset+idx] += 1
-            self.csv_list[epoch+1][offset+idx] /= batch_size
+
+                self.perclass_cont[idx]+=1
+                self.perclass_sum[offset_perclass_params+idx] += self.csv_list[epoch+1][offset+idx] * 100 / batch_size
+                self.perclass_avg[offset_perclass_params+idx] += self.perclass_sum[offset_perclass_params+idx]
+                self.csv_list[epoch+1][offset+idx] = self.perclass_avg[offset_perclass_params+idx]
 
         return self.csv_list
 
@@ -88,6 +94,11 @@ class PerclassAccuracyMetter():
                 csv_writer.writerows(new_list)
                 csv_file.close()
 
+    def reset_perclass_params(self):
+        self.perclass_sum = np.zeros(self.num_classes * 2).tolist()
+        self.perclass_avg = np.zeros(self.num_classes * 2).tolist()
+        self.perclass_cont = np.zeros(self.num_classes * 2).tolist()
+
     def include_top1_avg_acc(self,top1,is_train=True):
         """
         :param top1: Value that includes top1 prediction average accuracy
@@ -96,7 +107,7 @@ class PerclassAccuracyMetter():
         if not is_train:
           offset = self.num_classes+1
 
-        self.csv_list[self.current_epoch][offset] = top1
+        self.csv_list[self.current_epoch+1][offset] = top1
 
 
 def accuracy(output, target, topk=(1,)):
