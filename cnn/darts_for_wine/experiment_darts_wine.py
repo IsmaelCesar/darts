@@ -50,14 +50,14 @@ args = parser.parse_args()
 args.save = 'search-{}-{}-B5system'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 global CLASSES_WINE,perclass_acc_metter,n_epoch
 
-utils.create_exp_dir(args.save)
+#utils.create_exp_dir(args.save)
 
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M:%S %p')
-fh = logging.FileHandler(os.path.join(args.save ,'log.txt'))
-fh.setFormatter(logging.Formatter(log_format))
-logging.getLogger().addHandler(fh)
+#fh = logging.FileHandler(os.path.join(args.save ,'log.txt'))
+#fh.setFormatter(logging.Formatter(log_format))
+#logging.getLogger().addHandler(fh)
 
 
 
@@ -149,8 +149,8 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
 
 
     #Saving the model
-    perclass_acc_metter.write_csv(os.path.join(args.save,"experiments_measurements_window_"+str(window_n)+".csv"))
-    utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
+    #perclass_acc_metter.write_csv(os.path.join(args.save,"experiments_measurements_window_"+str(window_n)+".csv"))
+    #utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
 
     return perclass_acc_metter.csv_list,model,scheduler
 
@@ -215,6 +215,10 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     if step % manual_report_freq == 0:
       logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
 
+  #displaying perclass train acc
+  for i in range(CLASSES_WINE):
+      logging.info("Train Accuracy of class %d :%f", i, perclass_acc_metter.csv_list[n_epoch][i + i])
+
   return top1.avg,objs.avg
 
 def infer(valid_queue, model, criterion,num_classes):
@@ -256,6 +260,10 @@ def infer(valid_queue, model, criterion,num_classes):
     # objs.update(loss.data[0], n)
     # top1.update(prec1.data[0], n)
     # top5.update(prec5.data[0], n)
+
+    #displaying perclass valid acc
+    for i in range(CLASSES_WINE):
+        logging.info("Train Accuracy of class %d :%f", i, perclass_acc_metter.csv_list[n_epoch][i + CLASSES_WINE + 1])
 
     if step % manual_report_freq == 0:
         logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
