@@ -47,17 +47,17 @@ parser.add_argument('--arch_learning_rate', type=float, default=3e-4, help='lear
 parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
 args = parser.parse_args()
 
-args.save = 'search-{}-{}-B5system'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+args.save = 'search-{}-{}-LoadQWinesCSystem-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 global CLASSES_WINE,perclass_acc_metter,n_epoch
 
-#utils.create_exp_dir(args.save)
+utils.create_exp_dir(args.save)
 
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M:%S %p')
-#fh = logging.FileHandler(os.path.join(args.save ,'log.txt'))
-#fh.setFormatter(logging.Formatter(log_format))
-#logging.getLogger().addHandler(fh)
+fh = logging.FileHandler(os.path.join(args.save ,'log.txt'))
+fh.setFormatter(logging.Formatter(log_format))
+logging.getLogger().addHandler(fh)
 
 
 
@@ -217,7 +217,7 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
 
   #displaying perclass train acc
   for i in range(CLASSES_WINE):
-      logging.info("Train Accuracy of class %d :%f", i, perclass_acc_metter.csv_list[n_epoch][i + i])
+      logging.info("Train Accuracy of class "+ str(i)+": "+str(perclass_acc_metter.csv_list[n_epoch+1][i + 1]))
 
   return top1.avg,objs.avg
 
@@ -263,7 +263,7 @@ def infer(valid_queue, model, criterion,num_classes):
 
     #displaying perclass valid acc
     for i in range(CLASSES_WINE):
-        logging.info("Train Accuracy of class %d :%f", i, perclass_acc_metter.csv_list[n_epoch][i + CLASSES_WINE + 1])
+        logging.info("Train Accuracy of class "+str(i)+": "+str(perclass_acc_metter.csv_list[n_epoch+1][i + CLASSES_WINE + 1]))
 
     if step % manual_report_freq == 0:
         logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
