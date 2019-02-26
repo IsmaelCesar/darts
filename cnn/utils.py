@@ -74,7 +74,7 @@ class PerclassAccuracyMetter(object):
                 self.csv_list[epoch+1][offset+idx] += 1
 
                 self.perclass_cont[idx]+=1
-                self.perclass_sum[offset_perclass_params+idx] += self.csv_list[epoch+1][offset+idx] * 100 / batch_size
+                self.perclass_sum[offset_perclass_params+idx] += self.csv_list[epoch+1][offset+idx]/batch_size
                 self.perclass_avg[offset_perclass_params+idx] += self.perclass_sum[offset_perclass_params+idx]
                 self.csv_list[epoch+1][offset+idx] = self.perclass_avg[offset_perclass_params+idx]
 

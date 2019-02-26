@@ -238,17 +238,17 @@ def train_process(idx):
             num_classes=cat_train_label.shape[1]
 
             ##Put here the Convolutive CNN
-            #results_list, model,arg_scheduler= run_experiment(train_data, train_label, test_data,test_label,
-            #                                                  perclass_metter,num_classes, model, final_measurement,
-            #                                                  arg_lr,arg_scheduler)
-            #test_results[str(final_measurement)]+=np.array(results_list)[1:, 0].astype(float).tolist()
-            #train_results[str(final_measurement)]+=np.array(results_list)[1:, 2].astype(float).tolist()
-            #perclass_metter.first_iteration = False
+            results_list, model,arg_scheduler= run_experiment(train_data, train_label, test_data,test_label,
+                                                              perclass_metter,num_classes, model, final_measurement,
+                                                             arg_lr,arg_scheduler)
+            train_results[str(final_measurement)]+=np.array(results_list)[1:, 0].astype(float).tolist()
+            test_results[str(final_measurement)]+=np.array(results_list)[1:, ngr+1].astype(float).tolist()
+            perclass_metter.first_iteration = False
                
         etime_ = time.time() - tic
         etime[str(final_measurement)].append(etime_)
         logging.info("execution time: "+str(etime_))
-        
+        logging.info("Displyaing partial results:")
         #Display test results
         for dict_value in test_results.keys():
             logging.info('test2:')

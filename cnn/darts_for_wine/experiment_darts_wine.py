@@ -50,19 +50,20 @@ args = parser.parse_args()
 args.save = 'search-{}-{}-B5system'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 global CLASSES_WINE,perclass_acc_metter,n_epoch
 
-utils.create_exp_dir(args.save)
+#utils.create_exp_dir(args.save)
 
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M:%S %p')
-fh = logging.FileHandler(os.path.join(args.save ,'log.txt'))
-fh.setFormatter(logging.Formatter(log_format))
-logging.getLogger().addHandler(fh)
+#fh = logging.FileHandler(os.path.join(args.save ,'log.txt'))
+#fh.setFormatter(logging.Formatter(log_format))
+#logging.getLogger().addHandler(fh)
 
 
 
 def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perclass_metter,classes_number,model,
                               window_n,arg_lr,arg_scheduler):
+    global CLASSES_WINE, perclass_acc_metter, n_epoch
 
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
@@ -141,8 +142,10 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
 
         #Reusing the train procedure of the DARTS implementation
         train_acc, train_obj = train(train_queue,valid_queue,model,lr,architecht,criterion,optimizer,CLASSES_WINE)
+        logging.info("train_acc %f",train_acc)
         #train_acc, train_obj, train_stdd = torch.FloatTensor([2.0]),torch.FloatTensor([2.0]),torch.FloatTensor([3.0])
-        test_acc, test_obj  = infer(valid_queue,model,criterion,CLASSES_WINE)
+        valid_acc, valid_obj  = infer(valid_queue,model,criterion,CLASSES_WINE)
+        logging.info("valid_acc %f",valid_acc)
 
 
     #Saving the model
@@ -165,7 +168,7 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     :param lr: learning rate
     :return: train_acc(train accuracy), train_obj(Object used to compute the train accuracy)
   """
-  global perclass_acc_metter, n_epoch
+  global CLASSES_WINE, perclass_acc_metter, n_epoch
 
   objs = utils.AvgrageMeter()
   top1 = utils.AvgrageMeter()
@@ -205,7 +208,7 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
 
-    perclass_acc_metter.include_top1_avg_acc(top1)
+    perclass_acc_metter.include_top1_avg_acc(top1.avg.item())
     #objs.update(loss.data[0], n)
     #top1.update(prec1.data[0], n)
     #top5.update(prec5.data[0], n)
@@ -221,7 +224,7 @@ def infer(valid_queue, model, criterion,num_classes):
   :param criterion:  Criterion(Function over which the loss of the model shall be computed)
   :return: valid_acc(validation accuracy), valid_obj(Object used to compute the validation accuracy)
   """
-  global perclass_acc_metter, n_epoch
+  global CLASSES_WINE, perclass_acc_metter, n_epoch
 
   objs = utils.AvgrageMeter()
   top1 = utils.AvgrageMeter()
@@ -249,7 +252,7 @@ def infer(valid_queue, model, criterion,num_classes):
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
 
-    perclass_acc_metter.include_top1_avg_acc(top1,is_train=False)
+    perclass_acc_metter.include_top1_avg_acc(top1.avg.item,is_train=False)
     # objs.update(loss.data[0], n)
     # top1.update(prec1.data[0], n)
     # top5.update(prec5.data[0], n)
