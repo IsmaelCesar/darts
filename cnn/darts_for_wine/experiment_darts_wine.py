@@ -47,7 +47,7 @@ parser.add_argument('--arch_learning_rate', type=float, default=3e-4, help='lear
 parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
 args = parser.parse_args()
 
-args.save = 'search-{}-{}-B5system'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+args.save = 'search-{}-{}-B1system'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 global CLASSES_WINE
 
 utils.create_exp_dir(args.save)
@@ -78,7 +78,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
     logging.info("args = %s", args)
 
 
-    #logging.info("\n\t WINDOW + %s\n",window_n)
+    logging.info("\n\t WINDOW + %s\n",window_n)
 
     CLASSES_WINE =  classes_number
 
@@ -131,7 +131,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,csv_
         scheduler.step()
 
         lr = scheduler.get_lr()[0]
-        #logging.info('epoch %d lr %e', epoch, lr)
+        logging.info('epoch %d lr %e', epoch, lr)
 
         genotype = model.genotype()
         logging.info('genotype = %s', genotype)
