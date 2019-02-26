@@ -132,7 +132,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
         scheduler.step()
 
         lr = scheduler.get_lr()[0]
-        logging.info('epoch %d lr %e', epoch, lr)#in the fonollosa experiment the epoch is logged in the parent procedure
+        logging.info('epoch %d lr %e', n_epoch, lr)#in the fonollosa experiment the epoch is logged in the parent procedure
 
         genotype = model.genotype()
         logging.info('genotype = %s', genotype)
@@ -217,7 +217,7 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
 
   #displaying perclass train acc
   for i in range(CLASSES_WINE):
-      logging.info("Train Accuracy of class "+ str(i)+": "+str(perclass_acc_metter.csv_list[n_epoch+1][i + 1]))
+      logging.info("train Accuracy of class "+ str(i)+": "+str(perclass_acc_metter.csv_list[n_epoch+1][i + 1]))
 
   return top1.avg,objs.avg
 
@@ -263,7 +263,7 @@ def infer(valid_queue, model, criterion,num_classes):
 
     #displaying perclass valid acc
     for i in range(CLASSES_WINE):
-        logging.info("Train Accuracy of class "+str(i)+": "+str(perclass_acc_metter.csv_list[n_epoch+1][i + CLASSES_WINE + 1]))
+        logging.info("valid Accuracy of class "+str(i)+": "+str(perclass_acc_metter.csv_list[n_epoch+1][i + CLASSES_WINE + 1]))
 
     if step % manual_report_freq == 0:
         logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
