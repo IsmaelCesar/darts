@@ -217,7 +217,7 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
 
   #displaying perclass train acc
   for i in range(CLASSES_WINE):
-      logging.info("train Accuracy of class "+ str(i)+": "+str(perclass_acc_metter.csv_list[n_epoch+1][i + 1]))
+      logging.info("train accuracy of class "+ str(i)+": "+str(perclass_acc_metter.csv_list[n_epoch+1][i + 1]))
 
   return top1.avg,objs.avg
 
@@ -261,14 +261,12 @@ def infer(valid_queue, model, criterion,num_classes):
     # top1.update(prec1.data[0], n)
     # top5.update(prec5.data[0], n)
 
-    #displaying perclass valid acc
-    for i in range(CLASSES_WINE):
-        logging.info("valid Accuracy of class "+str(i)+": "+str(perclass_acc_metter.csv_list[n_epoch+1][i + CLASSES_WINE + 1]))
-
     if step % manual_report_freq == 0:
         logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
 
-
+  #Displaying perclass valid acc
+    for i in range(CLASSES_WINE):
+        logging.info("valid accuracy of class "+str(i)+": "+str(perclass_acc_metter.csv_list[n_epoch+1][i+CLASSES_WINE+2]))
   return top1.avg, objs.avg
 
 if __name__ == "__main__":
