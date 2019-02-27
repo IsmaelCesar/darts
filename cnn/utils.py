@@ -81,7 +81,7 @@ class PerclassAccuracyMeter(object):
 
         for sum,n,i in zip(self.perclass_sum,self.perclass_avg_cont,range(self.num_classes*2)):
             if n > 0:
-                if i >= 4:
+                if i >= self.num_classes:
                     self.csv_list[epoch+1][i+2] = sum/n *100
                 else:
                     self.csv_list[epoch + 1][i + 1] = sum / n * 100
