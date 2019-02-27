@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import pickle
 import numpy as  np
 from cnn.darts_for_wine.winedataset import WinesDataset
-from utils import CSVListBuilder
+from utils import PerclassAccuracyMeter
 
 class AnotherNet(nn.Module):
     def __init__(self):
@@ -73,17 +73,55 @@ def test_data_loading():
         print("Shape of the target1: \n", target1.shape)
         print("Shape of the target2: \n", target2.shape)
 
-def testing_perclass_acc_computation():
-    list_builder = CSVListBuilder(4)
+def testing_csv_list(perclass_meter,num_classes):
+
+
+    batch_size = 10
+
+    #myCsv  = np.random.randn(10,num_classes*2+2)
+
     for epoch in range(10):
-        target = torch.randint(4,(10,))
-        prediction = torch.rand(10,3)
 
-        csv = list_builder.compute_perclass_accuracy(target, prediction, len(target), epoch)
+        labels = torch.randint(num_classes,(50,))
 
-        csv = list_builder.compute_perclass_accuracy(target,prediction,len(target),epoch,is_train=False)
+        start_slice = 0
+        end_slice   = batch_size
+        #Train
+        for i in range(0,len(labels),batch_size):
 
-        print(csv)
+            target  = labels[start_slice:end_slice]
+            logits = torch.rand(batch_size,num_classes)
+
+            perclass_meter.compute_confusion_matrix(target,logits)
+
+            start_slice = end_slice
+            end_slice += batch_size
+
+        perclass_meter.compute_perclass_accuracy(epoch)
+        perclass_meter.reset_confusion_matrix()
+        #validation
+        labels = torch.randint(num_classes, (50,))
+        start_slice = 0
+        end_slice = batch_size
+
+        for i in range(0,len(labels),batch_size):
+
+            target  = labels[start_slice:end_slice]
+            logits = torch.rand(batch_size,num_classes)
+
+            perclass_meter.compute_confusion_matrix(target,logits)
+
+            start_slice = end_slice
+            end_slice += batch_size
+        perclass_meter.compute_perclass_accuracy(epoch,is_train=False)
+        perclass_meter.reset_confusion_matrix()
+
+        print(perclass_meter.return_current_epoch_data())
+
+    return perclass_meter
 
 if __name__ == '__main__':
-    testing_perclass_acc_computation()
+    num_classes  = 3
+    perclass_meter = PerclassAccuracyMeter(num_classes)
+
+    testing_csv_list(perclass_meter,num_classes)

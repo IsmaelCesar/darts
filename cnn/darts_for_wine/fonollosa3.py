@@ -39,6 +39,7 @@ import csv
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
 from darts_for_wine.experiment_darts_wine import args
 from darts_for_wine.experiment_darts_wine import logging
+from utils import PerclassAccuracyMeter
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 global tic
 global actualDir,dataset,labels,names,train_results
@@ -152,7 +153,7 @@ def train_model(final_measurement,k_,is_first_iteration=True):
     global repetions,labels,tic,idx_,tmp_test_acc
     global ini_value,file_name,last_column,numfiles
     # Added by ismael
-    global model,csv_list,lr,scheduler
+    global model,perclass_meter,lr,scheduler
     #split train and test data
     train_data, test_data, train_label, test_label = train_test_split(dataset[:,ini_value:final_measurement,:], labels, test_size = 0.5)
      
@@ -175,10 +176,10 @@ def train_model(final_measurement,k_,is_first_iteration=True):
     iteration = is_first_iteration
     classes_number = 4
     ## ********** Put here the Convolutive CNN  **********
-    history,model,scheduler = run_experiment(train_data, train_label, test_data, test_label, csv_list, classes_number,
-                                             model,final_measurement, iteration,lr,scheduler)
-    test_results[str(final_measurement)] += np.array(history)[1:, 0].astype(float).tolist()
-    train_results[str(final_measurement)] += np.array(history)[1:, 2].astype(float).tolist()
+    history,model,scheduler = run_experiment(train_data, train_label, test_data, test_label, perclass_meter, classes_number,
+                                             model,final_measurement,lr,scheduler)
+    train_results[str(final_measurement)] += np.array(history)[1:, 0].astype(float).tolist()
+    test_results[str(final_measurement)] += np.array(history)[1:,classes_number+1].astype(float).tolist()
 
     # #creating the model
     # K.clear_session()
@@ -244,7 +245,7 @@ def train_process(idx):
     global start_value,end_value,step,test_results,train_results
     global repetions,labels,tic,idx_,tmp_test_acc,file_name
     #Added by ismael
-    global model,csv_list,lr,scheduler
+    global model,perclass_meter,lr,scheduler
     idx_=idx
     tic = time()
     
@@ -256,7 +257,8 @@ def train_process(idx):
         scheduler = None #added by Ismael
         first_iteration = True #added by Ismael
         args.epochs = 1 #seting inner script epochs to one in order to use the fonollosa script epochs
-        csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
+        #csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
+        perclass_meter = PerclassAccuracyMeter(4)
         lr = args.learning_rate
         tmp_test_acc=0
         logging.info("\n\t WINDOW + %s\n", final_measurement)

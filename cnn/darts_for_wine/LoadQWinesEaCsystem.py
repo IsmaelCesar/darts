@@ -35,7 +35,10 @@ import csv
 from math import sqrt
 import pandas as pd
 import matplotlib.pyplot as plt
-from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine
+from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
+from darts_for_wine.experiment_darts_wine import args
+from darts_for_wine.experiment_darts_wine import logging
+from utils import PerclassAccuracyMeter
 
 #import autokeras as ak
 
@@ -171,8 +174,10 @@ def train_process(idx):
 
     for final_measurement in range(start_value, end_value+1, step):
 
-        csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
-        
+        perclass_metter = PerclassAccuracyMeter(ngr)
+        arg_lr = args.learning_rate
+        arg_scheduler = None
+
         train_results[str(final_measurement)] = []
         test_results[str(final_measurement)] = []
         etime[str(final_measurement)] = []              
@@ -230,23 +235,24 @@ def train_process(idx):
             num_classes=cat_train_label.shape[1]
 
             ##Put here the Convolutive CNN
-            results_list,model = run_experiment_darts_wine(train_data,train_label,test_data,test_label,csv_list,
-                                                       num_classes,model,final_measurement,is_first_iteration)
-            test_results[str(final_measurement)]  += np.array(results_list)[1:, 0].astype(float).tolist()
-            train_results[str(final_measurement)] += np.array(results_list)[1:, 2].astype(float).tolist()
-            is_first_iteration = False
+            results_list,model,arg_scheduler =run_experiment(train_data,train_label,test_data,test_label,perclass_metter,
+                                                            num_classes,model,final_measurement,
+                                                            arg_lr, arg_scheduler)
+            train_results[str(final_measurement)]  += np.array(results_list)[1:, 0].astype(float).tolist()
+            test_results[str(final_measurement)] += np.array(results_list)[1:, ngr+1].astype(float).tolist()
+            perclass_metter.first_iteration = False
 
         etime_ = time.time() - tic
         etime[str(final_measurement)].append(etime_)
-        print("execution time: "+str(etime_))
+        logging.info("execution time: "+str(etime_))
 
 
-
+        logging.info("Displaying partial Results: ")
         #Display test results
         for dict_value in test_results.keys():
-            print('test2:')
+            logging.info('test2:')
             mean_acc_test = np.mean(test_results[dict_value])
-            print(dict_value, mean_acc_test)
+            logging.info(dict_value+": "+ str(mean_acc_test))
 #        for dict_value in train_results.keys():
 #            print('train2:')
 #            mean_acc_train = np.mean(train_results[dict_value])
