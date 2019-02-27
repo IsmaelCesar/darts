@@ -48,7 +48,7 @@ parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weigh
 args = parser.parse_args()
 
 args.save = 'search-{}-{}-LoadQWinesCSystem-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
-global CLASSES_WINE,perclass_acc_metter,n_epoch
+global CLASSES_WINE,perclass_acc_meter,n_epoch
 
 utils.create_exp_dir(args.save)
 
@@ -63,7 +63,7 @@ logging.getLogger().addHandler(fh)
 
 def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perclass_meter,classes_number,model,
                               window_n,arg_lr,arg_scheduler):
-    global CLASSES_WINE, perclass_acc_metter, n_epoch
+    global CLASSES_WINE, perclass_acc_meter, n_epoch
 
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
@@ -143,13 +143,14 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
         #Reusing the train procedure of the DARTS implementation
         train_acc, train_obj = train(train_queue,valid_queue,model,lr,architecht,criterion,optimizer,CLASSES_WINE)
         logging.info("train_acc %f",train_acc)
+        perclass_acc_meter.reset_perclass_params()
         #train_acc, train_obj, train_stdd = torch.FloatTensor([2.0]),torch.FloatTensor([2.0]),torch.FloatTensor([3.0])
         valid_acc, valid_obj  = infer(valid_queue,model,criterion,CLASSES_WINE)
         logging.info("valid_acc %f",valid_acc)
 
         logging.info(perclass_acc_meter.return_current_epoch_data())
 
-        perclass_acc_metter.reset_perclass_params()
+        perclass_acc_meter.reset_perclass_params()
 
 
 
@@ -158,7 +159,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
     #perclass_acc_metter.write_csv(os.path.join(args.save,"experiments_measurements_window_"+str(window_n)+".csv"))
     #utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
 
-    return perclass_acc_metter.csv_list,model,scheduler
+    return perclass_acc_meter.csv_list,model,scheduler
 
 """
 The train e infer procedure were addapted for the leave one out technique
@@ -174,7 +175,7 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     :param lr: learning rate
     :return: train_acc(train accuracy), train_obj(Object used to compute the train accuracy)
   """
-  global CLASSES_WINE, perclass_acc_metter, n_epoch
+  global CLASSES_WINE, perclass_acc_meter, n_epoch
 
   objs = utils.AvgrageMeter()
   top1 = utils.AvgrageMeter()
@@ -200,7 +201,7 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     optimizer.zero_grad()
     logits = model(input)
 
-    perclass_acc_metter.compute_perclass_accuracy(target,logits,args.batch_size,n_epoch)
+    perclass_acc_meter.compute_perclass_accuracy(target,logits,args.batch_size,n_epoch)
 
     loss = criterion(logits,target)
     loss.backward()
@@ -214,7 +215,7 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
 
-    perclass_acc_metter.include_top1_avg_acc(top1.avg.item())
+    perclass_acc_meter.include_top1_avg_acc(top1.avg.item())
     #objs.update(loss.data[0], n)
     #top1.update(prec1.data[0], n)
     #top5.update(prec5.data[0], n)
@@ -230,7 +231,7 @@ def infer(valid_queue, model, criterion,num_classes):
   :param criterion:  Criterion(Function over which the loss of the model shall be computed)
   :return: valid_acc(validation accuracy), valid_obj(Object used to compute the validation accuracy)
   """
-  global CLASSES_WINE, perclass_acc_metter, n_epoch
+  global CLASSES_WINE, perclass_acc_meter, n_epoch
 
   objs = utils.AvgrageMeter()
   top1 = utils.AvgrageMeter()
@@ -248,7 +249,7 @@ def infer(valid_queue, model, criterion,num_classes):
     target = Variable(target, volatile=True).cuda(async=True)
 
     logits = model(input)
-    perclass_acc_metter.compute_perclass_accuracy(target, logits, args.batch_size, n_epoch,is_train=False)
+    perclass_acc_meter.compute_perclass_accuracy(target, logits, args.batch_size, n_epoch,is_train=False)
 
     loss = criterion(logits, target)
 
@@ -258,7 +259,7 @@ def infer(valid_queue, model, criterion,num_classes):
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
 
-    perclass_acc_metter.include_top1_avg_acc(top1.avg.item,is_train=False)
+    perclass_acc_meter.include_top1_avg_acc(top1.avg.item(),is_train=False)
     # objs.update(loss.data[0], n)
     # top1.update(prec1.data[0], n)
     # top5.update(prec5.data[0], n)
