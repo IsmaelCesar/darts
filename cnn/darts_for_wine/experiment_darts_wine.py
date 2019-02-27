@@ -47,7 +47,7 @@ parser.add_argument('--arch_learning_rate', type=float, default=3e-4, help='lear
 parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
 args = parser.parse_args()
 
-args.save = 'search-{}-{}-LoadQWinesCSystem-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+args.save = 'search-{}-{}-B1System-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 global CLASSES_WINE,perclass_acc_meter,n_epoch
 
 utils.create_exp_dir(args.save)
@@ -132,7 +132,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
         scheduler.step()
 
         lr = scheduler.get_lr()[0]
-        logging.info('epoch %d lr %e', n_epoch, lr)#in the fonollosa experiment the epoch is logged in the parent procedure
+        #logging.info('epoch %d lr %e', n_epoch, lr)#in the fonollosa experiment the epoch is logged in the parent procedure
 
         genotype = model.genotype()
         logging.info('genotype = %s', genotype)
