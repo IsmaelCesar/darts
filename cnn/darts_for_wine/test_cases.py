@@ -82,7 +82,7 @@ def testing_csv_list(perclass_meter,num_classes):
 
     for epoch in range(10):
 
-        labels = torch.randint(num_classes,(100,))
+        labels = torch.randint(num_classes,(50,))
 
         start_slice = 0
         end_slice   = batch_size
@@ -99,7 +99,7 @@ def testing_csv_list(perclass_meter,num_classes):
 
         perclass_meter.reset_perclass_params()
         #validation
-        labels = torch.randint(num_classes, (100,))
+        labels = torch.randint(num_classes, (50,))
         start_slice = 0
         end_slice = batch_size
 
@@ -120,7 +120,7 @@ def testing_csv_list(perclass_meter,num_classes):
     return perclass_meter
 
 if __name__ == '__main__':
-    num_classes  = 4
+    num_classes  = 3
     perclass_meter = PerclassAccuracyMeter(num_classes)
 
     testing_csv_list(perclass_meter,num_classes)
