@@ -22,35 +22,7 @@ class AvgrageMeter(object):
     self.cnt += n
     self.avg = self.sum / self.cnt
 
-
-class StandardDeviationMeter(object):
-
-   def __init__(self):
-      self.reset()
-
-   def reset(self):
-       self.avg = 0
-       self.standard_deviation = 0
-       self.values = []
-
-   def add_value(self,n):
-       self.values.append(n)
-
-   def calculate_average(self):
-       sum = 0
-       for v in self.values:
-           sum += v/len(self.values)
-       self.avg = sum
-
-   def calculate(self):
-       self.calculate_average()
-       sum = 0
-       for v in self.values:
-            sum += np.power((v - self.avg),2)/len(self.values)
-       self.standard_deviation = np.sqrt(sum)
-       return self.standard_deviation
-
-class PerclassAccuracyMetter():
+class PerclassAccuracyMeter(object):
     """
     Class dedicated for bulding the list to the CSV file
     """
@@ -58,10 +30,10 @@ class PerclassAccuracyMetter():
 
         csv_list = [['train_acc']]
         valid_acc_added = 0
-
         while valid_acc_added < 2:
             for i in  range(num_classes):
                 csv_list[0] += ["class"+str(i)+"_acc"]
+
 
             valid_acc_added += 1
 
@@ -72,34 +44,80 @@ class PerclassAccuracyMetter():
         self.csv_list = csv_list
         self.current_epoch = 0
         self.num_classes = num_classes
+        self.first_iteration = False
+        self.reset_confusion_matrix()
 
-    def compute_perclass_accuracy(self,taget,predictions,batch_size,epoch,is_train=True):
-        """
-        :param taget: Target value(s) from the Data set
-        :param predictions:  Predictions made by the model
-        :param batch_size:   Batch size
-        :param epoch:        Learning epoch
-        :param offset:       skipping train_acc e valid_acc values
-        :return:             CSV list updated
-        """
 
-        _,indexes = torch.max(predictions,1)
+    def compute_confusion_matrix(self,taget,logits):
 
+        _, preds = torch.max(logits,1)
+
+        for t,p in zip(taget.view(-1),preds.view(-1)):
+            self.confusion_matrix[t,p] += 1
+
+    def reset_confusion_matrix(self):
+        self.confusion_matrix = torch.zeros(self.num_classes, self.num_classes)
+
+    def compute_perclass_accuracy(self,epoch,is_train=True):
+
+        perclass_acc = self.confusion_matrix.diag() / self.confusion_matrix.sum()
+
+        #Adding the values to the csv_list
         if self.current_epoch < epoch:
-            self.csv_list.append(np.zeros(len(self.csv_list[-1])).tolist())
             self.current_epoch = epoch
+            self.csv_list.append(np.zeros(self.num_classes*2+2).tolist())
 
         offset = 1
 
-        if not is_train :
+        if not is_train:
             offset = self.num_classes + 2
 
-        for idx,tgt in zip(indexes,taget):
-            if idx == tgt:
-                self.csv_list[epoch+1][offset+idx.item()] += 1
-            self.csv_list[epoch+1][offset+idx.item()] /= batch_size
+        for p_acc,i in zip(perclass_acc,range(self.num_classes)):
+            self.csv_list[self.current_epoch+1][offset+i] = p_acc.item()*100
 
-        return self.csv_list
+        return perclass_acc
+
+
+    def write_csv(self,file_path, mode="a+"):
+        if (self.first_iteration):
+            mode = 'w+'
+            with open(file_path, mode) as csv_file:
+                csv_writer = csv.writer(csv_file, delimiter=',')
+                csv_writer.writerows(self.csv_list)
+                csv_file.close()
+        else:
+            new_list = self.csv_list[1:]
+            with open(file_path, mode) as csv_file:
+                csv_writer = csv.writer(csv_file, delimiter=',')
+                csv_writer.writerows(new_list)
+                csv_file.close()
+
+    def include_top1_avg_acc(self,top1,is_train=True):
+        """
+        :param top1: Value that includes top1 prediction average accuracy
+        """
+        offset = 0
+        if not is_train:
+          offset = self.num_classes+1
+
+        self.csv_list[self.current_epoch+1][offset] = top1
+
+    def return_current_epoch_data(self):
+        string_value = ""
+        for v in ['train_acc','valid_acc']:
+            string_value += "\n"+v + ": \n"
+            offset = 1
+
+            if v == 'valid_acc':
+                offset = 2 + self.num_classes
+
+            for c in range(self.num_classes):
+                 string_value += "class_"+str(c+1)+"acc: "
+                 string_value += str(self.csv_list[self.current_epoch+1][offset+c]) + " \n"
+
+        return string_value
+
+
 
 def accuracy(output, target, topk=(1,)):
   maxk = max(topk)
@@ -199,17 +217,3 @@ def create_exp_dir(path, scripts_to_save=None):
       dst_file = os.path.join(path, 'scripts', os.path.basename(script))
       shutil.copyfile(script, dst_file)
 
-
-def write_csv(list,file_path,first_iteration=True,mode="a+"):
-    if(first_iteration):
-        mode = 'w+'
-        with open(file_path,mode) as csv_file:
-            csv_writer = csv.writer(csv_file,delimiter=',')
-            csv_writer.writerows(list)
-            csv_file.close()
-    else:
-        list = list[1:]
-        with open(file_path,mode) as csv_file:
-            csv_writer = csv.writer(csv_file,delimiter=',')
-            csv_writer.writerows(list)
-            csv_file.close()
