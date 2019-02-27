@@ -40,7 +40,7 @@ import matplotlib.pyplot as plt
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
 from darts_for_wine.experiment_darts_wine import args
 from darts_for_wine.experiment_darts_wine import logging
-from utils import PerclassAccuracyMetter
+from utils import PerclassAccuracyMeter
 #import autokeras as ak
 
 np.random.seed(1)
@@ -177,7 +177,7 @@ def train_process(idx):
 
     for final_measurement in range(start_value, end_value+1, step):
 
-        perclass_metter = PerclassAccuracyMetter(ngr)
+        perclass_metter = PerclassAccuracyMeter(ngr)
         arg_lr = args.learning_rate
         arg_scheduler = None
 
