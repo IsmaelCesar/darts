@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import pickle
 import numpy as  np
 from cnn.darts_for_wine.winedataset import WinesDataset
-from utils import PerclassAccuracyMetter
+from utils import PerclassAccuracyMeter
 
 class AnotherNet(nn.Module):
     def __init__(self):
@@ -73,10 +73,54 @@ def test_data_loading():
         print("Shape of the target1: \n", target1.shape)
         print("Shape of the target2: \n", target2.shape)
 
-def testing_csv_list(num_classes):
-    myCsv  = np.random.randn(10,num_classes*2+2)
+def testing_csv_list(perclass_meter,num_classes):
 
-    return myCsv.tolist()
 
-#if __name__ == '__main__':
-    #testing_perclass_acc_computation()
+    batch_size = 10
+
+    #myCsv  = np.random.randn(10,num_classes*2+2)
+
+    for epoch in range(10):
+
+        labels = torch.randint(num_classes,(100,))
+
+        start_slice = 0
+        end_slice   = batch_size
+        #Train
+        for i in range(0,len(labels),batch_size):
+
+            target  = labels[start_slice:end_slice]
+            logits = torch.rand(batch_size,num_classes)
+
+            perclass_meter.compute_perclass_accuracy(target,logits,batch_size,epoch)
+
+            start_slice = end_slice
+            end_slice += batch_size
+
+        perclass_meter.reset_perclass_params()
+        #validation
+        labels = torch.randint(num_classes, (100,))
+        start_slice = 0
+        end_slice = batch_size
+
+        for i in range(0,len(labels),batch_size):
+
+            target  = labels[start_slice:end_slice]
+            logits = torch.rand(batch_size,num_classes)
+
+            perclass_meter.compute_perclass_accuracy(target,logits,batch_size,epoch,is_train=False)
+
+            start_slice = end_slice
+            end_slice += batch_size
+
+        print(perclass_meter.return_current_epoch_data())
+
+        perclass_meter.reset_perclass_params()
+
+    return perclass_meter
+
+if __name__ == '__main__':
+    num_classes  = 4
+    perclass_meter = PerclassAccuracyMeter(num_classes)
+
+    testing_csv_list(perclass_meter,num_classes)

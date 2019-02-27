@@ -61,7 +61,7 @@ logging.getLogger().addHandler(fh)
 
 
 
-def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perclass_metter,classes_number,model,
+def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perclass_meter,classes_number,model,
                               window_n,arg_lr,arg_scheduler):
     global CLASSES_WINE, perclass_acc_metter, n_epoch
 
@@ -81,7 +81,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
 
     logging.info("\n\t WINDOW + %s\n",window_n)
 
-    perclass_acc_metter = perclass_metter
+    perclass_acc_meter = perclass_meter
 
     CLASSES_WINE =  classes_number
 
@@ -146,6 +146,12 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
         #train_acc, train_obj, train_stdd = torch.FloatTensor([2.0]),torch.FloatTensor([2.0]),torch.FloatTensor([3.0])
         valid_acc, valid_obj  = infer(valid_queue,model,criterion,CLASSES_WINE)
         logging.info("valid_acc %f",valid_acc)
+
+        logging.info(perclass_acc_meter.return_current_epoch_data())
+
+        perclass_acc_metter.reset_perclass_params()
+
+
 
 
     #Saving the model
@@ -215,10 +221,6 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     if step % manual_report_freq == 0:
       logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
 
-  #displaying perclass train acc
-  for i in range(CLASSES_WINE):
-      logging.info("train accuracy of class "+ str(i)+": "+str(perclass_acc_metter.csv_list[n_epoch+1][i + 1]))
-
   return top1.avg,objs.avg
 
 def infer(valid_queue, model, criterion,num_classes):
@@ -264,9 +266,6 @@ def infer(valid_queue, model, criterion,num_classes):
     if step % manual_report_freq == 0:
         logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
 
-  #Displaying perclass valid acc
-    for i in range(CLASSES_WINE):
-        logging.info("valid accuracy of class "+str(i)+": "+str(perclass_acc_metter.csv_list[n_epoch+1][i+CLASSES_WINE+2]))
   return top1.avg, objs.avg
 
 if __name__ == "__main__":
