@@ -92,12 +92,13 @@ def testing_csv_list(perclass_meter,num_classes):
             target  = labels[start_slice:end_slice]
             logits = torch.rand(batch_size,num_classes)
 
-            perclass_meter.compute_perclass_accuracy(target,logits,batch_size,epoch)
+            perclass_meter.compute_confusion_matrix(target,logits)
 
             start_slice = end_slice
             end_slice += batch_size
 
-        perclass_meter.reset_perclass_params()
+        perclass_meter.compute_perclass_accuracy(epoch)
+        perclass_meter.reset_confusion_matrix()
         #validation
         labels = torch.randint(num_classes, (50,))
         start_slice = 0
@@ -108,14 +109,14 @@ def testing_csv_list(perclass_meter,num_classes):
             target  = labels[start_slice:end_slice]
             logits = torch.rand(batch_size,num_classes)
 
-            perclass_meter.compute_perclass_accuracy(target,logits,batch_size,epoch,is_train=False)
+            perclass_meter.compute_confusion_matrix(target,logits)
 
             start_slice = end_slice
             end_slice += batch_size
+        perclass_meter.compute_perclass_accuracy(epoch,is_train=False)
+        perclass_meter.reset_confusion_matrix()
 
         print(perclass_meter.return_current_epoch_data())
-
-        perclass_meter.reset_perclass_params()
 
     return perclass_meter
 

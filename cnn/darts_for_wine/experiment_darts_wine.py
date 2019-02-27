@@ -143,21 +143,20 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
         #Reusing the train procedure of the DARTS implementation
         train_acc, train_obj = train(train_queue,valid_queue,model,lr,architecht,criterion,optimizer,CLASSES_WINE)
         logging.info("train_acc %f",train_acc)
-        perclass_acc_meter.reset_perclass_params()
-        #train_acc, train_obj, train_stdd = torch.FloatTensor([2.0]),torch.FloatTensor([2.0]),torch.FloatTensor([3.0])
+        perclass_acc_meter.compute_perclass_accuracy(epoch)
+        perclass_meter.reset_confusion_matrix()
+
         valid_acc, valid_obj  = infer(valid_queue,model,criterion,CLASSES_WINE)
         logging.info("valid_acc %f",valid_acc)
+        perclass_acc_meter.compute_perclass_accuracy(epoch, is_train=False)
+        perclass_meter.reset_confusion_matrix()
+
 
         logging.info(perclass_acc_meter.return_current_epoch_data())
 
-        perclass_acc_meter.reset_perclass_params()
-
-
-
-
     #Saving the model
-    #perclass_acc_metter.write_csv(os.path.join(args.save,"experiments_measurements_window_"+str(window_n)+".csv"))
-    #utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
+    perclass_acc_meter.write_csv(os.path.join(args.save,"experiments_measurements_window_"+str(window_n)+".csv"))
+    utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
 
     return perclass_acc_meter.csv_list,model,scheduler
 
@@ -201,7 +200,7 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     optimizer.zero_grad()
     logits = model(input)
 
-    perclass_acc_meter.compute_perclass_accuracy(target,logits,args.batch_size,n_epoch)
+    perclass_acc_meter.compute_confusion_matrix(target,logits)
 
     loss = criterion(logits,target)
     loss.backward()
@@ -249,7 +248,7 @@ def infer(valid_queue, model, criterion,num_classes):
     target = Variable(target, volatile=True).cuda(async=True)
 
     logits = model(input)
-    perclass_acc_meter.compute_perclass_accuracy(target, logits, args.batch_size, n_epoch,is_train=False)
+    perclass_acc_meter.compute_confusion_matrix(target, logits)
 
     loss = criterion(logits, target)
 

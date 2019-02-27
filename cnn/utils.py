@@ -45,50 +45,38 @@ class PerclassAccuracyMeter(object):
         self.current_epoch = 0
         self.num_classes = num_classes
         self.first_iteration = False
-        self.reset_perclass_params()
+        self.reset_confusion_matrix()
 
-    def compute_perclass_accuracy(self,taget,predictions,batch_size,epoch,is_train=True):
-        """
-        :param taget: Target value(s) from the Data set
-        :param predictions:  Predictions made by the model
-        :param batch_size:   Batch size
-        :param epoch:        Learning epoch
-        :param offset:       skipping train_acc e valid_acc values
-        :return:             CSV list updated
-        """
 
-        _,indexes = torch.max(predictions,1)
+    def compute_confusion_matrix(self,taget,logits):
+
+        _, preds = torch.max(logits,1)
+
+        for t,p in zip(taget.view(-1),preds.view(-1)):
+            self.confusion_matrix[t,p] += 1
+
+    def reset_confusion_matrix(self):
+        self.confusion_matrix = torch.zeros(self.num_classes, self.num_classes)
+
+    def compute_perclass_accuracy(self,epoch,is_train=True):
+
+        perclass_acc = self.confusion_matrix.diag() / self.confusion_matrix.sum(1)
+
+        #Adding the values to the csv_list
         if self.current_epoch < epoch:
-            self.csv_list.append(np.zeros(self.num_classes*2+2).tolist())
             self.current_epoch = epoch
+            self.csv_list.append(np.zeros(self.num_classes*2+2).tolist())
 
         offset = 1
-        offset_perclass_params = 0
 
-        if not is_train :
+        if not is_train:
             offset = self.num_classes + 2
-            offset_perclass_params = self.num_classes
 
-        for idx,tgt in zip(indexes,taget):
-            if idx == tgt:
-                self.perclass_acc_cont[offset_perclass_params+idx] += 1
-                self.perclass_avg_cont[offset_perclass_params+idx] += 1
+        for p_acc,i in zip(perclass_acc,range(self.num_classes)):
+            self.csv_list[self.current_epoch+1][offset+i] = p_acc.item()*100
 
-                self.perclass_acc[offset_perclass_params+idx] = (self.perclass_acc_cont[offset_perclass_params+idx]/
-                                                                 batch_size)
+        return perclass_acc
 
-                self.perclass_sum[offset_perclass_params+idx] += self.perclass_acc[offset_perclass_params+idx]
-
-        for sum,n,i in zip(self.perclass_sum,self.perclass_avg_cont,range(self.num_classes*2)):
-            if n > 0:
-                if i >= self.num_classes:
-                    self.csv_list[epoch+1][i+2] = sum/n *100
-                else:
-                    self.csv_list[epoch + 1][i + 1] = sum / n * 100
-
-        self.perclass_acc_cont = np.zeros(self.num_classes * 2).tolist()
-
-        return self.csv_list
 
     def write_csv(self,file_path, mode="a+"):
         if (self.first_iteration):
@@ -103,13 +91,6 @@ class PerclassAccuracyMeter(object):
                 csv_writer = csv.writer(csv_file, delimiter=',')
                 csv_writer.writerows(new_list)
                 csv_file.close()
-
-    def reset_perclass_params(self):
-        self.perclass_sum = np.zeros(self.num_classes * 2).tolist()
-        self.perclass_avg = np.zeros(self.num_classes * 2).tolist()
-        self.perclass_acc_cont = np.zeros(self.num_classes * 2).tolist()
-        self.perclass_avg_cont = np.zeros(self.num_classes * 2).tolist()
-        self.perclass_acc = np.zeros(self.num_classes * 2).tolist()
 
     def include_top1_avg_acc(self,top1,is_train=True):
         """
