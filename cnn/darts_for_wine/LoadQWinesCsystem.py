@@ -242,7 +242,7 @@ def train_process(idx):
                                                               perclass_metter,num_classes, model, final_measurement,
                                                              arg_lr,arg_scheduler)
             train_results[str(final_measurement)]+=np.array(results_list)[1:, 0].astype(float).tolist()
-            test_results[str(final_measurement)]+=np.array(results_list)[1:, ngr+1].astype(float).tolist()
+            test_results[str(final_measurement)]+=np.array(results_list)[1:, ngr*2+1].astype(float).tolist()
             perclass_metter.first_iteration = False
                
         etime_ = time.time() - tic

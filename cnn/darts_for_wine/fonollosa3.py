@@ -179,7 +179,7 @@ def train_model(final_measurement,k_,is_first_iteration=True):
     history,model,scheduler = run_experiment(train_data, train_label, test_data, test_label, perclass_meter, classes_number,
                                              model,final_measurement,lr,scheduler)
     train_results[str(final_measurement)] += np.array(history)[1:, 0].astype(float).tolist()
-    test_results[str(final_measurement)] += np.array(history)[1:,classes_number+1].astype(float).tolist()
+    test_results[str(final_measurement)] += np.array(history)[1:,classes_number*2+1].astype(float).tolist()
 
     # #creating the model
     # K.clear_session()
