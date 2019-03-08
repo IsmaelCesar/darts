@@ -25,6 +25,8 @@ class AvgrageMeter(object):
 class PerclassAccuracyMeter(object):
     """
     Class dedicated for bulding the list to the CSV file
+    in the csv list there shal be the accuracy per-class
+    along with the perclass error.
     """
     def __init__(self,num_classes):
 
@@ -33,6 +35,7 @@ class PerclassAccuracyMeter(object):
         while valid_acc_added < 2:
             for i in  range(num_classes):
                 csv_list[0] += ["class"+str(i)+"_acc"]
+                csv_list[0] += ["class"+str(i)+"_error_rate"]
 
 
             valid_acc_added += 1
@@ -40,7 +43,7 @@ class PerclassAccuracyMeter(object):
             if valid_acc_added == 1:
                 csv_list[0] += ["valid_acc"]
 
-        csv_list.append(np.zeros(num_classes * 2 + 2).tolist())
+        csv_list.append(np.zeros(num_classes * 4 + 2).tolist())
         self.csv_list = csv_list
         self.current_epoch = 0
         self.num_classes = num_classes
@@ -60,23 +63,49 @@ class PerclassAccuracyMeter(object):
 
     def compute_perclass_accuracy(self,epoch,is_train=True):
 
-        perclass_acc = self.confusion_matrix.diag() / self.confusion_matrix.sum()
-
+        perclass_acc = self.confusion_matrix.diag() / self.confusion_matrix.sum(1)
+        perclass_error = self.__compute_perclass_error()
         #Adding the values to the csv_list
         if self.current_epoch < epoch:
             self.current_epoch = epoch
-            self.csv_list.append(np.zeros(self.num_classes*2+2).tolist())
+            self.csv_list.append(np.zeros(self.num_classes*4+2).tolist())
 
         offset = 1
 
         if not is_train:
-            offset = self.num_classes + 2
+            offset = self.num_classes*2 + 2
 
-        for p_acc,i in zip(perclass_acc,range(self.num_classes)):
+        for p_acc,pc_error,i in zip(perclass_acc,perclass_error,range(0,self.num_classes*2,2)):
             self.csv_list[self.current_epoch+1][offset+i] = p_acc.item()*100
+            self.csv_list[self.current_epoch+1][offset+i+1] = pc_error.item()
 
         return perclass_acc
 
+    def __compute_perclass_error(self):
+        """
+        The error computed in this method is the error rate of each class.
+        Let fp - false positives, tp - true positives, fn - false negatives
+        and tn - true negatives
+
+        For each class the following equation is computed
+        (fp + fn) /(tp + tn + fp + fn)
+
+        :return: list of perclass t2 error
+        """
+        perclass_error = []
+
+        for i in range(self.num_classes):
+            fp =0
+            fn =0
+            for j in range(self.num_classes):
+                if i!=j:
+                    fp += self.confusion_matrix[i][j]
+                    fn += self.confusion_matrix[j][i]
+            result = (fp + fn) / (self.confusion_matrix.diag().sum().item() + fp + fn)
+
+            perclass_error.append(result)
+
+        return perclass_error
 
     def write_csv(self,file_path, mode="a+"):
         if (self.first_iteration):
@@ -109,11 +138,14 @@ class PerclassAccuracyMeter(object):
             offset = 1
 
             if v == 'valid_acc':
-                offset = 2 + self.num_classes
-
-            for c in range(self.num_classes):
-                 string_value += "class_"+str(c+1)+"acc: "
-                 string_value += str(self.csv_list[self.current_epoch+1][offset+c]) + " \n"
+                offset = 2 + self.num_classes*2
+            c = 0
+            for i in range(0,self.num_classes*2,2):
+                 string_value += "class_"+str(c)+"acc: "
+                 string_value += str(self.csv_list[self.current_epoch+1][offset+i]) + "\t\t"
+                 string_value += "class_" + str(c) + "_error_rate: "
+                 string_value += str(self.csv_list[self.current_epoch + 1][offset + i + 1]) + "\n"
+                 c+= 1
 
         return string_value
 
