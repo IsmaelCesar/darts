@@ -36,10 +36,15 @@ from time import time
 from keras.models import model_from_json
 import csv
 
+#added by Ismael
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
 from darts_for_wine.experiment_darts_wine import args
 from darts_for_wine.experiment_darts_wine import logging
+import utils
 from utils import PerclassAccuracyMeter
+import time as time_formatter
+#--------------
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 global tic
 global actualDir,dataset,labels,names,train_results
@@ -80,7 +85,7 @@ def resetv():
     start_value = int(12000/samp) #int(5500/samp) 
     step = int(7000/samp) 
     end_value = int(19000/samp) + 1  #19000 -> 19289 samples size of B5_GMe_F050_R1.txt file
-    repetions = 20 #Set up the epochs
+    repetions = 20 #Set up the epochs 
     train_results = {}
     test_results = {}
 
@@ -367,8 +372,24 @@ The script begins here.
 """
 
 clas_=['CO','Ea','Ey','Me']  #Classes
-lauch(4,clas_,pic_) #Execute this line to load B5 dataset  
-#lauch(3,clas_,pic_) #Execute this line to load B4 dataset  
-#lauch(2,clas_,pic_) #Execute this line to load B3 dataset  
-#lauch(1,clas_,pic_) #Execute this line to load B2 dataset  
-#lauch(0,clas_,pic_) #Execute this line to load B1 dataset  
+lauch(4,clas_,pic_) #Execute this line to load B5 dataset
+
+args.save ="EXP_DARTS_WINE"
+args.save = 'search-{}-{}-B4System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+utils.create_exp_dir(args.save)
+lauch(3,clas_,pic_) #Execute this line to load B4 dataset
+
+args.save ="EXP_DARTS_WINE"
+args.save = 'search-{}-{}-B3System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+utils.create_exp_dir(args.save)
+lauch(2,clas_,pic_) #Execute this line to load B3 dataset
+
+args.save ="EXP_DARTS_WINE"
+args.save = 'search-{}-{}-B2System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+utils.create_exp_dir(args.save)
+lauch(1,clas_,pic_) #Execute this line to load B2 dataset
+
+args.save ="EXP_DARTS_WINE"
+args.save = 'search-{}-{}-B1System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+utils.create_exp_dir(args.save)
+lauch(0,clas_,pic_) #Execute this line to load B1 dataset
