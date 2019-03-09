@@ -363,7 +363,7 @@ def lauch(sys,clas_,p):
     fold_='files/' + str(syst_[sys]) + '/'
     print('loading ' + fold_)
     #call_ldataset(fold_,clas_,p)
-    #run_tr(syst_[sys])
+    run_tr(syst_[sys])
     
 """
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
