@@ -85,7 +85,7 @@ def resetv():
     start_value = int(12000/samp) #int(5500/samp) 
     step = int(7000/samp) 
     end_value = int(19000/samp) + 1  #19000 -> 19289 samples size of B5_GMe_F050_R1.txt file
-    repetions = 20 #Set up the epochs
+    repetions = 20 #Set up the epochs 
     train_results = {}
     test_results = {}
 
