@@ -161,7 +161,7 @@ def ldataset(folder,i,pic):
         pickle.dump([dataset,labels,names], f)
     print('loaded' + folder)
 
-def train_model(final_measurement,k_,is_first_iteration=True):
+def train_model(final_measurement,k_):
     global start_value,end_value,step,test_results,train_results
     global repetions,labels,tic,idx_,tmp_test_acc
     global ini_value,file_name,last_column,numfiles
@@ -186,7 +186,6 @@ def train_model(final_measurement,k_,is_first_iteration=True):
     #cat_train_label = to_categorical(train_label)
     #cat_test_label = to_categorical(test_label)
 
-    iteration = is_first_iteration
     classes_number = 4
     ## ********** Put here the Convolutive CNN  **********
     history,model,scheduler = run_experiment(train_data, train_label, test_data, test_label, perclass_meter, classes_number,
@@ -268,18 +267,18 @@ def train_process(idx):
 
         model = None #added by Ismael
         scheduler = None #added by Ismael
-        first_iteration = True #added by Ismael
         args.epochs = 1 #seting inner script epochs to one in order to use the fonollosa script epochs
         #csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
         perclass_meter = PerclassAccuracyMeter(4)
+        perclass_meter.first_iteration = True #added by Ismael
         lr = args.learning_rate
         tmp_test_acc=0
         logging.info("\n\t WINDOW + %s\n", final_measurement)
         for k in range(repetions):
         #for k in range(2):
             logging.info('epoch %d lr %e', k, lr)
-            train_model(final_measurement,k,is_first_iteration=first_iteration)
-            first_iteration = False #added by Ismael
+            train_model(final_measurement,k)
+            perclass_meter.first_iteration = False #added by Ismael
             lr = scheduler.get_lr()[0]
             #early stopping
             if tmp_test_acc==1:
@@ -385,7 +384,7 @@ if experiment_option == 5:
     print("\n\n\t Running Dataset 5\n\n")
 
     args.save ="EXP_DARTS_WINE"
-    args.save = 'search-{}-{}-B5System-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+    args.save = 'search-{}-{}-B5System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
     utils.create_exp_dir(args.save)
 
     fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))

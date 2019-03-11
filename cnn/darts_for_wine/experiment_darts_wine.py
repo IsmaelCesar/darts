@@ -50,17 +50,16 @@ parser.add_argument("--data_set_option",type=int,default=1,help="Type the datase
 parser.add_argument("--is_using_wine_ds",action='store_true',default=False,help="Indicate if any wine dataset is being used")
 args = parser.parse_args()
 
-args.save = 'search-{}-{}-B5System-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+#args.save = 'search-{}-{}-B5System-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 global CLASSES_WINE,perclass_acc_meter,n_epoch
 
-if args.is_using_wine_ds:
-    utils.create_exp_dir(args.save)
-    log_format = '%(asctime)s %(message)s'
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-        format=log_format, datefmt='%m/%d %I:%M:%S %p')
-    fh = logging.FileHandler(os.path.join(args.save ,'log.txt'))
-    fh.setFormatter(logging.Formatter(log_format))
-    logging.getLogger().addHandler(fh)
+#utils.create_exp_dir(args.save)
+#log_format = '%(asctime)s %(message)s'
+#logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+#        format=log_format, datefmt='%m/%d %I:%M:%S %p')
+#fh = logging.FileHandler(os.path.join(args.save ,'log.txt'))
+#fh.setFormatter(logging.Formatter(log_format))
+#logging.getLogger().addHandler(fh)
 
 def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perclass_meter,classes_number,model,
                               window_n,arg_lr,arg_scheduler):

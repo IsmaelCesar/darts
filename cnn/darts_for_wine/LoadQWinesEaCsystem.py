@@ -38,6 +38,7 @@ import matplotlib.pyplot as plt
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
 from darts_for_wine.experiment_darts_wine import args
 from darts_for_wine.experiment_darts_wine import logging
+import utils
 from utils import PerclassAccuracyMeter
 
 #import autokeras as ak
@@ -186,9 +187,9 @@ def train_process(idx):
        
         #In this section is to perform the LOO
         model = None
-        is_first_iteration = True
-        for i in range(ncl):
-        #for i in range(2):
+        perclass_metter.first_iteration = True
+        #for i in range(ncl):
+        for i in range(1):
             test_set=[]
             train_set=[]
             tr_labels=[]
@@ -305,5 +306,15 @@ ngr=ttvar[0]
 ncl=ttvar[ngr+1]
 calload([4,6,5,13],pic_,'TR',0) #QWinesEa-Csystem [4,6,5,13]
 sizeT=len(dataset)
+
+args.save = 'search-{}-{}-LoadQWinesEaCsystem-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+utils.create_exp_dir(args.save)
+log_format = '%(asctime)s %(message)s'
+logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+    format=log_format, datefmt='%m/%d %I:%M:%S %p')
+fh = logging.FileHandler(os.path.join(args.save ,'log.txt'))
+fh.setFormatter(logging.Formatter(log_format))
+logging.getLogger().addHandler(fh)
+
 train_process('LOO')
 
