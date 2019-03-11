@@ -45,21 +45,21 @@ parser.add_argument('--train_portion', type=float, default=0.5, help='portion of
 parser.add_argument('--unrolled', action='store_true', default=False, help='use one-step unrolled validation loss')
 parser.add_argument('--arch_learning_rate', type=float, default=3e-4, help='learning rate for arch encoding')
 parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
+#Added by Ismael
+parser.add_argument("--data_set_option",type=int,default=1,help="Type the dataset number you wish to execute")
+parser.add_argument("--is_using_wine_ds",action='store_true',default=False,help="Indicate if any wine dataset is being used")
 args = parser.parse_args()
 
-args.save = 'search-{}-{}-B5System-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+#args.save = 'search-{}-{}-B5System-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 global CLASSES_WINE,perclass_acc_meter,n_epoch
 
-utils.create_exp_dir(args.save)
-
-log_format = '%(asctime)s %(message)s'
-logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-    format=log_format, datefmt='%m/%d %I:%M:%S %p')
-fh = logging.FileHandler(os.path.join(args.save ,'log.txt'))
-fh.setFormatter(logging.Formatter(log_format))
-logging.getLogger().addHandler(fh)
-
-
+#utils.create_exp_dir(args.save)
+#log_format = '%(asctime)s %(message)s'
+#logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+#        format=log_format, datefmt='%m/%d %I:%M:%S %p')
+#fh = logging.FileHandler(os.path.join(args.save ,'log.txt'))
+#fh.setFormatter(logging.Formatter(log_format))
+#logging.getLogger().addHandler(fh)
 
 def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perclass_meter,classes_number,model,
                               window_n,arg_lr,arg_scheduler):
@@ -78,8 +78,9 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
     logging.info('gpu device = %d' % args.gpu)
     logging.info("args = %s", args)
 
+    if args.is_using_wine_ds:
+        logging.info("\n\t WINDOW + %s\n",window_n)
 
-    logging.info("\n\t WINDOW + %s\n",window_n)
     perclass_acc_meter = perclass_meter
 
     CLASSES_WINE =  classes_number
@@ -131,7 +132,9 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
         scheduler.step()
 
         lr = scheduler.get_lr()[0]
-        #logging.info('epoch %d lr %e', n_epoch, lr)#in the fonollosa experiment the epoch is logged in the parent procedure
+
+        if args.is_using_wine_ds:
+            logging.info('epoch %d lr %e', n_epoch, lr)#in the fonollosa experiment the epoch is logged in the parent procedure
 
         genotype = model.genotype()
         logging.info('genotype = %s', genotype)
@@ -143,11 +146,13 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
         train_acc, train_obj = train(train_queue,valid_queue,model,lr,architecht,criterion,optimizer,CLASSES_WINE)
         logging.info("train_acc %f",train_acc)
         perclass_acc_meter.compute_perclass_accuracy(epoch)
+        perclass_meter.csv_list[epoch+1][0] = train_acc.item()
         perclass_meter.reset_confusion_matrix()
 
         valid_acc, valid_obj  = infer(valid_queue,model,criterion,CLASSES_WINE)
         logging.info("valid_acc %f",valid_acc)
         perclass_acc_meter.compute_perclass_accuracy(epoch, is_train=False)
+        perclass_meter.csv_list[epoch + 1][CLASSES_WINE*2+1] = valid_acc.item()
         perclass_meter.reset_confusion_matrix()
 
 

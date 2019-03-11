@@ -43,6 +43,7 @@ from darts_for_wine.experiment_darts_wine import logging
 import utils
 from utils import PerclassAccuracyMeter
 import time as time_formatter
+from darts_for_wine.test_cases import testing_csv_list
 #--------------
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
@@ -52,6 +53,13 @@ global test_results,start_value,step,end_value,repetions
 global ini_value,file_name,first_column,samp,numfiles
     
 pic_ = 0  #set on in 1 if you want to save the figures
+
+##Added by Ismael - Chosing wich dataset to run from the options B1-B5
+experiment_option = args.data_set_option
+log_format = '%(asctime)s %(message)s'
+logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+    format=log_format, datefmt='%m/%d %I:%M:%S %p')
+##
 
 """
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -85,7 +93,7 @@ def resetv():
     start_value = int(5500/samp) #int(5500/samp) 
     step = int(500/samp) #oldstep 7000
     end_value = int(11500/samp) + 1  #19000 -> 19289 samples size of B5_GMe_F050_R1.txt file
-    repetions = 40 #Set up the epochs 
+    repetions = 1 #Set up the epochs
     train_results = {}
     test_results = {}
 
@@ -153,7 +161,7 @@ def ldataset(folder,i,pic):
         pickle.dump([dataset,labels,names], f)
     print('loaded' + folder)
 
-def train_model(final_measurement,k_,is_first_iteration=True):
+def train_model(final_measurement,k_):
     global start_value,end_value,step,test_results,train_results
     global repetions,labels,tic,idx_,tmp_test_acc
     global ini_value,file_name,last_column,numfiles
@@ -178,7 +186,6 @@ def train_model(final_measurement,k_,is_first_iteration=True):
     #cat_train_label = to_categorical(train_label)
     #cat_test_label = to_categorical(test_label)
 
-    iteration = is_first_iteration
     classes_number = 4
     ## ********** Put here the Convolutive CNN  **********
     history,model,scheduler = run_experiment(train_data, train_label, test_data, test_label, perclass_meter, classes_number,
@@ -260,18 +267,18 @@ def train_process(idx):
 
         model = None #added by Ismael
         scheduler = None #added by Ismael
-        first_iteration = True #added by Ismael
         args.epochs = 1 #seting inner script epochs to one in order to use the fonollosa script epochs
         #csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
         perclass_meter = PerclassAccuracyMeter(4)
+        perclass_meter.first_iteration = True #added by Ismael
         lr = args.learning_rate
         tmp_test_acc=0
         logging.info("\n\t WINDOW + %s\n", final_measurement)
         for k in range(repetions):
         #for k in range(2):
             logging.info('epoch %d lr %e', k, lr)
-            train_model(final_measurement,k,is_first_iteration=first_iteration)
-            first_iteration = False #added by Ismael
+            train_model(final_measurement,k)
+            perclass_meter.first_iteration = False #added by Ismael
             lr = scheduler.get_lr()[0]
             #early stopping
             if tmp_test_acc==1:
@@ -372,24 +379,64 @@ The script begins here.
 """
 
 clas_=['CO','Ea','Ey','Me']  #Classes
-lauch(4,clas_,pic_) #Execute this line to load B5 dataset
 
-args.save ="EXP_DARTS_WINE"
-args.save = 'search-{}-{}-B4System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
-utils.create_exp_dir(args.save)
-lauch(3,clas_,pic_) #Execute this line to load B4 dataset
+if experiment_option == 5:
+    print("\n\n\t Running Dataset 5\n\n")
 
-args.save ="EXP_DARTS_WINE"
-args.save = 'search-{}-{}-B3System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
-utils.create_exp_dir(args.save)
-lauch(2,clas_,pic_) #Execute this line to load B3 dataset
+    args.save ="EXP_DARTS_WINE"
+    args.save = 'search-{}-{}-B5System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+    utils.create_exp_dir(args.save)
 
-args.save ="EXP_DARTS_WINE"
-args.save = 'search-{}-{}-B2System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
-utils.create_exp_dir(args.save)
-lauch(1,clas_,pic_) #Execute this line to load B2 dataset
+    fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+    fh.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(fh)
 
-args.save ="EXP_DARTS_WINE"
-args.save = 'search-{}-{}-B1System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
-utils.create_exp_dir(args.save)
-lauch(0,clas_,pic_) #Execute this line to load B1 dataset
+    lauch(4,clas_,pic_) #Execute this line to load B5 dataset
+elif experiment_option == 4:
+    print("\n\n\t Running Dataset 4\n\n")
+
+    args.save ="EXP_DARTS_WINE"
+    args.save = 'search-{}-{}-B4System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+    utils.create_exp_dir(args.save)
+
+    fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+    fh.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(fh)
+
+    lauch(3,clas_,pic_) #Execute this line to load B4 dataset
+elif experiment_option == 3:
+    print("\n\n\t Running Dataset 3\n\n")
+
+    args.save ="EXP_DARTS_WINE"
+    args.save = 'search-{}-{}-B3System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+    utils.create_exp_dir(args.save)
+
+    fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+    fh.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(fh)
+
+    lauch(2,clas_,pic_) #Execute this line to load B3 dataset
+elif experiment_option == 2:
+    print("\n\n\t Running Dataset 2\n\n")
+
+    args.save ="EXP_DARTS_WINE"
+    args.save = 'search-{}-{}-B2System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+    utils.create_exp_dir(args.save)
+
+    fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+    fh.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(fh)
+
+    lauch(1,clas_,pic_) #Execute this line to load B2 dataset
+elif experiment_option == 1:
+    print("\n\n\t Running Dataset 1\n\n")
+
+    args.save ="EXP_DARTS_WINE"
+    args.save = 'search-{}-{}-B1System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+    utils.create_exp_dir(args.save)
+
+    fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+    fh.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(fh)
+
+    lauch(0,clas_,pic_) #Execute this line to load B1 dataset

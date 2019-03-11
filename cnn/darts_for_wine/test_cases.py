@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pickle
 import numpy as  np
-from cnn.darts_for_wine.winedataset import WinesDataset
+from darts_for_wine.winedataset import WinesDataset
 from utils import PerclassAccuracyMeter
 
 class AnotherNet(nn.Module):
@@ -118,7 +118,7 @@ def testing_csv_list(perclass_meter,num_classes):
 
         print(perclass_meter.return_current_epoch_data())
 
-    return perclass_meter
+    return perclass_meter.csv_list
 
 if __name__ == '__main__':
     num_classes  = 3
