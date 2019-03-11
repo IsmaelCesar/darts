@@ -82,10 +82,10 @@ def resetv():
     #Window one:  5000 - 12000 
     #Window two:  5000 - 19000 
     ini_value = int(5000/samp) 
-    start_value = int(12000/samp) #int(5500/samp) 
-    step = int(7000/samp) 
-    end_value = int(19000/samp) + 1  #19000 -> 19289 samples size of B5_GMe_F050_R1.txt file
-    repetions = 20 #Set up the epochs 
+    start_value = int(5500/samp) #int(5500/samp) 
+    step = int(500/samp) #oldstep 7000
+    end_value = int(11500/samp) + 1  #19000 -> 19289 samples size of B5_GMe_F050_R1.txt file
+    repetions = 40 #Set up the epochs 
     train_results = {}
     test_results = {}
 
