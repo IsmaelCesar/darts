@@ -150,6 +150,50 @@ class PerclassAccuracyMeter(object):
         return string_value
 
 
+class SensorDataTransformer(object):
+    """
+    This object serves as a data transformer of the
+    sensor measurements, saving values relevant to the data an canvas size
+    """
+    def __init__(self,canvas_lenght,canvas_height,max_lenght,max_height):
+
+        self.canvas_lenght = canvas_lenght
+        self.canvas_height = canvas_height
+        self.max_lenght = max_lenght
+        self.max_height = max_height
+        self.dot = 255
+
+    def __dot(self,canvas,d1,d2):
+        if d1.any() < self.canvas_height:
+            val1 = len(canvas) - round(d1 * self.canvas_height / self.max_height) - self.dot
+            val2 = len(canvas) - round(d1 * self.canvas_height / self.max_height)
+            val3 = np.floor_divide(d2 * self.canvas_lenght, self.max_lenght) - 1
+            val4 = np.floor_divide(d2 * self.canvas_lenght, self.max_lenght) - 1 + self.dot
+            canvas[int(val1)
+                   :int(val2),
+                val3:
+                val4] = 255
+
+        return canvas
+
+    def tranform_sensor_values_to_image(self,sensor_array):
+        """
+        :param sensor_array: Array of samples to be tranformed in to images
+        :param max_height: the maximum values of the measurements, related do maximum voltage
+                            of the sensor
+        :param max_lenght: the maximum values of the measurents, related to measurement time
+        :return:
+        """
+        sensor_images = []
+        for sample,j in zip(sensor_array,range(sensor_array.shape[0])):
+            image = np.full((sensor_array.shape[2],self.canvas_lenght,self.canvas_height),0)
+            for line in sample:
+                for sensor,sensor_index in zip(line,range(len(line))):
+                    image[sensor_index] = self.__dot(image[sensor_index],sensor,j)
+            sensor_images.append(image)
+
+        return np.array(sensor_images)
+
 
 def accuracy(output, target, topk=(1,)):
   maxk = max(topk)

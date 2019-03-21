@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import pickle
 import numpy as  np
 from darts_for_wine.winedataset import WinesDataset
+from matplotlib.pyplot import imshow
 from utils import PerclassAccuracyMeter
 
 class AnotherNet(nn.Module):

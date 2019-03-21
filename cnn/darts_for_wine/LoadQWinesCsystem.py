@@ -42,6 +42,7 @@ from darts_for_wine.experiment_darts_wine import args
 from darts_for_wine.experiment_darts_wine import logging
 import utils
 from utils import PerclassAccuracyMeter
+from darts_for_wine.test_cases import SensorDataTransformer
 #import autokeras as ak
 
 np.random.seed(1)
@@ -87,9 +88,9 @@ def resetv():
     samp=1  #1 for no sampling (use sampling to reduce the number of samples)
     first_column=2 #Columns 0 and 1 correspond to humidity and temperature. 
     ini_value = int(160/samp) #ignoring the baseline (first 160 samples) 
-    start_value = int(210/samp) #Defines the first window, old_start_value:1730
-    step = int(50/samp) #Window size old_step:1570
-    end_value = int(1650/samp) + 1 #last value old_end_value:3300
+    start_value = int(1730/samp) #Defines the first window, old_start_value:1730
+    step = int(1570/samp) #Window size old_step:1570
+    end_value = int(3300/samp) + 1 #last value old_end_value:3300
     repetions = 1  
 
 """
@@ -178,6 +179,9 @@ def train_process(idx):
 
     for final_measurement in range(start_value, end_value+1, step):
 
+        # Next Line has been added by Ismael
+        data_transformer = SensorDataTransformer(32, 32,final_measurement+step, 4560)
+
         perclass_metter = PerclassAccuracyMeter(ngr)
         arg_lr = args.learning_rate
         arg_scheduler = None
@@ -228,9 +232,9 @@ def train_process(idx):
             scaler = preprocessing.StandardScaler().fit(flat_train_data)
             flat_train_data = scaler.transform(flat_train_data)
             flat_test_data = scaler.transform(flat_test_data)
-
-            train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
-            test_data = flat_test_data.reshape(test_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
+            ## UNCOMMENT BEFORE LATER
+            #train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
+            #test_data = flat_test_data.reshape(test_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
             #input_shape = (train_data.shape[1],train_data.shape[2],1)
 
             # convert class vectors to binary class matrices
@@ -239,6 +243,8 @@ def train_process(idx):
             num_classes=cat_train_label.shape[1]
 
             ##Put here the Convolutive CNN
+            train_data = data_transformer.tranform_sensor_values_to_image(train_data)
+
             results_list, model,arg_scheduler= run_experiment(train_data, train_label, test_data,test_label,
                                                               perclass_metter,num_classes, model, final_measurement,
                                                              arg_lr,arg_scheduler)
