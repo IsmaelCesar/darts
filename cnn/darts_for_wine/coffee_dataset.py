@@ -163,7 +163,7 @@ def train_model(final_measurement,k_):
     global repetitions,labels,tic,idx_,tmp_test_acc
     global ini_value,file_name,last_column,numfiles
     # Making data necessary for training global variables
-    global model, scheduler, lr, perclass_meter
+    global model, scheduler, lr, perclass_meter,classes_number,partial_results
     
     #split train and test data
     train_data, test_data, train_label, test_label = train_test_split(dataset[:,ini_value:final_measurement,:], labels, test_size = 0.2)
@@ -183,6 +183,8 @@ def train_model(final_measurement,k_):
     h,model,scheduler =run_experiment(flat_train_data,train_label,flat_test_data,test_label,perclass_meter,classes_number,model,
                                       final_measurement,lr,scheduler)
 
+    partial_results[str(final_measurement)] = h[-1][classes_number*2+1] #picking the last value
+
     return 0
 
 """
@@ -194,10 +196,13 @@ def train_process(idx):
     global start_value,end_value,step,test_results,train_results
     global repetitions,labels,tic,idx_,tmp_test_acc,file_name
     # Making data necessary for training global variables
-    global model, scheduler, lr, perclass_meter
+    global model, scheduler, lr, perclass_meter,classes_number,partial_results
     idx_=idx
     tic = time()
-    
+
+    partial_results = {}
+    classes_number = 3
+
     for final_measurement in range(start_value, end_value+1, step):
         test_results[str(final_measurement)] = []
         train_results[str(final_measurement)] = []
@@ -205,17 +210,19 @@ def train_process(idx):
         model = None
         scheduler = None
         lr = args.learning_rate
-
+        partial_results[str(final_measurement)] = 0
         #logging.info("\n\t WINDOW + %s\n", final_measurement)
 
         tmp_test_acc=0      
         #for k in range(repetitions):
         train_model(final_measurement,0)
-  
-           
+
   
     etime = time() - tic
-    print("execution time: "+str(etime))
+    logging.info("execution time: "+str(etime))
+
+    for window in partial_results.keys():
+        logging.info("Window "+window+" acc: "+str(partial_results[window])+"\n\n")
     
 
 """
@@ -271,7 +278,7 @@ log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M:%S %p')
 args.save ="EXP_DARTS_WINE"
-args.save = 'search-{}-{}-B3System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+args.save = 'search-{}-{}-B3System-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 utils.create_exp_dir(args.save)
 
 fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
