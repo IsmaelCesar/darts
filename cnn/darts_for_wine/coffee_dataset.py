@@ -278,7 +278,7 @@ log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M:%S %p')
 args.save ="EXP_DARTS_WINE"
-args.save = 'search-{}-{}-B3System-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+args.save = 'search-{}-{}-Coffee_DataSet'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 utils.create_exp_dir(args.save)
 
 fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
