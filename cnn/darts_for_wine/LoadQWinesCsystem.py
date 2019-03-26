@@ -42,7 +42,7 @@ from darts_for_wine.experiment_darts_wine import args
 from darts_for_wine.experiment_darts_wine import logging
 import utils
 from utils import PerclassAccuracyMeter
-from darts_for_wine.test_cases import SensorDataTransformer
+from utils import SensorDataTransformer
 #import autokeras as ak
 
 np.random.seed(1)
