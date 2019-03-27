@@ -98,7 +98,7 @@ def testing_csv_list(perclass_meter,num_classes):
             start_slice = end_slice
             end_slice += batch_size
 
-        perclass_meter.compute_perclass_accuracy(epoch)
+        perclass_meter.compute_perclass_accuracy_with_precision_recall(epoch)
         perclass_meter.reset_confusion_matrix()
         #validation
         labels = torch.randint(num_classes, (50,))
@@ -114,11 +114,11 @@ def testing_csv_list(perclass_meter,num_classes):
 
             start_slice = end_slice
             end_slice += batch_size
-        perclass_meter.compute_perclass_accuracy(epoch,is_train=False)
+        perclass_meter.compute_perclass_accuracy_with_precision_recall(epoch,is_train=False)
         perclass_meter.reset_confusion_matrix()
 
-        print(perclass_meter.return_current_epoch_data())
-
+        print(perclass_meter.return_current_epoch_perclass_precision_recall())
+    perclass_meter.csv_list[-1][num_classes*2+1] = 99.98
     return perclass_meter.csv_list
 
 if __name__ == '__main__':

@@ -81,6 +81,25 @@ class PerclassAccuracyMeter(object):
 
         return perclass_acc
 
+    def compute_perclass_accuracy_with_precision_recall(self, epoch, is_train=True):
+        perclass_acc = self.confusion_matrix.diag() / self.confusion_matrix.sum(1)
+        precision_recall = self.__compute_precision_and_recall()
+        # Adding the values to the csv_list
+        if self.current_epoch < epoch:
+            self.current_epoch = epoch
+            self.csv_list.append(np.zeros(self.num_classes * 4 + 2).tolist())
+
+        offset = 1
+
+        if not is_train:
+            offset = self.num_classes*2 + 2
+
+        for p_acc, pc_rc, i in zip(perclass_acc, precision_recall, range(0, self.num_classes * 2, 2)):
+            self.csv_list[self.current_epoch + 1][offset + i] = p_acc.item() * 100
+            self.csv_list[self.current_epoch + 1][offset + i + 1] = (pc_rc[0].item(),pc_rc[1].item())
+
+        return perclass_acc
+
     def __compute_perclass_error(self):
         """
         The error computed in this method is the error rate of each class.
@@ -107,6 +126,40 @@ class PerclassAccuracyMeter(object):
 
         return perclass_error
 
+    def __compute_precision_and_recall(self):
+        """
+        The error computed in this method is the error rate of each class.
+        Let fp - false positives, tp - true positives, fn - false negatives
+        and tn - true negatives
+
+        For each class the following equation is computed for precision:
+        tp /(tp + fp)
+
+        For each class the following equation is computed for recall
+        tp /(tp + fn)
+
+        :return: list of perclass t2 error
+        """
+        precision_recall = []
+
+        for i in range(self.num_classes):
+            fp = 0
+            fn = 0
+            tp = 0
+            for j in range(self.num_classes):
+                if i != j:
+                    fp += self.confusion_matrix[i][j]
+                    fn += self.confusion_matrix[j][i]
+                else:
+                    tp = self.confusion_matrix[j][i]
+
+            precision = tp/(tp + fp)
+            recall = tp/(tp + fn)
+            precision_recall.append((precision,recall))
+
+        return precision_recall
+
+
     def write_csv(self,file_path, mode="a+"):
         if (self.first_iteration):
             mode = 'w+'
@@ -131,7 +184,7 @@ class PerclassAccuracyMeter(object):
 
         self.csv_list[self.current_epoch+1][offset] = top1
 
-    def return_current_epoch_data(self):
+    def return_current_epoch_perclass_error_rate(self):
         string_value = ""
         for v in ['train_acc','valid_acc']:
             string_value += "\n"+v + ": \n"
@@ -149,6 +202,25 @@ class PerclassAccuracyMeter(object):
 
         return string_value
 
+    def return_current_epoch_perclass_precision_recall(self):
+        string_value = ""
+        for v in ['train_acc','valid_acc']:
+            string_value += "\n"+v + ": \n"
+            offset = 1
+
+            if v == 'valid_acc':
+                offset = 2 + self.num_classes*2
+            c = 0
+            for i in range(0,self.num_classes*2,2):
+                 string_value += "class_"+str(c)+"acc: "
+                 string_value += str(self.csv_list[self.current_epoch+1][offset+i]) + "\t\t"
+                 string_value += "class_" + str(c) + "_precision: "
+                 string_value += str(self.csv_list[self.current_epoch + 1][offset + i + 1][0]) + "\t\t"
+                 string_value += "class_" + str(c) + "_recall: "
+                 string_value += str(self.csv_list[self.current_epoch + 1][offset + i + 1][1]) + "\n"
+                 c+= 1
+
+        return string_value
 
 class SensorDataTransformer(object):
     """

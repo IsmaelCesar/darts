@@ -46,6 +46,7 @@ from darts_for_wine.experiment_darts_wine import args
 from darts_for_wine.experiment_darts_wine import logging
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
 
+
    
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 global tic
@@ -211,6 +212,7 @@ def train_process(idx):
         scheduler = None
         lr = args.learning_rate
         partial_results[str(final_measurement)] = 0
+        perclass_meter = PerclassAccuracyMeter(classes_number)
         #logging.info("\n\t WINDOW + %s\n", final_measurement)
 
         tmp_test_acc=0      
