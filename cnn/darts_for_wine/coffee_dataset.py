@@ -45,6 +45,7 @@ from utils import PerclassAccuracyMeter
 from darts_for_wine.experiment_darts_wine import args
 from darts_for_wine.experiment_darts_wine import logging
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
+import time as time_formatter
 
 
    
@@ -280,7 +281,7 @@ log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M:%S %p')
 args.save ="EXP_DARTS_WINE"
-args.save = 'search-{}-{}-Coffee_DataSet'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+args.save = 'search-{}-{}-Coffee_DataSet'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
 utils.create_exp_dir(args.save)
 
 fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
