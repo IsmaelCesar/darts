@@ -156,7 +156,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
         perclass_meter.reset_confusion_matrix()
 
 
-        logging.info(perclass_acc_meter.return_current_epoch_data())
+        logging.info(perclass_acc_meter.return_current_epoch_perclass_error_rate())
 
     #Saving the model
     perclass_acc_meter.write_csv(os.path.join(args.save,"experiments_measurements_window_"+str(window_n)+".csv"))
