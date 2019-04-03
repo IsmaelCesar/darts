@@ -37,6 +37,11 @@ import utils
 from darts_for_wine.experiment_darts_wine import logging
 from darts_for_wine.experiment_darts_wine import args
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
+from darts_for_wine.experiment_darts_wine import infer
+from darts_for_wine.winedataset import WinesDataset
+import torch
+import torch.nn as nn
+import torch.utils.data as torchdata
 import time as time_formatter
 
    
@@ -205,11 +210,19 @@ def train_model(final_measurement,k_,te_g):
     #cat_test_label = to_categorical(test_label)
     #Added By Ismael
     stdd_train_data = flat_train_data.reshape(train_data.shape[0],train_data.shape[1],last_column)
-    stdd_valid_data = flat_train_data.reshape(valid_data.shape[0], valid_data.shape[1], last_column)
-    stdd_test_data = flat_train_data.reshape(test_data.shape[0], test_data.shape[1], last_columnT)
+    stdd_valid_data = flat_valid_data.reshape(valid_data.shape[0], valid_data.shape[1], last_column)
+    stdd_test_data = flat_test_data.reshape(test_data.shape[0], test_data.shape[1], last_columnT)
     ## ********** Put here the Convolutive CNN  **********
     h,model,scheduler = run_experiment(stdd_train_data,train_label,stdd_valid_data,valid_label,perclass_meter,
                                        classes_number,model,final_measurement,lr,scheduler)
+
+    logging.info("\t\t\n\n USING TEST SET OF WINDOW"+str(final_measurement)+"\n\n")
+
+    dset_obj = WinesDataset(stdd_test_data,test_label)
+    test_queue = torch.utils.data.DataLoader(dset_obj, sampler=torchdata.sampler.RandomSampler(dset_obj),
+                                              pin_memory=True, num_workers=2)
+    infer(test_queue,model,nn.CrossEntropyLoss(),classes_number)
+
     train_results[str(final_measurement)] = h[-1][0]
     valid_results[str(final_measurement)] = h[-1][classes_number*2+1]
 
@@ -224,7 +237,7 @@ def train_process(te_g):
 
     tic = time()
 
-    classes_number = 3
+    classes_number = 11
     
     for final_measurement in range(start_value, end_value+1, step):
         valid_results[str(final_measurement)] = []
@@ -337,7 +350,7 @@ def run_tr():
     print(str(numfiles)+'files loaded from' + tr_g)
     
     if not namesT:
-        with open('preloaded_dataset-' + te_g + '.pkl', 'rb') as f_s1: 
+        with open(prefix_path+'preloaded_dataset-' + te_g + '.pkl', 'rb') as f_s1:
             datasetT,labelsT,namesT = pickle.load(f_s1)
     datasetT = np.array(datasetT)
     dim_dataT = dataset.shape
@@ -356,21 +369,22 @@ fold_='WTD_files/'
 tr_g=syst_[3] #Training group 'L4'
 
 
-#Added by ismael
-log_format = '%(asctime)s %(message)s'
-logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-    format=log_format, datefmt='%m/%d %I:%M:%S %p')
-args.save ="EXP_DARTS"
-args.save = 'search-{}-{}-WindTunel'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
-utils.create_exp_dir(args.save)
-
-fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
-fh.setFormatter(logging.Formatter(log_format))
-logging.getLogger().addHandler(fh)
-
 #Testing groups 'L1','L2','L3','L4','L5','L6'
 for k in range(0, 6, 1):
     print('loading ' + fold_)
+
+    # Added by ismael
+    log_format = '%(asctime)s %(message)s'
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                        format=log_format, datefmt='%m/%d %I:%M:%S %p')
+    args.save = "EXP_DARTS"
+    args.save = ('search-{}-{}-WindTunel_'+syst_[k]).format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+    utils.create_exp_dir(args.save)
+
+    fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+    fh.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(fh)
+
     te_g=syst_[k]
     print(te_g)
     #call_ldataset() #Only excute for non preloaded dataset
