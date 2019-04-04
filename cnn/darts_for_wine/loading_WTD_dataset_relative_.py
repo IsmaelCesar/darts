@@ -238,7 +238,7 @@ def train_process(te_g):
     tic = time()
 
     classes_number = len(clas_)
-    
+
     for final_measurement in range(start_value, end_value+1, step):
         valid_results[str(final_measurement)] = []
         train_results[str(final_measurement)] = []
@@ -271,7 +271,7 @@ def train_process(te_g):
        logging.info('train:')
         #mean_acc_train = np.mean(train_results[dict_value])
        logging.info(str(dict_value)+":"+str(train_results[dict_value]))
-   
+
 #    # Saving the outcomes:
 #    fcsv= 'summary_'+ file_name[:-3] + tr_g + te_g + '.csv'      
 #    with open(fcsv, 'w') as csvfile:
