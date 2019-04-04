@@ -233,11 +233,11 @@ def train_process(te_g):
     global start_value,end_value,step,valid_results,train_results,test_results
     global repetions,labels,tic,tr_g,tmp_valid_acc
     #Added by Ismael
-    global model, scheduler, lr, perclass_meter, classes_number
+    global clas_,model, scheduler, lr, perclass_meter, classes_number
 
     tic = time()
 
-    classes_number = 11
+    classes_number = len(clas_)
     
     for final_measurement in range(start_value, end_value+1, step):
         valid_results[str(final_measurement)] = []
