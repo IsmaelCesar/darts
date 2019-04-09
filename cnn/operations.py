@@ -132,9 +132,9 @@ class FactorizedReduce(nn.Module):
     if out2.shape[2] == out1.shape[2] and out2.shape[3] == out1.shape[3]:
       out = torch.cat([out1,out2], dim=1)
     else:
-      out1 = self.conv_1(x[:,:,:,1:])
-      out2 = self.conv_2(x[:,:,:,1:])
-      out = torch.cat([out1, out2], dim=1)
+      out1 = self.conv_1(x)
+      out2 = self.conv_2(x)
+      out = torch.cat([out1, out2],dim=1)
     out = self.bn(out)
     return out
 
