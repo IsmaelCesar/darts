@@ -121,9 +121,8 @@ class PerclassAccuracyMeter(object):
                 if i!=j:
                     fp += self.confusion_matrix[i][j]
                     fn += self.confusion_matrix[j][i]
-                elif i==j:
-                    tp += self.confusion_matrix[i][j]
-            result = (fp + fn) / (tp + fp + fn)
+
+            result = (fp + fn) / (self.confusion_matrix.diag().sum().item() + fp + fn)
 
             perclass_error.append(result)
 
