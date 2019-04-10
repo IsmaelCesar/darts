@@ -86,8 +86,8 @@ def resetv():
     #Window two:  30 - 299
     #Next test ini_value 30,start_value 50,step 20
     ini_value = int(30/samp) 
-    start_value = int(165/samp) 
-    step = int(135/samp) 
+    start_value = int(50/samp) #old_start_value 165
+    step = int(20/samp)        #old_step 135
     end_value = int(299/samp) 
     repetitions = args.epochs  #Set up the epochs
     train_results = {}
@@ -284,7 +284,7 @@ log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M:%S %p')
 args.save ="EXP_DARTS_WINE"
-args.save = 'search-{}-{}-Coffee_DataSet'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+args.save = 'search-{}-{}-Coffee_DataSet_SmallerWindows'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
 utils.create_exp_dir(args.save)
 
 fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))

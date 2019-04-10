@@ -83,7 +83,7 @@ class PerclassAccuracyMeter(object):
 
     def compute_perclass_accuracy_with_precision_recall(self, epoch, is_train=True):
         perclass_acc = self.confusion_matrix.diag() / self.confusion_matrix.sum(1)
-        precision_recall = self.__compute_precision_and_recall()
+        precision_recall = self.__compute_precision_recall_and_f1()
         # Adding the values to the csv_list
         if self.current_epoch < epoch:
             self.current_epoch = epoch
@@ -96,7 +96,7 @@ class PerclassAccuracyMeter(object):
 
         for p_acc, pc_rc, i in zip(perclass_acc, precision_recall, range(0, self.num_classes * 2, 2)):
             self.csv_list[self.current_epoch + 1][offset + i] = p_acc.item() * 100
-            self.csv_list[self.current_epoch + 1][offset + i + 1] = (pc_rc[0].item(),pc_rc[1].item())
+            self.csv_list[self.current_epoch + 1][offset + i + 1] = (pc_rc[0].item(),pc_rc[1].item(),pc_rc[2].item())
 
         return perclass_acc
 
@@ -107,7 +107,7 @@ class PerclassAccuracyMeter(object):
         and tn - true negatives
 
         For each class the following equation is computed
-        (fp + fn) /(tp + tn + fp + fn)
+        (fp + fn) /(tp + fp + fn)
 
         :return: list of perclass t2 error
         """
@@ -116,17 +116,19 @@ class PerclassAccuracyMeter(object):
         for i in range(self.num_classes):
             fp =0
             fn =0
+            tp =0
             for j in range(self.num_classes):
                 if i!=j:
                     fp += self.confusion_matrix[i][j]
                     fn += self.confusion_matrix[j][i]
+
             result = (fp + fn) / (self.confusion_matrix.diag().sum().item() + fp + fn)
 
             perclass_error.append(result)
 
         return perclass_error
 
-    def __compute_precision_and_recall(self):
+    def __compute_precision_recall_and_f1(self):
         """
         The error computed in this method is the error rate of each class.
         Let fp - false positives, tp - true positives, fn - false negatives
@@ -137,6 +139,9 @@ class PerclassAccuracyMeter(object):
 
         For each class the following equation is computed for recall
         tp /(tp + fn)
+
+        For each class the following equation is computed for f1 score
+        2* (precision*recall)/(precsion + recall)
 
         :return: list of perclass t2 error
         """
@@ -155,7 +160,8 @@ class PerclassAccuracyMeter(object):
 
             precision = tp/(tp + fp)
             recall = tp/(tp + fn)
-            precision_recall.append((precision,recall))
+            f1score     = 2*(precision*recall)/(precision+recall)
+            precision_recall.append((precision,recall,f1score))
 
         return precision_recall
 
@@ -217,7 +223,9 @@ class PerclassAccuracyMeter(object):
                  string_value += "class_" + str(c) + "_precision: "
                  string_value += str(self.csv_list[self.current_epoch + 1][offset + i + 1][0]) + "\t\t"
                  string_value += "class_" + str(c) + "_recall: "
-                 string_value += str(self.csv_list[self.current_epoch + 1][offset + i + 1][1]) + "\n"
+                 string_value += str(self.csv_list[self.current_epoch + 1][offset + i + 1][1]) + "\t\t"
+                 string_value += "class_" + str(c) + "_f1_score: "
+                 string_value += str(self.csv_list[self.current_epoch + 1][offset + i + 1][2]) + "\n"
                  c+= 1
 
         return string_value

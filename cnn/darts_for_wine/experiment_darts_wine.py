@@ -147,6 +147,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
         logging.info("train_acc %f",train_acc)
         perclass_acc_meter.compute_perclass_accuracy(epoch)
         perclass_meter.csv_list[epoch+1][0] = train_acc.item()
+
         perclass_meter.reset_confusion_matrix()
 
         valid_acc, valid_obj  = infer(valid_queue,model,criterion,CLASSES_WINE)
