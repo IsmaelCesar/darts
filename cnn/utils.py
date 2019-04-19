@@ -198,7 +198,7 @@ class PerclassAccuracyMeter(object):
         """
         offset = 0
         if not is_train:
-          offset = self.num_classes+1
+          offset = self.num_classes*2+1
 
         self.csv_list[self.current_epoch+1][offset] = top1
 
