@@ -41,7 +41,6 @@ import utils
 from darts_for_wine.experiment_darts_wine import logging
 from darts_for_wine.experiment_darts_wine import args
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
-from darts_for_wine.test_cases import testing_csv_list
 import time as time_formatter
    
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
@@ -178,9 +177,9 @@ def train_model(final_measurement,k_):
     #cat_test_label = to_categorical(test_label)
     
     ## ********** Put here the Convolutive CNN  **********
-    #h, model, scheduler=run_experiment(stdd_train_data,train_label,stdd_test_data,test_label,perclass_meter,
-    #               num_classes,model,final_measurement,lr,scheduler)
-    h = testing_csv_list(perclass_meter,train_label,args.save,final_measurement)
+    h, model, scheduler=run_experiment(stdd_train_data,train_label,stdd_test_data,test_label,perclass_meter,
+                   num_classes,model,final_measurement,lr,scheduler)
+
 
     train_results[str(final_measurement)] = np.array(h)[1:,0].astype(float).tolist()
     test_results[str(final_measurement)] = np.array(h)[1:, num_classes*2+1].astype(float).tolist()
@@ -281,11 +280,11 @@ def train_process(idx):
     for dict_value in test_results.keys():
          logging.info('test:')
          mean_acc_test = np.mean(test_results[dict_value])
-         logging.info(dict_value+"mean acc:"+str(mean_acc_test))
+         logging.info(dict_value+" mean acc:"+str(mean_acc_test))
     for dict_value in train_results.keys():
         logging.info('train:')
         mean_acc_train = np.mean(train_results[dict_value])
-        logging.info(dict_value +"mean acc:"+ str(mean_acc_train))
+        logging.info(dict_value +" mean acc:"+ str(mean_acc_train))
     
     ## Saving the outcomes:
     # fcsv=file_name[:-3]+'.csv'      
