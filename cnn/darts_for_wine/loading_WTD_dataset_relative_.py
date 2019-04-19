@@ -223,8 +223,8 @@ def train_model(final_measurement,k_,te_g):
                                               pin_memory=True, num_workers=2)
     infer(test_queue,model,nn.CrossEntropyLoss(),classes_number)
 
-    train_results[str(final_measurement)] = h[-1][0]
-    valid_results[str(final_measurement)] = h[-1][classes_number*2+1]
+    train_results[str(final_measurement)] = np.array(h)[1:,0].astype(float).tolist()
+    valid_results[str(final_measurement)] = np.array(h)[1:, classes_number*2+1].astype(float).tolist()
 
     return 0
 
@@ -266,12 +266,13 @@ def train_process(te_g):
     #Printing partial outcomes
     for dict_value in valid_results.keys():
        logging.info('valid:')
-       logging.info(str(dict_value) + ":" + str(valid_results[dict_value]))
+       mean_acc = np.mean(valid_results[dict_value])
+       logging.info(str(dict_value) + " mean acc:" + str(mean_acc))
        #mean_acc_valid = np.mean(valid_results[dict_value])
     for dict_value in train_results.keys():
        logging.info('train:')
-        #mean_acc_train = np.mean(train_results[dict_value])
-       logging.info(str(dict_value)+":"+str(train_results[dict_value]))
+       mean_acc_train = np.mean(train_results[dict_value])
+       logging.info(str(dict_value)+"mean acc:"+str(mean_acc_train))
 
 #    # Saving the outcomes:
 #    fcsv= 'summary_'+ file_name[:-3] + tr_g + te_g + '.csv'      
