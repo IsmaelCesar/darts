@@ -22,6 +22,8 @@ import matplotlib.pyplot as plt
 import concurrent.futures
 #import matplotlib.pyplot as plt
 import os
+import sys
+sys.path.append("../")
 from sklearn.model_selection import train_test_split
 from keras.utils import to_categorical
 from sklearn import preprocessing
@@ -32,7 +34,15 @@ from keras import backend as K
 from time import time
 from keras.models import model_from_json
 #import csv
-import pandas as pd 
+import pandas as pd
+
+#Added By ismael
+import utils
+from darts_for_wine.experiment_darts_wine import logging
+from darts_for_wine.experiment_darts_wine import args
+from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
+from darts_for_wine.test_cases import testing_csv_list
+import time as time_formatter
    
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 global tic
@@ -149,7 +159,8 @@ def train_model(final_measurement,k_):
     global start_value,end_value,step,test_results,train_results
     global repetitions,labels,tic,idx_,tmp_test_acc
     global ini_value,file_name,last_column,numfiles
-    
+    #Added By Ismael
+    global num_classes, perclass_meter, model, scheduler, lr
     #split train and test data
     train_data, test_data, train_label, test_label = train_test_split(dataset[:,ini_value:final_measurement,:], labels, test_size = 0.5)
      
@@ -159,12 +170,17 @@ def train_model(final_measurement,k_):
     scaler = preprocessing.StandardScaler().fit(flat_train_data)
     flat_train_data = scaler.transform(flat_train_data)
     flat_test_data = scaler.transform(flat_test_data)
-     
-    cat_train_label = to_categorical(train_label)
-    cat_test_label = to_categorical(test_label)
+
+    stdd_train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1] , last_column)
+    stdd_test_data = flat_test_data.reshape(test_data.shape[0], test_data.shape[1], last_column)
+
+    #cat_train_label = to_categorical(train_label)
+    #cat_test_label = to_categorical(test_label)
     
     ## ********** Put here the Convolutive CNN  **********
-    
+    #run_experiment(stdd_train_data,train_label,stdd_test_data,test_label,perclass_meter,
+    #               num_classes,model,final_measurement,lr,scheduler)
+    testing_csv_list(perclass_meter,train_label,args.save,final_measurement)
     
     # #creating the model
     # K.clear_session()
@@ -230,19 +246,28 @@ The main function to train the model
 def train_process(idx):
     global start_value,end_value,step,test_results,train_results
     global repetitions,labels,tic,idx_,tmp_test_acc,file_name
+    #Added by Ismael
+    global num_classes,perclass_meter,model,scheduler,lr
     idx_=idx
     tic = time()
     
     for final_measurement in range(start_value, end_value+1, step):
         test_results[str(final_measurement)] = []
         train_results[str(final_measurement)] = []
-      
+
+        # Perclass Metter
+        perclass_meter = utils.PerclassAccuracyMeter(num_classes,is_using_prf1=True)
+        perclass_meter.first_iteration = True
+        model = None
+        scheduler = None
+        lr = args.learning_rate
+
         tmp_test_acc=0      
-        for k in range(repetitions):
-            train_model(final_measurement,k)
+        #for k in range(repetitions):
+        train_model(final_measurement,0)
             #early stopping
-            if tmp_test_acc==1:
-                break                
+        #    if tmp_test_acc==1:
+        #        break
            
   
     etime = time() - tic
@@ -305,8 +330,9 @@ and starts the training process
 def run_tr(fl_):
     global dataset,labels,names,last_column,first_column,numfiles
     resetv()
+    file_path = "../../data/turbulent_gas_mixtures/"
     if not names:
-        with open(fl_ + '.pkl', 'rb') as f_s: 
+        with open(file_path+fl_ + '.pkl', 'rb') as f_s:
             dataset,labels,names = pickle.load(f_s)
     dataset = np.array(dataset)
     dim_data = dataset.shape
@@ -336,6 +362,20 @@ def lauch(clas_,p):
 SECTION 1.
 The script begins here. 
 """
-
+global num_classes
 clas_=['Et_n','Et_L','Et_M','Et_H']  #Classes
-lauch(clas_,pic_) #loading the dataset  
+
+#Added By Ismael
+num_classes = len(clas_)
+
+log_format = '%(asctime)s %(message)s'
+logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                        format=log_format, datefmt='%m/%d %I:%M:%S %p')
+args.save = "EXP_DARTS"
+args.save = ('search-{}-{}-TurbulentGasMixtures').format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+utils.create_exp_dir(args.save)
+fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+fh.setFormatter(logging.Formatter(log_format))
+logging.getLogger().addHandler(fh)
+
+lauch(clas_,pic_) #loading the dataset

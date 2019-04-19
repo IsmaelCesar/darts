@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -74,17 +75,14 @@ def test_data_loading():
         print("Shape of the target1: \n", target1.shape)
         print("Shape of the target2: \n", target2.shape)
 
-def testing_csv_list(perclass_meter,num_classes):
+def testing_csv_list(perclass_meter,labels,save,window_n):
 
 
     batch_size = 10
 
     #myCsv  = np.random.randn(10,num_classes*2+2)
-
+    num_classes = perclass_meter.num_classes
     for epoch in range(10):
-
-        labels = torch.randint(num_classes,(50,))
-
         start_slice = 0
         end_slice   = batch_size
         #Train
@@ -93,7 +91,7 @@ def testing_csv_list(perclass_meter,num_classes):
             target  = labels[start_slice:end_slice]
             logits = torch.rand(batch_size,num_classes)
 
-            perclass_meter.compute_confusion_matrix(target,logits)
+            perclass_meter.compute_confusion_matrix(torch.LongTensor(target),logits)
 
             start_slice = end_slice
             end_slice += batch_size
@@ -118,6 +116,9 @@ def testing_csv_list(perclass_meter,num_classes):
         perclass_meter.reset_confusion_matrix()
 
         print(perclass_meter.return_current_epoch_perclass_precision_recall())
+        perclass_meter.write_csv(
+            os.path.join(save, "experiments_measurements_window_" + str(window_n) + ".csv"))
+        perclass_meter.first_iteration = False
     perclass_meter.csv_list[-1][num_classes*2+1] = 99.98
     return perclass_meter.csv_list
 

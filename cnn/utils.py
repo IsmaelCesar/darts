@@ -28,20 +28,32 @@ class PerclassAccuracyMeter(object):
     in the csv list there shal be the accuracy per-class
     along with the perclass error.
     """
-    def __init__(self,num_classes):
+    def __init__(self,num_classes,is_using_prf1=False):
 
         csv_list = [['train_acc']]
         valid_acc_added = 0
-        while valid_acc_added < 2:
-            for i in  range(num_classes):
-                csv_list[0] += ["class"+str(i)+"_acc"]
-                csv_list[0] += ["class"+str(i)+"_error_rate"]
+        if not is_using_prf1:
+            while valid_acc_added < 2:
+                for i in  range(num_classes):
+                    csv_list[0] += ["class"+str(i)+"_acc"]
+                    csv_list[0] += ["class"+str(i)+"_error_rate"]
 
 
-            valid_acc_added += 1
+                valid_acc_added += 1
 
-            if valid_acc_added == 1:
-                csv_list[0] += ["valid_acc"]
+                if valid_acc_added == 1:
+                    csv_list[0] += ["valid_acc"]
+        else:
+            while valid_acc_added < 2:
+                for i in  range(num_classes):
+                    csv_list[0] += ["class"+str(i)+"_acc"]
+                    csv_list[0] += ["class"+str(i)+"_precision_recall_f1"]
+
+
+                valid_acc_added += 1
+
+                if valid_acc_added == 1:
+                    csv_list[0] += ["valid_acc"]
 
         csv_list.append(np.zeros(num_classes * 4 + 2).tolist())
         self.csv_list = csv_list

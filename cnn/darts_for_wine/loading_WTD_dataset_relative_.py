@@ -247,6 +247,7 @@ def train_process(te_g):
 
         #Perclass Metter
         perclass_meter = utils.PerclassAccuracyMeter(classes_number)
+        perclass_meter.first_iteration = True
         model = None
         scheduler = None
         lr = args.learning_rate
