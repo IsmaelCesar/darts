@@ -280,11 +280,11 @@ def train_process(idx):
     for dict_value in test_results.keys():
          logging.info('test:')
          mean_acc_test = np.mean(test_results[dict_value])
-         logging.info(dict_value+" mean acc:"+str(mean_acc_test))
+         logging.info("Window "+str(dict_value)+" mean acc:"+str(mean_acc_test))
     for dict_value in train_results.keys():
         logging.info('train:')
         mean_acc_train = np.mean(train_results[dict_value])
-        logging.info(dict_value +" mean acc:"+ str(mean_acc_train))
+        logging.info("Window "+str(dict_value) +" mean acc:"+ str(mean_acc_train))
     
     ## Saving the outcomes:
     # fcsv=file_name[:-3]+'.csv'      

@@ -246,7 +246,7 @@ def train_process(te_g):
 
 
         #Perclass Metter
-        perclass_meter = utils.PerclassAccuracyMeter(classes_number)
+        perclass_meter = utils.PerclassAccuracyMeter(classes_number,is_using_prf1=True)
         perclass_meter.first_iteration = True
         model = None
         scheduler = None
@@ -267,12 +267,12 @@ def train_process(te_g):
     for dict_value in valid_results.keys():
        logging.info('valid:')
        mean_acc = np.mean(valid_results[dict_value])
-       logging.info(str(dict_value) + " mean acc:" + str(mean_acc))
+       logging.info("Window "+str(dict_value) + " mean acc:" + str(mean_acc))
        #mean_acc_valid = np.mean(valid_results[dict_value])
     for dict_value in train_results.keys():
        logging.info('train:')
        mean_acc_train = np.mean(train_results[dict_value])
-       logging.info(str(dict_value)+"mean acc:"+str(mean_acc_train))
+       logging.info("Window "+str(dict_value)+"mean acc:"+str(mean_acc_train))
 
 #    # Saving the outcomes:
 #    fcsv= 'summary_'+ file_name[:-3] + tr_g + te_g + '.csv'      
@@ -380,7 +380,7 @@ for k in range(0, 6, 1):
     logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
     args.save = "EXP_DARTS"
-    args.save = ('search-{}-{}-WindTunel_'+syst_[k]).format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+    args.save = ('search-{}-{}-WindTunel_'+syst_[k]+"PrecisionRecallF1Score").format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
     utils.create_exp_dir(args.save)
 
     fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
