@@ -217,6 +217,7 @@ def train_process(idx):
         lr = args.learning_rate
         partial_results[str(final_measurement)] = 0
         perclass_meter = PerclassAccuracyMeter(classes_number)
+        perclass_meter.first_iteration = True
         #logging.info("\n\t WINDOW + %s\n", final_measurement)
 
         tmp_test_acc=0      
