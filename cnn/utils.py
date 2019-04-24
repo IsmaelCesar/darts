@@ -170,9 +170,9 @@ class PerclassAccuracyMeter(object):
                 else:
                     tp = self.confusion_matrix[j][i]
 
-            precision = tp/((tp + fp)*epsilon)
-            recall = tp/((tp + fn)*epsilon)
-            f1score     = 2*(precision*recall)/((precision+recall)*epsilon)
+            precision = tp/((tp + fp)+epsilon)
+            recall = tp/((tp + fn)+epsilon)
+            f1score     = 2*(precision*recall)/((precision+recall)+epsilon)
             precision_recall.append((precision,recall,f1score))
 
         return precision_recall
