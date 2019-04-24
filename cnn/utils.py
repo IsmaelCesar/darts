@@ -158,7 +158,7 @@ class PerclassAccuracyMeter(object):
         :return: list of perclass t2 error
         """
         precision_recall = []
-
+        epsilon  = 0.0000001 #factor to avoid division by zero
         for i in range(self.num_classes):
             fp = 0
             fn = 0
@@ -170,9 +170,9 @@ class PerclassAccuracyMeter(object):
                 else:
                     tp = self.confusion_matrix[j][i]
 
-            precision = tp/(tp + fp)
-            recall = tp/(tp + fn)
-            f1score     = 2*(precision*recall)/(precision+recall)
+            precision = tp/((tp + fp)*epsilon)
+            recall = tp/((tp + fn)*epsilon)
+            f1score     = 2*(precision*recall)/((precision+recall)*epsilon)
             precision_recall.append((precision,recall,f1score))
 
         return precision_recall
