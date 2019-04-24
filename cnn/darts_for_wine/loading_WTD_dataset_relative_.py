@@ -82,9 +82,9 @@ def resetv():
     else:
         samp_=samp
     ini_value = int(20*samp_) 
-    start_value = int(80*samp_) #int(5500/samp) 
-    step = int(60*samp_) 
-    end_value = int(260*samp_)  #samples size 
+    start_value = int(60*samp_) #int(5500/samp) old_start_value 80*samp_
+    step = int(40*samp_) #old_step 60*samp_
+    end_value = int(260*samp_)  #samples size old end_value 260*samp_
     repetions = 1
     train_results = {}
     valid_results = {}
@@ -378,7 +378,7 @@ for k in range(0, 6, 1):
     logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
     args.save = "EXP_DARTS"
-    args.save = ('search-{}-{}-WindTunel_'+syst_[k]).format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+    args.save = ('search-{}-{}-WindTunel_'+syst_[k]+'SmallerWindows').format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
     utils.create_exp_dir(args.save)
 
     fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
