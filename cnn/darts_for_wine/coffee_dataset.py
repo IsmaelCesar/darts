@@ -188,8 +188,8 @@ def train_model(final_measurement,k_):
     h,model,scheduler =run_experiment(stdd_train_data,train_label,stdd_test_data,test_label,perclass_meter,classes_number,model,
                                       final_measurement,lr,scheduler)
 
-    partial_results[str(final_measurement)] = h[-1][classes_number*2+1] #picking the last value
-
+    train_results[str(final_measurement)] = np.array(h)[1: , 0].astype(float).tolist()
+    test_results[str(final_measurement)]  = np.array(h)[1: , classes_number*2+1].astype(float).tolist()
     return 0
 
 """
@@ -201,7 +201,7 @@ def train_process(idx):
     global start_value,end_value,step,test_results,train_results
     global repetitions,labels,tic,idx_,tmp_test_acc,file_name
     # Making data necessary for training global variables
-    global model, scheduler, lr, perclass_meter,classes_number,partial_results
+    global model, scheduler, lr, perclass_meter,classes_number
     idx_=idx
     tic = time()
 
@@ -216,7 +216,8 @@ def train_process(idx):
         scheduler = None
         lr = args.learning_rate
         partial_results[str(final_measurement)] = 0
-        perclass_meter = PerclassAccuracyMeter(classes_number)
+        perclass_meter = PerclassAccuracyMeter(classes_number,is_using_prf1=True)
+        perclass_meter.first_iteration = True
         #logging.info("\n\t WINDOW + %s\n", final_measurement)
 
         tmp_test_acc=0      
@@ -227,8 +228,17 @@ def train_process(idx):
     etime = time() - tic
     logging.info("execution time: "+str(etime))
 
-    for window in partial_results.keys():
-        logging.info("Window "+window+" acc: "+str(partial_results[window])+"\n\n")
+    logging.info("Partial Outcomes")
+    for dict_value in test_results.keys():
+        logging.info('test:')
+        mean_acc_test = np.mean(test_results[dict_value])
+        logging.info("Window "+str(dict_value) + " mean acc:" + str(mean_acc_test))
+    for dict_value in train_results.keys():
+        logging.info('train:')
+        mean_acc_train = np.mean(train_results[dict_value])
+        logging.info("Window "+str(dict_value) + " mean acc:" + str(mean_acc_train))
+
+
     
 
 """
@@ -284,7 +294,7 @@ log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M:%S %p')
 args.save ="EXP_DARTS_WINE"
-args.save = 'search-{}-{}-Coffee_DataSet_SmallerWindows'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+args.save = 'search-{}-{}-Coffee_DataSet_WithPrecisionRecallF1Score'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
 utils.create_exp_dir(args.save)
 
 fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))

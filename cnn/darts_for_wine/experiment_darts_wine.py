@@ -145,22 +145,25 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
         #Reusing the train procedure of the DARTS implementation
         train_acc, train_obj = train(train_queue,valid_queue,model,lr,architecht,criterion,optimizer,CLASSES_WINE)
         logging.info("train_acc %f",train_acc)
-        perclass_acc_meter.compute_perclass_accuracy(epoch)
-        perclass_meter.csv_list[epoch+1][0] = train_acc.item()
+        perclass_acc_meter.compute_perclass_accuracy_with_precision_recall(epoch)
+        perclass_acc_meter.csv_list[epoch+1][0] = train_acc.item()
 
-        perclass_meter.reset_confusion_matrix()
+        perclass_acc_meter.reset_confusion_matrix()
 
         valid_acc, valid_obj  = infer(valid_queue,model,criterion,CLASSES_WINE)
         logging.info("valid_acc %f",valid_acc)
-        perclass_acc_meter.compute_perclass_accuracy(epoch, is_train=False)
-        perclass_meter.csv_list[epoch + 1][CLASSES_WINE*2+1] = valid_acc.item()
-        perclass_meter.reset_confusion_matrix()
+        perclass_acc_meter.compute_perclass_accuracy_with_precision_recall(epoch, is_train=False)
+        perclass_acc_meter.csv_list[epoch + 1][CLASSES_WINE*2+1] = valid_acc.item()
+        perclass_acc_meter.reset_confusion_matrix()
 
 
-        logging.info(perclass_acc_meter.return_current_epoch_perclass_error_rate())
+        logging.info(perclass_acc_meter.return_current_epoch_perclass_precision_recall())
+
+        perclass_acc_meter.write_csv(
+            os.path.join(args.save, "experiments_measurements_window_" + str(window_n) + ".csv"))
+        perclass_acc_meter.first_iteration=False
 
     #Saving the model
-    perclass_acc_meter.write_csv(os.path.join(args.save,"experiments_measurements_window_"+str(window_n)+".csv"))
     utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
 
     return perclass_acc_meter.csv_list,model,scheduler
@@ -219,7 +222,7 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
 
-    perclass_acc_meter.include_top1_avg_acc(top1.avg.item())
+    #perclass_acc_meter.include_top1_avg_acc(top1.avg.item())
     #objs.update(loss.data[0], n)
     #top1.update(prec1.data[0], n)
     #top5.update(prec5.data[0], n)
@@ -263,7 +266,7 @@ def infer(valid_queue, model, criterion,num_classes):
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
 
-    perclass_acc_meter.include_top1_avg_acc(top1.avg.item(),is_train=False)
+    #perclass_acc_meter.include_top1_avg_acc(top1.avg.item(),is_train=False)
     # objs.update(loss.data[0], n)
     # top1.update(prec1.data[0], n)
     # top5.update(prec5.data[0], n)

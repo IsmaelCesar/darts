@@ -28,20 +28,32 @@ class PerclassAccuracyMeter(object):
     in the csv list there shal be the accuracy per-class
     along with the perclass error.
     """
-    def __init__(self,num_classes):
+    def __init__(self,num_classes,is_using_prf1=False):
 
         csv_list = [['train_acc']]
         valid_acc_added = 0
-        while valid_acc_added < 2:
-            for i in  range(num_classes):
-                csv_list[0] += ["class"+str(i)+"_acc"]
-                csv_list[0] += ["class"+str(i)+"_error_rate"]
+        if not is_using_prf1:
+            while valid_acc_added < 2:
+                for i in  range(num_classes):
+                    csv_list[0] += ["class"+str(i)+"_acc"]
+                    csv_list[0] += ["class"+str(i)+"_error_rate"]
 
 
-            valid_acc_added += 1
+                valid_acc_added += 1
 
-            if valid_acc_added == 1:
-                csv_list[0] += ["valid_acc"]
+                if valid_acc_added == 1:
+                    csv_list[0] += ["valid_acc"]
+        else:
+            while valid_acc_added < 2:
+                for i in  range(num_classes):
+                    csv_list[0] += ["class"+str(i)+"_acc"]
+                    csv_list[0] += ["class"+str(i)+"_precision_recall_f1"]
+
+
+                valid_acc_added += 1
+
+                if valid_acc_added == 1:
+                    csv_list[0] += ["valid_acc"]
 
         csv_list.append(np.zeros(num_classes * 4 + 2).tolist())
         self.csv_list = csv_list
@@ -146,7 +158,7 @@ class PerclassAccuracyMeter(object):
         :return: list of perclass t2 error
         """
         precision_recall = []
-
+        epsilon  = 0.0000001 #factor to avoid division by zero
         for i in range(self.num_classes):
             fp = 0
             fn = 0
@@ -158,9 +170,9 @@ class PerclassAccuracyMeter(object):
                 else:
                     tp = self.confusion_matrix[j][i]
 
-            precision = tp/(tp + fp)
-            recall = tp/(tp + fn)
-            f1score     = 2*(precision*recall)/(precision+recall)
+            precision = tp/((tp + fp)*epsilon)
+            recall = tp/((tp + fn)*epsilon)
+            f1score     = 2*(precision*recall)/((precision+recall)*epsilon)
             precision_recall.append((precision,recall,f1score))
 
         return precision_recall
@@ -186,7 +198,7 @@ class PerclassAccuracyMeter(object):
         """
         offset = 0
         if not is_train:
-          offset = self.num_classes+1
+          offset = self.num_classes*2+1
 
         self.csv_list[self.current_epoch+1][offset] = top1
 
