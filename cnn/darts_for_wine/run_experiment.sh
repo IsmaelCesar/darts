@@ -11,6 +11,7 @@
 #Running experiments QWines data set
 #python LoadQWinesCsystem.py --data_set_option 1 --is_using_inner_epoch_loop  --epochs 50
 #python LoadQWinesEaCsystem.py --data_set_option 1 --is_using_inner_epoch_loop --epochs 50
-#python coffee_dataset.py --is_using_inner_epoch_loop --epochs 50
 
+python turbulent_gas_mixtures.py --is_using_inner_epoch_loop --epochs 50
+python coffee_dataset.py --is_using_inner_epoch_loop --epochs 50
 python loading_WTD_dataset_relative_.py --is_using_inner_epoch_loop --epochs 50
