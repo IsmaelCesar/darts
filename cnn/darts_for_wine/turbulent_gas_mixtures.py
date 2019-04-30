@@ -179,9 +179,14 @@ def train_model(final_measurement,k_):
     ## ********** Put here the Convolutive CNN  **********
     h, model, scheduler=run_experiment(stdd_train_data,train_label,stdd_test_data,test_label,perclass_meter,
                    num_classes,model,final_measurement,lr,scheduler)
-
-    train_results[str(final_measurement)] = np.array(h)[1:, 0].astype(float).tolist()
-    test_results[str(final_measurement)] = np.array(h)[1:, num_classes * 2 + 1].astype(float).tolist()
+    h1 = []
+    for el in h[1: ]:
+        h1.append(el[0])
+    train_results[str(final_measurement)] = np.array(h1).astype(float).tolist()
+    h1 = []
+    for el in h[1: ]:
+        h1.append(el[0])
+    test_results[str(final_measurement)] = np.array(h1).astype(float).tolist()
 
 
     # #creating the model
