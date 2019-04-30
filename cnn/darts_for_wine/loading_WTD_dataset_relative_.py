@@ -82,8 +82,8 @@ def resetv():
     else:
         samp_=samp
     ini_value = int(20*samp_) 
-    start_value = int(60*samp_) #int(5500/samp) old_start_value 80*samp_
-    step = int(40*samp_) #old_step 60*samp_
+    start_value = int(80*samp_) #int(5500/samp) old_start_value 60*samp_
+    step = int(60*samp_) #old_step 40*samp_
     end_value = int(260*samp_)  #samples size old end_value 260*samp_
     repetions = 1
     train_results = {}
@@ -220,11 +220,12 @@ def train_model(final_measurement,k_,te_g):
 
     dset_obj = WinesDataset(stdd_test_data,test_label)
     test_queue = torch.utils.data.DataLoader(dset_obj, sampler=torchdata.sampler.RandomSampler(dset_obj),
-                                              pin_memory=True, num_workers=2)
+                                                  pin_memory=True, num_workers=2)
     infer(test_queue,model,nn.CrossEntropyLoss(),classes_number)
 
-    train_results[str(final_measurement)] = np.array(h)[1:,0].astype(float).tolist()
-    valid_results[str(final_measurement)] = np.array(h)[1:, classes_number*2+1].astype(float).tolist()
+
+    train_results[str(final_measurement)] = np.array(h)[1:, 0].astype(float).tolist()
+    test_results[str(final_measurement)] = np.array(h)[1:, classes_number * 2 + 1].astype(float).tolist()
 
     return 0
 
