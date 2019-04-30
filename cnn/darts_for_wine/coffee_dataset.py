@@ -188,8 +188,8 @@ def train_model(final_measurement,k_):
     h,model,scheduler =run_experiment(stdd_train_data,train_label,stdd_test_data,test_label,perclass_meter,classes_number,model,
                                       final_measurement,lr,scheduler)
 
-    train_results[str(final_measurement)] = np.array(h)[1: , 0].astype(float).tolist()
-    test_results[str(final_measurement)]  = np.array(h)[1: , classes_number*2+1].astype(float).tolist()
+    train_results[str(final_measurement)] = np.array(h)[1:, 0].astype(float).tolist()
+    test_results[str(final_measurement)] = np.array(h)[1:, classes_number * 2 + 1].astype(float).tolist()
     return 0
 
 """

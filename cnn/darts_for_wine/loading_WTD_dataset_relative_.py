@@ -39,6 +39,7 @@ from darts_for_wine.experiment_darts_wine import args
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
 from darts_for_wine.experiment_darts_wine import infer
 from darts_for_wine.winedataset import WinesDataset
+from darts_for_wine.test_cases import testing_csv_list
 import torch
 import torch.nn as nn
 import torch.utils.data as torchdata
@@ -214,7 +215,7 @@ def train_model(final_measurement,k_,te_g):
     stdd_test_data = flat_test_data.reshape(test_data.shape[0], test_data.shape[1], last_columnT)
     ## ********** Put here the Convolutive CNN  **********
     h,model,scheduler = run_experiment(stdd_train_data,train_label,stdd_valid_data,valid_label,perclass_meter,
-                                       classes_number,model,final_measurement,lr,scheduler)
+                                      classes_number,model,final_measurement,lr,scheduler)
 
     logging.info("\t\t\n\n USING TEST SET OF WINDOW"+str(final_measurement)+"\n\n")
 
@@ -222,6 +223,8 @@ def train_model(final_measurement,k_,te_g):
     test_queue = torch.utils.data.DataLoader(dset_obj, sampler=torchdata.sampler.RandomSampler(dset_obj),
                                                   pin_memory=True, num_workers=2)
     infer(test_queue,model,nn.CrossEntropyLoss(),classes_number)
+
+    #h = testing_csv_list(perclass_meter,labels,args.save,final_measurement)
 
 
     train_results[str(final_measurement)] = np.array(h)[1:, 0].astype(float).tolist()
@@ -379,7 +382,7 @@ for k in range(0, 6, 1):
     # Added by ismael
     log_format = '%(asctime)s %(message)s'
     logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                        format=log_format, datefmt='%m/%d %I:%M:%S %p')
+                       format=log_format, datefmt='%m/%d %I:%M:%S %p')
     args.save = "EXP_DARTS"
 
     args.save = ('search-{}-{}-WindTunel_'+syst_[k]+"PrecisionRecallF1Score").format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
