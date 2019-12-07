@@ -243,7 +243,7 @@ def train_process(idx):
             num_classes=cat_train_label.shape[1]
 
             ##Put here the Convolutive CNN
-            train_data = data_transformer.tranform_sensor_values_to_image(train_data)
+            #train_data = data_transformer.tranform_sensor_values_to_image(train_data)
 
             results_list, model,arg_scheduler= run_experiment(train_data, train_label, test_data,test_label,
                                                               perclass_metter,num_classes, model, final_measurement,
