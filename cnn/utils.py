@@ -75,7 +75,7 @@ class PerclassAccuracyMeter(object):
 
     def compute_perclass_accuracy(self,epoch,is_train=True):
 
-        perclass_acc = self.confusion_matrix.diag() / self.confusion_matrix.sum()
+        perclass_acc = self.confusion_matrix.diag() / self.confusion_matrix.sum(1)
         perclass_error = self.__compute_perclass_error()
         #Adding the values to the csv_list
         if self.current_epoch < epoch:
@@ -94,7 +94,7 @@ class PerclassAccuracyMeter(object):
         return perclass_acc
 
     def compute_perclass_accuracy_with_precision_recall(self, epoch, is_train=True):
-        perclass_acc = self.confusion_matrix.diag() / self.confusion_matrix.sum()
+        perclass_acc = self.confusion_matrix.diag() / self.confusion_matrix.sum(1)
         precision_recall = self.__compute_precision_recall_and_f1()
         # Adding the values to the csv_list
         if self.current_epoch < epoch:
