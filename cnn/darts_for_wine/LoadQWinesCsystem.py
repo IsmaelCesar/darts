@@ -410,7 +410,7 @@ ncl=ttvar[ngr+1]
 calload([4,5,13],pic_,'TR',0) #QWines-Csystem [4,5,13]
 sizeT=len(dataset)
 
-args.save = 'search-{}-{}-LoadQWinesCsystem-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+args.save = '{}-{}-LoadQWinesCsystem-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 utils.create_exp_dir(args.save)
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
