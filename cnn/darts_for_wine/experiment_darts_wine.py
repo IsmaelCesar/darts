@@ -64,7 +64,7 @@ global CLASSES_WINE,perclass_acc_meter,n_epoch
 def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perclass_meter,classes_number,model,
                               window_n,arg_lr,arg_scheduler):
     global CLASSES_WINE, perclass_acc_meter, n_epoch
-    """
+    
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
         sys.exit(1)
@@ -77,7 +77,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
     torch.cuda.manual_seed(args.seed)
     logging.info('gpu device = %d' % args.gpu)
     logging.info("args = %s", args)
-    """
+    
     if args.is_using_inner_epoch_loop:
         logging.info("\n\t WINDOW + %s\n",window_n)
 
@@ -87,11 +87,11 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
 
     ##criterion = nn.MSELoss()
     criterion = nn.CrossEntropyLoss()
-    #criterion.cuda()
+    criterion.cuda()
 
     if(model == None):
         model = Network(args.init_channels,CLASSES_WINE,args.layers,criterion)
-        #model.cuda()
+        model.cuda()
         logging.info("A new model has been created")
     
     
@@ -193,15 +193,15 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     model.train()
     n = input.size(0)
 
-    #input.cuda()
-    #target.cuda()
-    #input = Variable(input, requires_grad=False).cuda()
-    #target = Variable(target, requires_grad=False).cuda(async=True)
+    input.cuda()
+    target.cuda()
+    input = Variable(input, requires_grad=False).cuda()
+    target = Variable(target, requires_grad=False).cuda(async=True)
 
     #get a random minibatch from the search queue with replacement
     input_search, target_search = next(iter(valid_queue))
-    #input_search = Variable(input_search, requires_grad=False).cuda()
-    #target_search = Variable(target_search, requires_grad=False).cuda(async=True)
+    input_search = Variable(input_search, requires_grad=False).cuda()
+    target_search = Variable(target_search, requires_grad=False).cuda(async=True)
 
     architect.step(input,target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
 
@@ -249,11 +249,11 @@ def infer(valid_queue, model, criterion,num_classes):
 
   for step, (input, target) in enumerate(valid_queue):
 
-    #input.cuda()
-    #target.cuda()
+    input.cuda()
+    target.cuda()
 
-    #input = Variable(input, volatile=True).cuda()
-    #target = Variable(target, volatile=True).cuda(async=True)
+    input = Variable(input, volatile=True).cuda()
+    target = Variable(target, volatile=True).cuda(async=True)
 
     logits = model(input)
     perclass_acc_meter.compute_confusion_matrix(target, logits)
