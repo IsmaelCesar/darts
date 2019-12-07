@@ -36,6 +36,7 @@ import tensorflow as tf
 import csv
 from math import sqrt
 import pandas as pd
+from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
 from darts_for_wine.experiment_darts_wine import args
@@ -163,7 +164,11 @@ def ldataset(folder,lab,k_,pic,opt):
 SECTION 5.
 The main function to train the model
 """
-def train_process(idx):
+
+def train_process(idx, use_loo=False):
+    """
+    :param use_loo: Boolean, Option to use Leave one out cross validation or hold out
+    """
     global start_value,end_value,step
     global labels,tic,file_name,repetions,labels_
     global ini_value,last_column,numfiles
@@ -175,12 +180,10 @@ def train_process(idx):
     etime = {}
     tic = time.time()
 
-
-
     for final_measurement in range(start_value, end_value+1, step):
 
         # Next Line has been added by Ismael
-        data_transformer = SensorDataTransformer(32, 32,final_measurement+step, 4560)
+        # data_transformer = SensorDataTransformer(32, 32,final_measurement+step, 4560)
 
         perclass_metter = PerclassAccuracyMeter(ngr)
         arg_lr = args.learning_rate
@@ -188,88 +191,181 @@ def train_process(idx):
 
         train_results[str(final_measurement)] = []
         test_results[str(final_measurement)] = []
-        etime[str(final_measurement)] = []              
-        
-        indx=0
-       
-        #In this section is to perform the LOO
-        model = None
-        perclass_metter.first_iteration = True
+        etime[str(final_measurement)] = []
 
-        for i in range(ncl):
-            test_set=[]
-            train_set=[]
-            tr_labels=[]
-            te_labels=[]
-            j=1
-            h=1
-            indx=indx+ttvar[ngr+2+i]-1
-            for k in range(sizeT):
-                if labels_[indx]==labels_[k]:
-                    test_set.append(dataset[k])
-                    te_labels.append(labels[k])
-                    j+=1
-                else:
-                    train_set.append(dataset[k])
-                    tr_labels.append(labels[k])
-                    h+=1
-
-            tr_labels = np.array(tr_labels)
-            te_labels = np.array(te_labels)
-            test_set = np.array(test_set)
-            train_set = np.array(train_set)
-            #Finish the LOO
-            #repetitions = 10  # repetitions
-            #for k in range(repetions):
-
-            #Data shuffle
-            train_data, train_label = sklearn.utils.shuffle(train_set[:,ini_value:final_measurement,:], tr_labels)
-            test_data, test_label = sklearn.utils.shuffle(test_set[:,ini_value:final_measurement,:], te_labels)
-
-    #                #preprocess
-            flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
-            flat_test_data = test_data.reshape(test_data.shape[0], test_data.shape[1] * last_column)
-            scaler = preprocessing.StandardScaler().fit(flat_train_data)
-            flat_train_data = scaler.transform(flat_train_data)
-            flat_test_data = scaler.transform(flat_test_data)
-            ## UNCOMMENT BEFORE LATER
-            #train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
-            #test_data = flat_test_data.reshape(test_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
-            #input_shape = (train_data.shape[1],train_data.shape[2],1)
-
-            # convert class vectors to binary class matrices
-            cat_train_label = keras.utils.to_categorical(train_label,ngr)
-            cat_test_label = keras.utils.to_categorical(test_label,ngr)
-            num_classes=cat_train_label.shape[1]
-
-            ##Put here the Convolutive CNN
-            #train_data = data_transformer.tranform_sensor_values_to_image(train_data)
-
-            results_list, model,arg_scheduler= run_experiment(train_data, train_label, test_data,test_label,
-                                                              perclass_metter,num_classes, model, final_measurement,
-                                                             arg_lr,arg_scheduler)
-            train_results[str(final_measurement)]+=np.array(results_list)[1:, 0].astype(float).tolist()
-            test_results[str(final_measurement)]+=np.array(results_list)[1:, ngr*2+1].astype(float).tolist()
-            perclass_metter.first_iteration = False
-               
-        etime_ = time.time() - tic
-        etime[str(final_measurement)].append(etime_)
-        logging.info("execution time: "+str(etime_))
-        logging.info("Displyaing partial results:")
-        #Display test results
-        for dict_value in test_results.keys():
-            logging.info('test2:')
-            mean_acc_test = np.mean(test_results[dict_value])
-            logging.info(dict_value+": "+str(mean_acc_test))
-#        for dict_value in train_results.keys():
-#            print('train2:')
-#            mean_acc_train = np.mean(train_results[dict_value])
-#            print(dict_value, mean_acc_train)
+        if use_loo:
+            train_results, test_results, etime = run_experiment_with_loo_cross_validation(idx, arg_lr, perclass_metter,
+                                                                                          final_measurement, arg_scheduler,
+                                                                                          train_results, test_results,
+                                                                                          etime)
+        else:
+            train_results, test_results, etime = run_experiment_with_hold_out_validation(idx, arg_lr, perclass_metter,
+                                                                                         final_measurement, arg_scheduler,
+                                                                                         train_results, test_results,
+                                                                                         etime)
                              
 # Saving the objects:
     with open('out_' + file_name[:-3] + idx +'.pkl', 'wb') as f:  
-        pickle.dump([train_results,test_results,etime], f)
-   
+        pickle.dump([train_results, test_results, etime], f)
+
+
+def run_experiment_with_loo_cross_validation(idx, arg_lr, perclass_metter, final_measurement, arg_scheduler,
+                                             train_results, test_results, etime):
+    """
+    Run experiment with leave one out cross-validation
+    :return:
+    """
+    global start_value, end_value, step
+    global labels, tic, file_name, repetions, labels_
+    global ini_value, last_column, numfiles
+    global tr_labels, tr_names, te_dataset, te_labels, te_names
+    global ttvar, ngr, ncl, sizeT, train_set, test_set, flat_train_data, train_label, test_label, train_data, test_data
+
+    logging.info("Running window " + str(final_measurement) + " with LeaveOneOut cross-validation")
+
+    indx = 0
+
+    # In this section is to perform the LOO
+    model = None
+    perclass_metter.first_iteration = True
+
+    for i in range(ncl):
+        test_set = []
+        train_set = []
+        tr_labels = []
+        te_labels = []
+        j = 1
+        h = 1
+        indx = indx + ttvar[ngr + 2 + i] - 1
+        for k in range(sizeT):
+            if labels_[indx] == labels_[k]:
+                test_set.append(dataset[k])
+                te_labels.append(labels[k])
+                j += 1
+            else:
+                train_set.append(dataset[k])
+                tr_labels.append(labels[k])
+                h += 1
+
+        tr_labels = np.array(tr_labels)
+        te_labels = np.array(te_labels)
+        test_set = np.array(test_set)
+        train_set = np.array(train_set)
+        # Finish the LOO
+        # repetitions = 10  # repetitions
+        # for k in range(repetions):
+
+        # Data shuffle
+        train_data, train_label = sklearn.utils.shuffle(train_set[:, ini_value:final_measurement, :], tr_labels)
+        test_data, test_label = sklearn.utils.shuffle(test_set[:, ini_value:final_measurement, :], te_labels)
+
+        #                #preprocess
+        flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
+        flat_test_data = test_data.reshape(test_data.shape[0], test_data.shape[1] * last_column)
+        scaler = preprocessing.StandardScaler().fit(flat_train_data)
+        flat_train_data = scaler.transform(flat_train_data)
+        flat_test_data = scaler.transform(flat_test_data)
+        ## UNCOMMENT BEFORE LATER
+        # train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
+        # test_data = flat_test_data.reshape(test_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
+        # input_shape = (train_data.shape[1],train_data.shape[2],1)
+
+        # convert class vectors to binary class matrices
+        cat_train_label = keras.utils.to_categorical(train_label, ngr)
+        cat_test_label = keras.utils.to_categorical(test_label, ngr)
+        num_classes = cat_train_label.shape[1]
+
+        ##Put here the Convolutive CNN
+        # train_data = data_transformer.tranform_sensor_values_to_image(train_data)
+
+        results_list, model, arg_scheduler = run_experiment(train_data, train_label, test_data, test_label,
+                                                            perclass_metter, num_classes, model, final_measurement,
+                                                            arg_lr, arg_scheduler)
+        train_results[str(final_measurement)] += np.array(results_list)[1:, 0].astype(float).tolist()
+        test_results[str(final_measurement)] += np.array(results_list)[1:, ngr * 2 + 1].astype(float).tolist()
+        perclass_metter.first_iteration = False
+
+    etime_ = time.time() - tic
+    etime[str(final_measurement)].append(etime_)
+    logging.info("execution time: " + str(etime_))
+    logging.info("Displyaing partial results:")
+    # Display test results
+    for dict_value in test_results.keys():
+        logging.info('test2:')
+        mean_acc_test = np.mean(test_results[dict_value])
+        logging.info(dict_value + ": " + str(mean_acc_test))
+    #        for dict_value in train_results.keys():
+    #            print('train2:')
+    #            mean_acc_train = np.mean(train_results[dict_value])
+    #            print(dict_value, mean_acc_train)
+
+    return train_results, test_results, etime
+
+
+def run_experiment_with_hold_out_validation(idx, arg_lr, perclass_metter, final_measurement, arg_scheduler,
+                                            train_results, test_results, etime):
+    """
+    Run experiment with holdout cross-validation
+    :return:
+    """
+    global start_value, end_value, step
+    global labels, tic, file_name, repetions, labels_
+    global ini_value, last_column, numfiles
+    global tr_labels, tr_names, te_dataset, te_labels, te_names
+    global ttvar, ngr, ncl, sizeT, train_set, test_set, flat_train_data, train_label, test_label, train_data, test_data
+
+    logging.info("Running window "+str(final_measurement)+" with holdout cross-validation")
+
+    model = None
+    perclass_metter.first_iteration = True
+
+    # repetitions = 10  # repetitions
+    # for k in range(repetions):
+    train_data, test_data, train_label, test_label = train_test_split(dataset[:, ini_value:final_measurement, :],
+                                                                      labels, test_size=0.2)
+    # Data shuffle
+    train_data, train_label = sklearn.utils.shuffle(train_data, train_label)
+    test_data, test_label = sklearn.utils.shuffle(test_data, test_label)
+
+    #                #preprocess
+    flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
+    flat_test_data = test_data.reshape(test_data.shape[0], test_data.shape[1] * last_column)
+    scaler = preprocessing.StandardScaler().fit(flat_train_data)
+    flat_train_data = scaler.transform(flat_train_data)
+    flat_test_data = scaler.transform(flat_test_data)
+    ## UNCOMMENT BEFORE LATER
+    # train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
+    # test_data = flat_test_data.reshape(test_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
+    # input_shape = (train_data.shape[1],train_data.shape[2],1)
+
+    # convert class vectors to binary class matrices
+    cat_train_label = keras.utils.to_categorical(train_label, ngr)
+    cat_test_label = keras.utils.to_categorical(test_label, ngr)
+    num_classes = cat_train_label.shape[1]
+
+    ##Put here the Convolutive CNN
+    # train_data = data_transformer.tranform_sensor_values_to_image(train_data)
+
+    results_list, model, arg_scheduler = run_experiment(train_data, train_label, test_data, test_label,
+                                                        perclass_metter, num_classes, model, final_measurement,
+                                                        arg_lr, arg_scheduler)
+    train_results[str(final_measurement)] += np.array(results_list)[1:, 0].astype(float).tolist()
+    test_results[str(final_measurement)] += np.array(results_list)[1:, ngr * 2 + 1].astype(float).tolist()
+    perclass_metter.first_iteration = False
+
+    etime_ = time.time() - tic
+    etime[str(final_measurement)].append(etime_)
+    logging.info("execution time: " + str(etime_))
+    logging.info("Displyaing partial results:")
+    # Display test results
+    for dict_value in test_results.keys():
+        logging.info('test2:')
+        mean_acc_test = np.mean(test_results[dict_value])
+        logging.info(dict_value + ": " + str(mean_acc_test)),
+
+    return train_results, test_results, etime
+
+
 """
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 SECTION 2.

@@ -178,7 +178,7 @@ def train_model(final_measurement,k_):
     flat_test_data = scaler.transform(flat_test_data)
     #Next two lines have been added by Ismael
     #Putting arrays back into their original shape
-    stdd_train_data =  flat_train_data.reshape(train_data.shape[0],train_data.shape[1],last_column)
+    stdd_train_data = flat_train_data.reshape(train_data.shape[0],train_data.shape[1],last_column)
     stdd_test_data = flat_test_data.reshape(test_data.shape[0],test_data.shape[1],last_column)
     #cat_train_label = to_categorical(train_label)
     #cat_test_label = to_categorical(test_label)

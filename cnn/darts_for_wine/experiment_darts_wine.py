@@ -25,7 +25,7 @@ from architect import Architect
 parser = argparse.ArgumentParser("DARTS for wine classification")
 parser.add_argument('--data', type=str, default='../../data/wines/', help='location of the data corpus')
 parser.add_argument('--batch_size', type=int, default=10, help='batch size')
-parser.add_argument('--learning_rate', type=float, default=0.025, help='init learning rate')
+parser.add_argument('--learning_rate', type=float, default=0.001, help='init learning rate')
 parser.add_argument('--learning_rate_min', type=float, default=0.001, help='min learning rate')
 parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
 parser.add_argument('--weight_decay', type=float, default=3e-4, help='weight decay')
@@ -64,7 +64,8 @@ global CLASSES_WINE,perclass_acc_meter,n_epoch
 def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perclass_meter,classes_number,model,
                               window_n,arg_lr,arg_scheduler):
     global CLASSES_WINE, perclass_acc_meter, n_epoch
-    
+
+
     if not torch.cuda.is_available():
         logging.info('no gpu device available')
         sys.exit(1)
@@ -77,7 +78,8 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
     torch.cuda.manual_seed(args.seed)
     logging.info('gpu device = %d' % args.gpu)
     logging.info("args = %s", args)
-    
+
+
     if args.is_using_inner_epoch_loop:
         logging.info("\n\t WINDOW + %s\n",window_n)
 
@@ -107,10 +109,12 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
 
     logging.info("The data set has been loaded")
 
+    """
     if(arg_scheduler == None):
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, float(10), eta_min=args.learning_rate_min)
     else:
         scheduler = arg_scheduler
+    """
 
     ds_lenght = len(train_ds_wine)
     loo_test_element_indx = 0
@@ -129,9 +133,10 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
 
         n_epoch = epoch #trainin epoch to be used in the calculations of the perclass accuracy metter
 
-        scheduler.step()
+        #scheduler.step()
 
-        lr = scheduler.get_lr()[0]
+        #lr = scheduler.get_lr()[0]
+        lr = arg_lr
 
         if args.is_using_inner_epoch_loop:
             logging.info('epoch %d lr %e', n_epoch, lr)#in the fonollosa experiment the epoch is logged in the parent procedure
@@ -166,6 +171,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
     #Saving the model
     utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
 
+    scheduler = None
     return perclass_acc_meter.csv_list,model,scheduler
 
 """
