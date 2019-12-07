@@ -75,7 +75,7 @@ class PerclassAccuracyMeter(object):
 
     def compute_perclass_accuracy(self,epoch,is_train=True):
 
-        perclass_acc = self.confusion_matrix.diag() / self.confusion_matrix.sum(1)
+        perclass_acc = self.confusion_matrix.diag() / self.confusion_matrix.sum()
         perclass_error = self.__compute_perclass_error()
         #Adding the values to the csv_list
         if self.current_epoch < epoch:

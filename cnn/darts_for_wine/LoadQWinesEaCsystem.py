@@ -86,9 +86,9 @@ def resetv():
     samp=1  #1 for no sampling (use sampling to reduce the number of samples)
     first_column=2 #Columns 0 and 1 correspond to humidity and temperature. 
     ini_value = int(160/samp) #ignoring the baseline (first 160 samples) 
-    start_value = int(210/samp) #Defines the first window old_start_value: 1730
-    step = int(50/samp) #Window size old_step:1570
-    end_value = int(1650/samp) + 1 #last value old_end_value: 3300
+    start_value = int(474/samp) #Defines the first window old_start_value: 1730
+    step = int(314/samp) #Window size old_step:1570
+    end_value = int(3300/samp) + 1 #last value old_end_value: 3300
     repetions = 1  
 
 """
