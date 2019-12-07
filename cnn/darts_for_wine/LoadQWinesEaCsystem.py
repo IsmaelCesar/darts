@@ -196,7 +196,7 @@ def train_process(idx, use_loo=False):
                                                                                          train_results, test_results,
                                                                                          etime)
 # Saving the objects:
-    with open('out_' + file_name[:-3] + idx +'.pkl', 'wb') as f:  
+    with open(args.save+'/'+'out_' + file_name[:-3] + idx +'.pkl', 'wb') as f:
         pickle.dump([train_results,test_results,etime], f)
 
 
@@ -311,8 +311,8 @@ def run_experiment_with_hold_out_validation(idx, arg_lr, perclass_metter, final_
     train_data, test_data, train_label, test_label = train_test_split(dataset[:, ini_value:final_measurement, :],
                                                                       labels, test_size=0.2)
     # Data shuffle
-    train_data, train_label = sklearn.utils.shuffle(train_set, train_label)
-    test_data, test_label = sklearn.utils.shuffle(test_set, test_label)
+    train_data, train_label = sklearn.utils.shuffle(train_data, train_label)
+    test_data, test_label = sklearn.utils.shuffle(test_data, test_label)
 
     #                #preprocess
     flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
