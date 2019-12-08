@@ -28,32 +28,21 @@ class PerclassAccuracyMeter(object):
     in the csv list there shal be the accuracy per-class
     along with the perclass error.
     """
-    def __init__(self,num_classes,is_using_prf1=False):
+    def __init__(self,num_classes):
 
         csv_list = [['train_acc']]
         valid_acc_added = 0
-        if not is_using_prf1:
-            while valid_acc_added < 2:
-                for i in  range(num_classes):
-                    csv_list[0] += ["class"+str(i)+"_acc"]
-                    csv_list[0] += ["class"+str(i)+"_error_rate"]
+
+        while valid_acc_added < 2:
+            for i in  range(num_classes):
+                csv_list[0] += ["class"+str(i)+"_acc"]
+                csv_list[0] += ["class"+str(i)+"_precision_recall_f1"]
 
 
-                valid_acc_added += 1
+            valid_acc_added += 1
 
-                if valid_acc_added == 1:
-                    csv_list[0] += ["valid_acc"]
-        else:
-            while valid_acc_added < 2:
-                for i in  range(num_classes):
-                    csv_list[0] += ["class"+str(i)+"_acc"]
-                    csv_list[0] += ["class"+str(i)+"_precision_recall_f1"]
-
-
-                valid_acc_added += 1
-
-                if valid_acc_added == 1:
-                    csv_list[0] += ["valid_acc"]
+            if valid_acc_added == 1:
+                csv_list[0] += ["valid_acc"]
 
         csv_list.append(np.zeros(num_classes * 4 + 2).tolist())
         self.csv_list = csv_list
@@ -202,23 +191,6 @@ class PerclassAccuracyMeter(object):
 
         self.csv_list[self.current_epoch+1][offset] = top1
 
-    def return_current_epoch_perclass_error_rate(self):
-        string_value = ""
-        for v in ['train_acc','valid_acc']:
-            string_value += "\n"+v + ": \n"
-            offset = 1
-
-            if v == 'valid_acc':
-                offset = 2 + self.num_classes*2
-            c = 0
-            for i in range(0,self.num_classes*2,2):
-                 string_value += "class_"+str(c)+"acc: "
-                 string_value += str(self.csv_list[self.current_epoch+1][offset+i]) + "\t\t"
-                 string_value += "class_" + str(c) + "_error_rate: "
-                 string_value += str(self.csv_list[self.current_epoch + 1][offset + i + 1]) + "\n"
-                 c+= 1
-
-        return string_value
 
     def return_current_epoch_perclass_precision_recall(self):
         string_value = ""

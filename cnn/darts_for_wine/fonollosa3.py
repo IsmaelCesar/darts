@@ -32,7 +32,7 @@ from keras import models
 from keras import layers
 from keras import regularizers
 from keras import backend as K
-from time import time
+import time
 from keras.models import model_from_json
 import csv
 
@@ -72,7 +72,7 @@ Auxiliary functions
 In this function is defined the initial conditions
 """
 def resetv():
-    global actualDir,dataset,labels,names,train_results
+    global actualDir,dataset,labels,names,train_results, etime
     global test_results,start_value,step,end_value,repetions
     global ini_value,file_name,first_column,samp
     global learning_rate #added by ismael
@@ -96,6 +96,7 @@ def resetv():
     repetions = 50 #Set up the epochs
     train_results = {}
     test_results = {}
+    etime = {}
 
 """
 4.2.
@@ -162,12 +163,14 @@ def ldataset(folder,i,pic):
     print('loaded' + folder)
 
 def train_model(final_measurement,k_):
-    global start_value,end_value,step,test_results,train_results
+    global start_value,end_value,step,test_results,train_results, etime
     global repetions,labels,tic,idx_,tmp_test_acc
     global ini_value,file_name,last_column,numfiles
     # Added by ismael
     global model,perclass_meter,lr,scheduler
     #split train and test data
+
+
     train_data, test_data, train_label, test_label = train_test_split(dataset[:,ini_value:final_measurement,:], labels, test_size = 0.2)
      
     #preprocess
@@ -190,8 +193,11 @@ def train_model(final_measurement,k_):
     ## ********** Put here the Convolutive CNN  **********
     history,model,scheduler = run_experiment(train_data, train_label, test_data, test_label, perclass_meter, classes_number,
                                              model,final_measurement,lr,scheduler)
+
+
     train_results[str(final_measurement)] += np.array(history)[1:, 0].astype(float).tolist()
     test_results[str(final_measurement)] += np.array(history)[1:,classes_number*2+1].astype(float).tolist()
+
 
     # #creating the model
     # K.clear_session()
@@ -254,16 +260,17 @@ SECTION 5.
 The main function to train the model
 """
 def train_process(idx):
-    global start_value,end_value,step,test_results,train_results
+    global start_value,end_value,step,test_results,train_results, etime
     global repetions,labels,tic,idx_,tmp_test_acc,file_name
     #Added by ismael
     global model,perclass_meter,lr,scheduler
     idx_=idx
-    tic = time()
+    tic = time.time()
     
     for final_measurement in range(start_value, end_value+1, step):
         test_results[str(final_measurement)] = []
         train_results[str(final_measurement)] = []
+        etime[str(final_measurement)] = []
 
         model = None #added by Ismael
         scheduler = None #added by Ismael
@@ -279,13 +286,13 @@ def train_process(idx):
             logging.info('epoch %d lr %e', k, lr)
             train_model(final_measurement,k)
             perclass_meter.first_iteration = False #added by Ismael
-            lr = scheduler.get_lr()[0]
+            # lr = scheduler.get_lr()[0]
             #early stopping
             if tmp_test_acc==1:
                 break
 
   
-    etime = time() - tic
+    etime = time.time() - tic
     print("execution time: "+str(etime))
     
     ##Printing partial outcomes
@@ -324,8 +331,9 @@ def train_process(idx):
     #         spamwriter.writerow([dict_value,  mean_acc_train,  std_acc_train])      
         
     ## Saving the objects:
-    # with open('outcomes_'+ file_name[:-3] + idx_ +'.pkl', 'wb') as f:  # Python 3: open(..., 'wb')
-    #     pickle.dump([train_results,test_results,etime], f)
+    with open(args.save+'/'+'out_'+ file_name[:-3] + idx_ +'.pkl', 'wb') as f:  # Python 3: open(..., 'wb')
+        pickle.dump([train_results,test_results,etime], f)
+        f.close()
 
 """
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -384,7 +392,7 @@ if experiment_option == 5:
     print("\n\n\t Running Dataset 5\n\n")
 
     args.save ="EXP_DARTS_WINE"
-    args.save = 'search-{}-{}-B5System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+    args.save = '{}-{}-B5System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
     utils.create_exp_dir(args.save)
 
     fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
@@ -396,7 +404,7 @@ elif experiment_option == 4:
     print("\n\n\t Running Dataset 4\n\n")
 
     args.save ="EXP_DARTS_WINE"
-    args.save = 'search-{}-{}-B4System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+    args.save = '{}-{}-B4System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
     utils.create_exp_dir(args.save)
 
     fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
@@ -408,7 +416,7 @@ elif experiment_option == 3:
     print("\n\n\t Running Dataset 3\n\n")
 
     args.save ="EXP_DARTS_WINE"
-    args.save = 'search-{}-{}-B3System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+    args.save = '{}-{}-B3System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
     utils.create_exp_dir(args.save)
 
     fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
@@ -420,7 +428,7 @@ elif experiment_option == 2:
     print("\n\n\t Running Dataset 2\n\n")
 
     args.save ="EXP_DARTS_WINE"
-    args.save = 'search-{}-{}-B2System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+    args.save = '{}-{}-B2System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
     utils.create_exp_dir(args.save)
 
     fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
@@ -432,7 +440,7 @@ elif experiment_option == 1:
     print("\n\n\t Running Dataset 1\n\n")
 
     args.save ="EXP_DARTS_WINE"
-    args.save = 'search-{}-{}-B1System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+    args.save = '{}-{}-B1System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
     utils.create_exp_dir(args.save)
 
     fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
