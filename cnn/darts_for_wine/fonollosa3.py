@@ -391,7 +391,7 @@ clas_=['CO','Ea','Ey','Me']  #Classes
 if experiment_option == 5:
     print("\n\n\t Running Dataset 5\n\n")
 
-    args.save ="EXP_DARTS_WINE"
+    # args.save ="EXP_DARTS_WNE"
     args.save = '{}-{}-B5System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
     utils.create_exp_dir(args.save)
 
@@ -403,7 +403,7 @@ if experiment_option == 5:
 elif experiment_option == 4:
     print("\n\n\t Running Dataset 4\n\n")
 
-    args.save ="EXP_DARTS_WINE"
+    # args.save ="EXP_DARTS_WINE"
     args.save = '{}-{}-B4System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
     utils.create_exp_dir(args.save)
 
@@ -415,7 +415,7 @@ elif experiment_option == 4:
 elif experiment_option == 3:
     print("\n\n\t Running Dataset 3\n\n")
 
-    args.save ="EXP_DARTS_WINE"
+    # args.save ="EXP_DARTS_WINE"
     args.save = '{}-{}-B3System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
     utils.create_exp_dir(args.save)
 
@@ -427,7 +427,7 @@ elif experiment_option == 3:
 elif experiment_option == 2:
     print("\n\n\t Running Dataset 2\n\n")
 
-    args.save ="EXP_DARTS_WINE"
+    #args.save ="EXP_DARTS_WINE"
     args.save = '{}-{}-B2System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
     utils.create_exp_dir(args.save)
 
@@ -439,7 +439,7 @@ elif experiment_option == 2:
 elif experiment_option == 1:
     print("\n\n\t Running Dataset 1\n\n")
 
-    args.save ="EXP_DARTS_WINE"
+    # args.save ="EXP_DARTS_WINE"
     args.save = '{}-{}-B1System-WithPerclassAcc'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
     utils.create_exp_dir(args.save)
 
