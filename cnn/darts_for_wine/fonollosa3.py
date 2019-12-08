@@ -93,7 +93,7 @@ def resetv():
     start_value = int(5500/samp) #int(5500/samp) 
     step = int(500/samp) #oldstep 7000
     end_value = int(11500/samp) + 1  #19000 -> 19289 samples size of B5_GMe_F050_R1.txt file
-    repetions = 50 #Set up the epochs
+    repetions = args.epochs #Set up the epochs
     train_results = {}
     test_results = {}
     etime = {}
@@ -281,6 +281,7 @@ def train_process(idx):
         lr = args.learning_rate
         tmp_test_acc=0
         logging.info("\n\t WINDOW + %s\n", final_measurement)
+        logging.info("Total Epochs %d", repetions)
         for k in range(repetions):
         #for k in range(2):
             logging.info('epoch %d lr %e', k, lr)
