@@ -338,7 +338,7 @@ def train_process(te_g):
 #            spamwriter.writerow([dict_value,  mean_acc_train,  std_acc_train])      
 #         
 #    # Saving the objects:
-    with open('outcomes_'+ file_name[:-3] + tr_g + te_g +'.pkl', 'wb') as f:  # Python 3: open(..., 'wb')
+    with open(args.save+'/'+'outcomes_'+ file_name[:-3] + tr_g + te_g +'.pkl', 'wb') as f:  # Python 3: open(..., 'wb')
         pickle.dump([train_results, valid_results, etime], f)
         f.close()
 

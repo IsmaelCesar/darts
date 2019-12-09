@@ -129,7 +129,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
                                               pin_memory=True, num_workers=2)
 
     # The loop has also been adapted to the Leave one out technique
-    for epoch in  range(args.epochs):
+    for epoch in range(args.epochs):
 
         n_epoch = epoch #trainin epoch to be used in the calculations of the perclass accuracy metter
 
@@ -169,7 +169,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
         perclass_acc_meter.first_iteration=False
 
     #Saving the model
-    utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
+    utils.save(model,os.path.join(args.save, "classifier_"+str(window_n)+".pt"))
 
     scheduler = None
     return perclass_acc_meter.csv_list, model, scheduler

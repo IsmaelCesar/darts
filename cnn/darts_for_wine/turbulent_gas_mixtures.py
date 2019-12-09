@@ -274,7 +274,7 @@ def train_process(idx):
     outer_tic = time.time()
 
     etime = {}
-    for final_measurement in range(start_value, end_value+1, step):
+    for final_measurement in range(start_value, end_value, step):# end_value+1
         test_results[str(final_measurement)] = []
         train_results[str(final_measurement)] = []
         etime[str(final_measurement)] = 0
@@ -405,4 +405,4 @@ fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
 fh.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(fh)
 
-lauch(clas_, pic_) #loading the dataset
+lauch(clas_, pic_) # loading the dataset
