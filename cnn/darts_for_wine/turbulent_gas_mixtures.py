@@ -270,7 +270,6 @@ def train_process(idx):
     global num_classes, perclass_meter, model, scheduler, lr
     idx_=idx
     outer_tic = time.time()
-    args.epochs = 2
     etime = {}
     for final_measurement in range(start_value, end_value, step):# end_value+1
         test_results[str(final_measurement)] = []
