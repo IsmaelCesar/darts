@@ -219,10 +219,13 @@ def train_model(final_measurement, k_, te_g):
     h, model, scheduler = run_experiment(stdd_train_data, train_label, stdd_valid_data, valid_label, perclass_meter,
                                          classes_number, model, final_measurement, lr, scheduler)
 
-    cat_valid_label = to_categorical(valid_label)
-    preds = model(torch.FloatTensor(stdd_valid_data))
+    #cat_valid_label = to_categorical(valid_label)
+    stdd_valid_data = stdd_valid_data.reshape(stdd_valid_data.shape[0], 1,
+                                              stdd_valid_data.shape[1], stdd_valid_data.shape[2])
 
-    clsf_report = classification_report(cat_valid_label, preds)
+    preds = model(torch.FloatTensor(stdd_valid_data).cuda()).cpu().detach().numpy()
+
+    clsf_report = classification_report(valid_label, np.argmax(preds, axis=1))
 
     logging.info("Cassification report table window " + str(final_measurement))
     logging.info("\n\n" + clsf_report + "\n\n")
@@ -267,7 +270,7 @@ def train_process(te_g):
     for final_measurement in range(start_value, end_value+1, step):
         valid_results[str(final_measurement)] = []
         train_results[str(final_measurement)] = []
-        test_results[str(final_measurement)] = []
+        #test_results[str(final_measurement)] = []
         etime[str(final_measurement)] = 0
 
         tic = time.time()

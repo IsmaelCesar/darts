@@ -220,7 +220,7 @@ def train_model(final_measurement,k_):
     h1 = []
     for el in h[1:]:
         h1.append(el[0])
-    test_results[str(final_measurement)] = np.array(h1).astype(float).tolist()
+    valid_results[str(final_measurement)] = np.array(h1).astype(float).tolist()
     return 0
 
 """
