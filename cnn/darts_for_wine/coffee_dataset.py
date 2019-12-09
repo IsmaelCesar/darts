@@ -197,14 +197,14 @@ def train_model(final_measurement,k_):
                                         scheduler)
 
 
-    cat_test_label = to_categorical(test_label)
+    # cat_test_label = to_categorical(test_label)
 
     stdd_test_data = stdd_test_data.reshape(stdd_test_data.shape[0], 1,
                                             stdd_test_data.shape[1], stdd_test_data.shape[2])
 
     preds = model(torch.FloatTensor(stdd_test_data).cuda()).cpu().detach().numpy()
 
-    clsf_report = classification_report(cat_test_label, preds)
+    clsf_report = classification_report(test_label, np.argmax(preds, axis=1))
 
     logging.info("Cassification report table window " + str(final_measurement))
     logging.info("\n\n" + clsf_report + "\n\n")
