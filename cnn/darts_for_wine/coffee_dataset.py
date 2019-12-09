@@ -202,7 +202,7 @@ def train_model(final_measurement,k_):
     stdd_test_data = stdd_test_data.reshape(stdd_test_data.shape[0], 1,
                                             stdd_test_data.shape[1], stdd_test_data.shape[2])
 
-    preds = model(torch.FloatTensor(stdd_test_data).cuda()).detach().numpy()
+    preds = model(torch.FloatTensor(stdd_test_data).cuda()).cpu().detach().numpy()
 
     clsf_report = classification_report(cat_test_label, preds)
 
