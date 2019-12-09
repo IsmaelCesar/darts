@@ -346,7 +346,7 @@ The primary function to load the dataset.
 def call_ldataset(fold,clas,pic_):
     resetv()
     for i in range(len(clas)):
-        ldataset(fold+clas[i],i,pic_) 
+        ldataset(fold+clas[i], i, pic_)
 
 """
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -355,7 +355,7 @@ This function calls the script that loads the dataset
 and starts the training process
 """
 def run_tr(fl_):
-    global dataset,labels,names,last_column,first_column,numfiles
+    global dataset, labels, names, last_column, first_column, numfiles
     resetv()
     file_path = "../../data/turbulent_gas_mixtures/"
     if not names:
