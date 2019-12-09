@@ -183,14 +183,8 @@ def train_model(final_measurement,k_):
 
     perclass_meter.first_iteration = False
 
-    h1 = []
-    for el in h[1: ]:
-        h1.append(el[0])
-    train_results[str(final_measurement)] = np.array(h1).astype(float).tolist()
-    h1 = []
-    for el in h[1:]:
-        h1.append(el[0])
-    test_results[str(final_measurement)] = np.array(h1).astype(float).tolist()
+    train_results[str(final_measurement)] += np.array(h)[1:, 0].astype(float).tolist()
+    test_results[str(final_measurement)] += np.array(h)[1:, num_classes * 2 + 1].astype(float).tolist()
 
     # cat_train_label = to_categorical(train_label)
     #cat_test_label = to_categorical(test_label)

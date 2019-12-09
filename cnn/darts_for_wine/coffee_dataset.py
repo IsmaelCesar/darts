@@ -196,7 +196,7 @@ def train_model(final_measurement,k_):
                                         lr,
                                         scheduler)
 
-
+    perclass_meter.first_iteration = False
     # cat_test_label = to_categorical(test_label)
 
     stdd_test_data = stdd_test_data.reshape(stdd_test_data.shape[0], 1,
@@ -213,14 +213,9 @@ def train_model(final_measurement,k_):
         f.write(clsf_report)
         f.close()
 
-    h1 = []
-    for el in h[1:]:
-        h1.append(el[0])
-    train_results[str(final_measurement)] = np.array(h1).astype(float).tolist()
-    h1 = []
-    for el in h[1:]:
-        h1.append(el[0])
-    valid_results[str(final_measurement)] = np.array(h1).astype(float).tolist()
+    train_results[str(final_measurement)] += np.array(h)[1:, 0].astype(float).tolist()
+    valid_results[str(final_measurement)] += np.array(h)[1:, classes_number*2+1].astype(float).tolist()
+
     return 0
 
 """
