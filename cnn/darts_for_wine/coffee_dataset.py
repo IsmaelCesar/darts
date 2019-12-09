@@ -184,8 +184,6 @@ def train_model(final_measurement,k_):
     stdd_test_data = flat_test_data.reshape(test_data.shape[0], test_data.shape[1], last_column)
     #cat_train_label = to_categorical(train_label)
 
-
-    
     ## ********** Put here the Convolutive CNN  **********
     h, model, scheduler =run_experiment(stdd_train_data,
                                         train_label,
@@ -199,6 +197,8 @@ def train_model(final_measurement,k_):
                                         scheduler)
 
     cat_test_label = to_categorical(test_label)
+    stdd_test_data = stdd_test_data.reshape(stdd_test_data.shape[0], 1,
+                                            stdd_test_data.shape[1], stdd_test_data.shape[2])
     preds = model(torch.FloatTensor(stdd_test_data))
 
     clsf_report = classification_report(cat_test_label, preds)
