@@ -86,9 +86,9 @@ def resetv():
     #Window one:  30 - 165
     #Window two:  30 - 299
     #Next test ini_value 30,start_value 50,step 20
-    ini_value = int(30/samp) 
-    start_value = int(50/samp) #old_start_value 165
-    step = int(20/samp)        #old_step 135
+    ini_value = int(30/samp) # old value int(30/samp)
+    start_value = int(56/samp)# old value int(50/samp) #old_start_value 165
+    step = int(26/samp) #old value int(20/samp)        #old_step 135
     end_value = int(299/samp) 
     repetitions = args.epochs  #Set up the epochs
     train_results = {}
