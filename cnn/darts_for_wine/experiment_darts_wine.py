@@ -47,7 +47,7 @@ parser.add_argument('--arch_learning_rate', type=float, default=3e-4, help='lear
 parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
 #Added by Ismael
 parser.add_argument("--data_set_option", type=int, default=1, help="Type the dataset number you wish to execute")
-parser.add_argument("--is_using_inner_epoch_loop",action='store_false',default=True,help="Indicate if any wine dataset is being used")
+parser.add_argument("--is_using_inner_epoch_loop",action='store_true',default=False,help="Indicate if any wine dataset is being used")
 args = parser.parse_args()
 
 #args.save = 'search-{}-{}-B5System-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))

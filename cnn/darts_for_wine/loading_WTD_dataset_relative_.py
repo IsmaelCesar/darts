@@ -218,7 +218,7 @@ def train_model(final_measurement, k_, te_g):
     ## ********** Put here the Convolutive CNN  **********
     h, model, scheduler = run_experiment(stdd_train_data, train_label, stdd_valid_data, valid_label, perclass_meter,
                                          classes_number, model, final_measurement, lr, scheduler)
-
+    perclass_meter.first_iteration = False
     #cat_valid_label = to_categorical(valid_label)
     stdd_valid_data = stdd_valid_data.reshape(stdd_valid_data.shape[0], 1,
                                               stdd_valid_data.shape[1], stdd_valid_data.shape[2])
