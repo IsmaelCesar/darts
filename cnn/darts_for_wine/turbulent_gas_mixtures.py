@@ -163,6 +163,7 @@ def train_model(final_measurement,k_):
     #Added By Ismael
     global num_classes, perclass_meter, model, scheduler, lr
     #split train and test data
+
     train_data, test_data, train_label, test_label = train_test_split(dataset[:, ini_value:final_measurement, :],
                                                                       labels, test_size=0.2) # 0.3
      
@@ -179,6 +180,9 @@ def train_model(final_measurement,k_):
     ## ********** Put here the Convolutive CNN  **********
     h, model, scheduler = run_experiment(stdd_train_data, train_label, stdd_test_data, test_label, perclass_meter,
                                          num_classes, model, final_measurement, lr, scheduler)
+
+    perclass_meter.first_iteration = False
+
     h1 = []
     for el in h[1: ]:
         h1.append(el[0])
@@ -192,8 +196,8 @@ def train_model(final_measurement,k_):
     #cat_test_label = to_categorical(test_label)
     stdd_test_data = stdd_test_data.reshape(stdd_test_data.shape[0], 1,
                                             stdd_test_data.shape[1], stdd_test_data.shape[2])
-
-    preds = model(torch.FloatTensor(stdd_test_data).cuda()).cpu().detach().numpy()
+    #.cuda()
+    preds = model(torch.FloatTensor(stdd_test_data).cuda()).cpu().detach().numpy()#.cpu()
 
     clsf_report = classification_report(test_label, np.argmax(preds, axis=1))
 
@@ -272,7 +276,7 @@ def train_process(idx):
     global num_classes, perclass_meter, model, scheduler, lr
     idx_=idx
     outer_tic = time.time()
-
+    args.epochs = 2
     etime = {}
     for final_measurement in range(start_value, end_value, step):# end_value+1
         test_results[str(final_measurement)] = []

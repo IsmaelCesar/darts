@@ -47,7 +47,7 @@ parser.add_argument('--arch_learning_rate', type=float, default=3e-4, help='lear
 parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
 #Added by Ismael
 parser.add_argument("--data_set_option", type=int, default=1, help="Type the dataset number you wish to execute")
-parser.add_argument("--is_using_inner_epoch_loop",action='store_true',default=False,help="Indicate if any wine dataset is being used")
+parser.add_argument("--is_using_inner_epoch_loop",action='store_false',default=True,help="Indicate if any wine dataset is being used")
 args = parser.parse_args()
 
 #args.save = 'search-{}-{}-B5System-WithPerclassAcc'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
@@ -123,10 +123,10 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
 
     train_queue = torch.utils.data.DataLoader(train_ds_wine,sampler=torchdata.sampler.RandomSampler(train_ds_wine),
                                               batch_size=args.batch_size,
-                                              pin_memory=True, num_workers=2)
+                                              pin_memory=True)#, num_workers=1
 
     valid_queue = torch.utils.data.DataLoader(test_ds_wine, sampler=torchdata.sampler.RandomSampler(test_ds_wine),
-                                              pin_memory=True, num_workers=2)
+                                              pin_memory=True)#num_workers=2
 
     # The loop has also been adapted to the Leave one out technique
     for epoch in range(args.epochs):
