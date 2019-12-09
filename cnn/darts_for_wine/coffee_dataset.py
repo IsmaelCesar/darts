@@ -68,9 +68,9 @@ Auxiliary functions
 In this function is defined the initial conditions
 """
 def resetv():
-    global actualDir,dataset,labels,names,train_results
-    global test_results,start_value,step,end_value,repetitions
-    global ini_value,file_name,first_column,samp
+    global actualDir, dataset, labels, names, train_results, etime
+    global valid_results, start_value, step, end_value, repetitions
+    global ini_value, file_name, first_column, samp
     file_name = os.path.basename(__file__)
     path_name = os.path.realpath(__file__)
     actualDir = path_name[:-len(file_name)]
@@ -91,7 +91,8 @@ def resetv():
     end_value = int(299/samp) 
     repetitions = args.epochs  #Set up the epochs
     train_results = {}
-    test_results = {}
+    valid_results = {}
+    etime = {}
 
 """
 4.2.
@@ -157,18 +158,19 @@ def ldataset(folder,i,pic):
     numfiles = len(labels)
     # Saving the objects:
     with open('preloaded_dataset.pkl', 'wb') as f:  
-        pickle.dump([dataset,labels,names], f)
+        pickle.dump([dataset, labels, names], f)
     print('loaded' + folder)
 
 def train_model(final_measurement,k_):
-    global start_value,end_value,step,test_results,train_results
-    global repetitions,labels,tic,idx_,tmp_test_acc
-    global ini_value,file_name,last_column,numfiles
+    global start_value, end_value, step, valid_results, train_results
+    global repetitions, labels, tic, idx_, tmp_test_acc
+    global ini_value, file_name, last_column, numfiles
     # Making data necessary for training global variables
-    global model, scheduler, lr, perclass_meter,classes_number,partial_results
+    global model, scheduler, lr, perclass_meter, classes_number, partial_results
     
     #split train and test data
-    train_data, test_data, train_label, test_label = train_test_split(dataset[:,ini_value:final_measurement,:], labels, test_size = 0.2)
+    train_data, test_data, train_label, test_label = train_test_split(dataset[:, ini_value:final_measurement, :],
+                                                                      labels, test_size=0.2)
     
     #preprocess
     flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
@@ -178,21 +180,29 @@ def train_model(final_measurement,k_):
     flat_test_data = scaler.transform(flat_test_data)
     #Next two lines have been added by Ismael
     #Putting arrays back into their original shape
-    stdd_train_data = flat_train_data.reshape(train_data.shape[0],train_data.shape[1],last_column)
-    stdd_test_data = flat_test_data.reshape(test_data.shape[0],test_data.shape[1],last_column)
+    stdd_train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1], last_column)
+    stdd_test_data = flat_test_data.reshape(test_data.shape[0], test_data.shape[1], last_column)
     #cat_train_label = to_categorical(train_label)
     #cat_test_label = to_categorical(test_label)
 
     
     ## ********** Put here the Convolutive CNN  **********
-    h,model,scheduler =run_experiment(stdd_train_data,train_label,stdd_test_data,test_label,perclass_meter,classes_number,model,
-                                      final_measurement,lr,scheduler)
+    h, model, scheduler =run_experiment(stdd_train_data,
+                                        train_label,
+                                        stdd_test_data,
+                                        test_label,
+                                        perclass_meter,
+                                        classes_number,
+                                        model,
+                                        final_measurement,
+                                        lr,
+                                        scheduler)
     h1 = []
-    for el in h[1: ]:
+    for el in h[1:]:
         h1.append(el[0])
     train_results[str(final_measurement)] = np.array(h1).astype(float).tolist()
     h1 = []
-    for el in h[1: ]:
+    for el in h[1:]:
         h1.append(el[0])
     test_results[str(final_measurement)] = np.array(h1).astype(float).tolist()
     return 0
@@ -203,46 +213,52 @@ SECTION 5.
 The main function to train the model
 """
 def train_process(idx):
-    global start_value,end_value,step,test_results,train_results
-    global repetitions,labels,tic,idx_,tmp_test_acc,file_name
+    global start_value, end_value, step, valid_results, train_results, etime
+    global repetitions, labels, tic, idx_, tmp_test_acc, file_name
     # Making data necessary for training global variables
-    global model, scheduler, lr, perclass_meter,classes_number
+    global model, scheduler, lr, perclass_meter, classes_number
     idx_=idx
     tic = time()
 
     partial_results = {}
     classes_number = 3
+    lr = args.learning_rate
 
     for final_measurement in range(start_value, end_value+1, step):
-        test_results[str(final_measurement)] = []
+        valid_results[str(final_measurement)] = []
         train_results[str(final_measurement)] = []
-
+        etime[str(final_measurement)] = 0
         model = None
         scheduler = None
-        lr = args.learning_rate
         partial_results[str(final_measurement)] = 0
-        perclass_meter = PerclassAccuracyMeter(classes_number,is_using_prf1=True)
-        perclass_meter.first_iteration = True
-        #logging.info("\n\t WINDOW + %s\n", final_measurement)
 
-        tmp_test_acc=0      
-        #for k in range(repetitions):
-        train_model(final_measurement,0)
+        etic = time.time()
+        perclass_meter = PerclassAccuracyMeter(classes_number)
+        perclass_meter.first_iteration = True
+        # logging.info("\n\t WINDOW + %s\n", final_measurement)
+
+        tmp_test_acc = 0
+        # for k in range(repetitions):
+        train_model(final_measurement, 0)
+        etime[str(final_measurement)] += time.time() - etic
 
   
-    etime = time() - tic
-    logging.info("execution time: "+str(etime))
+    # etime =
+    logging.info("execution time: "+str(time() - tic))
 
     logging.info("Partial Outcomes")
-    for dict_value in test_results.keys():
+    for dict_value in valid_results.keys():
         logging.info('test:')
-        mean_acc_test = np.mean(test_results[dict_value])
+        mean_acc_test = np.mean(valid_results[dict_value])
         logging.info("Window "+str(dict_value) + " mean acc:" + str(mean_acc_test))
     for dict_value in train_results.keys():
         logging.info('train:')
         mean_acc_train = np.mean(train_results[dict_value])
         logging.info("Window "+str(dict_value) + " mean acc:" + str(mean_acc_train))
 
+    with open('outcomes_'+file_name[:-3] +'.pkl', 'wb') as f:  # Python 3: open(..., 'wb')
+        pickle.dump([train_results, valid_results, etime], f)
+        f.close()
 
     
 
@@ -264,11 +280,11 @@ This function calls the script that loads the dataset
 and starts the training process
 """
 def run_tr(fl_):
-    global dataset,labels,names,last_column,first_column,numfiles
+    global dataset, labels, names, last_column, first_column, numfiles
     resetv()
     if not names:
         with open(fl_ + '.pkl', 'rb') as f_s: 
-            dataset,labels,names = pickle.load(f_s)
+            dataset, labels, names = pickle.load(f_s)
     dataset = np.array(dataset)
     dim_data = dataset.shape
     last_column = int(dim_data[2])
@@ -298,13 +314,12 @@ The script begins here.
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M:%S %p')
-args.save ="EXP_DARTS"
-args.save = 'search-{}-{}-Coffee_DataSet_WithPrecisionRecallF1Score'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+#args.save ="EXP_DARTS_COFFEE"
+args.save = '{}-{}-Coffee_DataSet_WithPrecisionRecallF1Score'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
 utils.create_exp_dir(args.save)
-
 fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
 fh.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(fh)
 
 clas_=['AQ-Coffee','HQ-Coffee','LQ-Coffee']  #Classes
-lauch(clas_,pic_) #loading the dataset  
+lauch(clas_, pic_) #loading the dataset

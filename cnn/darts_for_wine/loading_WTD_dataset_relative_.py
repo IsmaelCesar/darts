@@ -39,13 +39,13 @@ from darts_for_wine.experiment_darts_wine import args
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
 from darts_for_wine.experiment_darts_wine import infer
 from darts_for_wine.winedataset import WinesDataset
-from darts_for_wine.test_cases import testing_csv_list
+# from darts_for_wine.test_cases import testing_csv_list
 import torch
 import torch.nn as nn
 import torch.utils.data as torchdata
 import time as time_formatter
 
-   
+experiment_option = args.data_set_option - 1
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 global tic,pic_
 global actualDir,dataset,labels,names,train_results,test_results
@@ -82,10 +82,10 @@ def resetv():
         samp_=1
     else:
         samp_=samp
-    ini_value = int(20*samp_) 
-    start_value = int(80*samp_) #int(5500/samp) old_start_value 60*samp_
-    step = int(60*samp_) #old_step 40*samp_
-    end_value = int(260*samp_)  #samples size old end_value 260*samp_
+    ini_value = int(20*samp) # old value int(20*samp_)
+    start_value = int(44*samp) # old division int(80*samp_) ; int(5500/samp) old_start_value 60*samp_
+    step = int(23*samp) # old value int(60*samp_) #old_step 40*samp_
+    end_value = int(260*samp) # old value int(260*samp_)  #samples size old end_value 260*samp_
     repetions = 1
     train_results = {}
     valid_results = {}
@@ -139,31 +139,31 @@ def load_file(filename_):
    
    
 #load dataset
-def ldataset(sel,fl_,folder,i): 
-    global actualDir,dataset,labels,names,end_value,file_name,numfiles,pic_
-    global datasetT,labelsT,namesT,numfilesT
+def ldataset(sel, fl_, folder, i):
+    global actualDir, dataset, labels,names, end_value, file_name, numfiles, pic_
+    global datasetT, labelsT, namesT, numfilesT
     os.chdir(folder)
     with concurrent.futures.ProcessPoolExecutor() as executor:    
         filenames=os.listdir(os.getcwd()) 
-        for filename, a in zip(filenames,executor.map(load_file,filenames)):
+        for filename, a in zip(filenames,executor.map(load_file, filenames)):
             if (bool(filename.find('board_setPoint_500V')+1) and bool(filename.find('fan_setPoint_060')+1) == True):
                 ##save figure 
                 if pic_==1:
                     os.chdir(actualDir)
                     os.chdir('WTD_files/figures/' + fl_ )           
                     fg = plt.figure()
-                    plt.plot(a[:,first_column:])
+                    plt.plot(a[:, first_column:])
                     fg.savefig(filename[:-3]+'png', bbox_inches='tight',dpi=100)
                     plt.clf() # Clear figure
                     os.chdir(actualDir)    
                     os.chdir(folder)
                 ##save figure  
                 if (sel==0):
-                    dataset.append(a[:,first_column:])
+                    dataset.append(a[:, first_column:])
                     labels.append(i)
                     names.append(filename)
                 else:
-                    datasetT.append(a[:,first_column:])
+                    datasetT.append(a[:, first_column:])
                     labelsT.append(i)
                     namesT.append(filename)
                 del a
@@ -172,77 +172,80 @@ def ldataset(sel,fl_,folder,i):
         numfiles = len(labels)
         # Saving the objects:
         with open('preloaded_dataset-' + fl_ + '.pkl', 'wb') as f:  
-            pickle.dump([dataset,labels,names], f)
+            pickle.dump([dataset, labels, names], f)
     else:
         numfilesT = len(labelsT)
         # Saving the objects:
         with open('preloaded_dataset-' + fl_ + '.pkl', 'wb') as f:  
-            pickle.dump([datasetT,labelsT,namesT], f)    
+            pickle.dump([datasetT, labelsT, namesT], f)
     print('loaded' + folder)
 
-def train_model(final_measurement,k_,te_g):
-    global start_value,end_value,step,valid_results,train_results,test_results
-    global repetions,labels,tic,tr_g,tmp_valid_acc
-    global ini_value,file_name,last_column,numfiles
-    global datasetT,labelsT,namesT
-    global dim_dataT,last_columnT
+def train_model(final_measurement, k_, te_g):
+    global start_value, end_value, step, valid_results, train_results, test_results
+    global repetions, labels,tic, tr_g, tmp_valid_acc
+    global ini_value, file_name, last_column, numfiles
+    global datasetT, labelsT, namesT
+    global dim_dataT, last_columnT
     # Added by Ismael
     global model, scheduler, lr, perclass_meter, classes_number
     
-    #split train and validation data
-    train_data, valid_data, train_label, valid_label = train_test_split(dataset[:,ini_value:final_measurement,:], labels, test_size = 0.3)
-    #test data
-    test_data = datasetT[:,ini_value:final_measurement,:]
-    test_label = labelsT
+    # split train and validation data
+    train_data, valid_data, train_label, valid_label = train_test_split(dataset[:, ini_value:final_measurement, :],
+                                                                        labels, test_size=0.2)# 0.3
+    # test data
+    # test_data = datasetT[:, ini_value:final_measurement, :]
+    # test_label = labelsT
      
     #preprocess
     flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
     flat_valid_data = valid_data.reshape(valid_data.shape[0], valid_data.shape[1] * last_column)
-    flat_test_data = test_data.reshape(test_data.shape[0], test_data.shape[1] * last_columnT)
+    # flat_test_data = test_data.reshape(test_data.shape[0], test_data.shape[1] * last_columnT)
     scaler = preprocessing.StandardScaler().fit(flat_train_data)
     flat_train_data = scaler.transform(flat_train_data)
     scaler1 = preprocessing.StandardScaler().fit(flat_valid_data)
     flat_valid_data = scaler1.transform(flat_valid_data)
-    scaler2 = preprocessing.StandardScaler().fit(flat_test_data)
-    flat_test_data = scaler2.transform(flat_test_data)
+    # scaler2 = preprocessing.StandardScaler().fit(flat_test_data)
+    # flat_test_data = scaler2.transform(flat_test_data)
       
-    #cat_train_label = to_categorical(train_label)
-    #cat_valid_label = to_categorical(valid_label)
-    #cat_test_label = to_categorical(test_label)
-    #Added By Ismael
-    stdd_train_data = flat_train_data.reshape(train_data.shape[0],train_data.shape[1],last_column)
+    # cat_train_label = to_categorical(train_label)
+    # cat_valid_label = to_categorical(valid_label)
+    # cat_test_label = to_categorical(test_label)
+    # Added By Ismael
+    stdd_train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1], last_column)
     stdd_valid_data = flat_valid_data.reshape(valid_data.shape[0], valid_data.shape[1], last_column)
-    stdd_test_data = flat_test_data.reshape(test_data.shape[0], test_data.shape[1], last_columnT)
+    # stdd_test_data = flat_test_data.reshape(test_data.shape[0], test_data.shape[1], last_columnT)
+
     ## ********** Put here the Convolutive CNN  **********
-    h,model,scheduler = run_experiment(stdd_train_data,train_label,stdd_valid_data,valid_label,perclass_meter,
-                                      classes_number,model,final_measurement,lr,scheduler)
+    h, model, scheduler = run_experiment(stdd_train_data, train_label, stdd_valid_data, valid_label, perclass_meter,
+                                         classes_number, model, final_measurement, lr, scheduler)
 
-    logging.info("\t\t\n\n USING TEST SET OF WINDOW"+str(final_measurement)+"\n\n")
 
-    dset_obj = WinesDataset(stdd_test_data,test_label)
-    test_queue = torch.utils.data.DataLoader(dset_obj, sampler=torchdata.sampler.RandomSampler(dset_obj),
-                                                  pin_memory=True, num_workers=2)
-    infer(test_queue,model,nn.CrossEntropyLoss(),classes_number)
+    # logging.info("\t\t\n\n USING TEST SET OF WINDOW"+str(final_measurement)+"\n\n")
 
-    #h = testing_csv_list(perclass_meter,labels,args.save,final_measurement)
+    # dset_obj = WinesDataset(stdd_test_data, test_label)
+    # test_queue = torch.utils.data.DataLoader(dset_obj, sampler=torchdata.sampler.RandomSampler(dset_obj),
+    #                                              pin_memory=True, num_workers=2)
+    # infer(test_queue, model, nn.CrossEntropyLoss(), classes_number)
+
+    # h = testing_csv_list(perclass_meter,labels,args.save,final_measurement)
 
     h1 = []
-    for el in h[1: ]:
-        h1.append(el[0])
+    for el in h[1:]:
+       h1.append(el[0])
     train_results[str(final_measurement)] = np.array(h1).astype(float).tolist()
     h1 = []
-    for el in h[1: ]:
+    for el in h[1:]:
         h1.append(el[0])
-    test_results[str(final_measurement)] = np.array(h1).astype(float).tolist()
+    valid_results[str(final_measurement)] = np.array(h1).astype(float).tolist()
 
     return 0
 
 
 def train_process(te_g):
-    global start_value,end_value,step,valid_results,train_results,test_results
-    global repetions,labels,tic,tr_g,tmp_valid_acc
+    global start_value, end_value, step, valid_results, train_results, test_results
+    global repetions, labels, tic, tr_g, tmp_valid_acc
     #Added by Ismael
-    global clas_,model, scheduler, lr, perclass_meter, classes_number
+    global clas_, model, scheduler, lr, perclass_meter, classes_number
 
     tic = time()
 
@@ -255,7 +258,7 @@ def train_process(te_g):
 
 
         #Perclass Metter
-        perclass_meter = utils.PerclassAccuracyMeter(classes_number,is_using_prf1=True)
+        perclass_meter = utils.PerclassAccuracyMeter(classes_number)
         perclass_meter.first_iteration = True
         model = None
         scheduler = None
@@ -263,7 +266,7 @@ def train_process(te_g):
 
         tmp_valid_acc=0   
         #for k in range(repetions):
-        train_model(final_measurement,k,te_g)
+        train_model(final_measurement, 0, te_g)
         #early stopping
         #if tmp_valid_acc==1:
         #    break
@@ -317,8 +320,9 @@ def train_process(te_g):
 #            spamwriter.writerow([dict_value,  mean_acc_train,  std_acc_train])      
 #         
 #    # Saving the objects:
-#    with open('outcomes_'+ file_name[:-3] + tr_g + te_g +'.pkl', 'wb') as f:  # Python 3: open(..., 'wb')
-#        pickle.dump([train_results,valid_results,test_results,etime], f)
+    with open('outcomes_'+ file_name[:-3] + tr_g + te_g +'.pkl', 'wb') as f:  # Python 3: open(..., 'wb')
+        pickle.dump([train_results, valid_results, etime], f)
+        f.close()
 
     
 def call_ldataset():
@@ -330,29 +334,30 @@ def call_ldataset():
     if not names:
         for i in range(len(clas_)):
             if (clas_[i]!='Butanol_100'):
-                ldataset(0,tr_g,fold_+clas_[i]+'/'+ tr_g +'/',i) 
+                ldataset(0, tr_g, fold_+clas_[i]+'/'+tr_g + '/', i)
             else:
                 if (tr_g != 'L6'):
-                    ldataset(0,tr_g,fold_+clas_[i]+'/'+ tr_g +'/',i) 
+                    ldataset(0, tr_g, fold_+clas_[i]+'/'+tr_g + '/', i)
     
     #testing group
     for j in range(len(clas_)):
         if (clas_[j]!='Butanol_100'):
-            ldataset(1,te_g,fold_+clas_[j]+'/'+ te_g +'/',j) 
+            ldataset(1, te_g, fold_+clas_[j]+'/'+te_g + '/', j)
         else:
             if (te_g != 'L6'):
                 ldataset(1,te_g,fold_+clas_[j]+'/'+ te_g +'/',j) 
 
 
 def run_tr():
-    global dataset,labels,names,last_column,first_column,numfiles
-    global datasetT,labelsT,namesT
-    global dim_dataT,last_columnT,tr_g,numfilesT
+    global dataset, labels, names, last_column, first_column, numfiles
+    global datasetT, labelsT, namesT
+    global dim_dataT, last_columnT, tr_g, numfilesT
     resetv()
-    #nextline was added by ismael
+    # nextline was added by ismael
     prefix_path = "../../data/windtunel/"
     if not names:
-        with open(prefix_path+'preloaded_dataset-' + tr_g + '.pkl', 'rb') as f_s:
+        # with open(prefix_path+'preloaded_dataset-' + tr_g + '.pkl', 'rb') as f_s:
+        with open(prefix_path + 'preloaded_dataset-' + te_g + '.pkl', 'rb') as f_s:
             dataset,labels,names = pickle.load(f_s)
     dataset = np.array(dataset)
     dim_data = dataset.shape
@@ -360,13 +365,13 @@ def run_tr():
     numfiles = len(labels)
     print(str(numfiles)+'files loaded from' + tr_g)
     
-    if not namesT:
-        with open(prefix_path+'preloaded_dataset-' + te_g + '.pkl', 'rb') as f_s1:
-            datasetT,labelsT,namesT = pickle.load(f_s1)
-    datasetT = np.array(datasetT)
-    dim_dataT = dataset.shape
-    last_columnT = int(dim_data[2])
-    numfilesT = len(labelsT)
+    # if not namesT:
+    #     with open(prefix_path+'preloaded_dataset-' + te_g + '.pkl', 'rb') as f_s1:
+    #         datasetT,labelsT,namesT = pickle.load(f_s1)
+    # datasetT = np.array(datasetT)
+    # dim_dataT = dataset.shape
+    # last_columnT = int(dim_data[2])
+    # numfilesT = len(labelsT)
     print(str(numfiles)+'files loaded from' + te_g)
     
     train_process(te_g) 
@@ -377,10 +382,149 @@ global clas_, syst_, fold_, tr_g, te_g
 clas_=['Acetaldehyde_500','Acetone_2500','Ammonia_10000','Benzene_200','Butanol_100','CO_1000','CO_4000','Ethylene_500','Methane_1000','Methanol_200','Toluene_200']
 syst_=['L1','L2','L3','L4','L5','L6']
 fold_='WTD_files/'
-tr_g=syst_[3] #Training group 'L4'
+tr_g=syst_[3]# Training group 'L4'
 
 
-#Testing groups 'L1','L2','L3','L4','L5','L6'
+# Testing groups 'L1','L2','L3','L4','L5','L6'
+
+if experiment_option == 0:
+    print('loading ' + fold_)
+
+    # Added by ismael
+    log_format = '%(asctime)s %(message)s'
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                        format=log_format, datefmt='%m/%d %I:%M:%S %p')
+    # args.save = "EXP_DARTS"
+
+    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time_formatter.strftime(
+        "%Y%m%d-%H%M%S"))
+
+    utils.create_exp_dir(args.save)
+
+    fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+    fh.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(fh)
+
+    te_g = syst_[experiment_option]
+    print(te_g)
+    # call_ldataset() #Only excute for non preloaded dataset
+    run_tr()
+
+elif experiment_option == 1:
+    print('loading ' + fold_)
+
+    # Added by ismael
+    log_format = '%(asctime)s %(message)s'
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                        format=log_format, datefmt='%m/%d %I:%M:%S %p')
+    # args.save = "EXP_DARTS"
+
+    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time_formatter.strftime(
+        "%Y%m%d-%H%M%S"))
+
+    utils.create_exp_dir(args.save)
+
+    fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+    fh.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(fh)
+
+    te_g = syst_[experiment_option]
+    print(te_g)
+    # call_ldataset() #Only excute for non preloaded dataset
+    run_tr()
+
+elif experiment_option == 2:
+    print('loading ' + fold_)
+
+    # Added by ismael
+    log_format = '%(asctime)s %(message)s'
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                        format=log_format, datefmt='%m/%d %I:%M:%S %p')
+    # args.save = "EXP_DARTS"
+
+    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time_formatter.strftime(
+        "%Y%m%d-%H%M%S"))
+
+    utils.create_exp_dir(args.save)
+
+    fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+    fh.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(fh)
+
+    te_g = syst_[experiment_option]
+    print(te_g)
+    # call_ldataset() #Only excute for non preloaded dataset
+    run_tr()
+
+if experiment_option == 3:
+    print('loading ' + fold_)
+
+    # Added by ismael
+    log_format = '%(asctime)s %(message)s'
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                        format=log_format, datefmt='%m/%d %I:%M:%S %p')
+    # args.save = "EXP_DARTS"
+
+    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time_formatter.strftime(
+        "%Y%m%d-%H%M%S"))
+
+    utils.create_exp_dir(args.save)
+
+    fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+    fh.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(fh)
+
+    te_g = syst_[experiment_option]
+    print(te_g)
+    # call_ldataset() #Only excute for non preloaded dataset
+    run_tr()
+
+elif experiment_option == 4:
+    print('loading ' + fold_)
+
+    # Added by ismael
+    log_format = '%(asctime)s %(message)s'
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                        format=log_format, datefmt='%m/%d %I:%M:%S %p')
+    # args.save = "EXP_DARTS"
+
+    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time_formatter.strftime(
+        "%Y%m%d-%H%M%S"))
+
+    utils.create_exp_dir(args.save)
+
+    fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+    fh.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(fh)
+
+    te_g = syst_[experiment_option]
+    print(te_g)
+    # call_ldataset() #Only excute for non preloaded dataset
+    run_tr()
+
+elif experiment_option == 5:
+    print('loading ' + fold_)
+
+    # Added by ismael
+    log_format = '%(asctime)s %(message)s'
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                        format=log_format, datefmt='%m/%d %I:%M:%S %p')
+    # args.save = "EXP_DARTS"
+
+    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time_formatter.strftime(
+        "%Y%m%d-%H%M%S"))
+
+    utils.create_exp_dir(args.save)
+
+    fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+    fh.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(fh)
+
+    te_g = syst_[experiment_option]
+    print(te_g)
+    # call_ldataset() #Only excute for non preloaded dataset
+    run_tr()
+"""
 for k in range(0, 6, 1):
     print('loading ' + fold_)
 
@@ -388,9 +532,9 @@ for k in range(0, 6, 1):
     log_format = '%(asctime)s %(message)s'
     logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                        format=log_format, datefmt='%m/%d %I:%M:%S %p')
-    args.save = "EXP_DARTS"
+    # args.save = "EXP_DARTS"
 
-    args.save = ('search-{}-{}-WindTunel_'+syst_[k]+"PrecisionRecallF1Score").format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+    args.save = ('{}-{}-WindTunel_'+syst_[k]+"PrecisionRecallF1Score").format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
 
     utils.create_exp_dir(args.save)
 
@@ -402,7 +546,7 @@ for k in range(0, 6, 1):
     print(te_g)
     #call_ldataset() #Only excute for non preloaded dataset
     run_tr()
-
+"""
 
 
 

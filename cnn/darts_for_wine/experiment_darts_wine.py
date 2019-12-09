@@ -46,7 +46,7 @@ parser.add_argument('--unrolled', action='store_true', default=False, help='use 
 parser.add_argument('--arch_learning_rate', type=float, default=3e-4, help='learning rate for arch encoding')
 parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
 #Added by Ismael
-parser.add_argument("--data_set_option",type=int,default=1,help="Type the dataset number you wish to execute")
+parser.add_argument("--data_set_option", type=int, default=1, help="Type the dataset number you wish to execute")
 parser.add_argument("--is_using_inner_epoch_loop",action='store_true',default=False,help="Indicate if any wine dataset is being used")
 args = parser.parse_args()
 
@@ -125,17 +125,17 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
                                               batch_size=args.batch_size,
                                               pin_memory=True, num_workers=2)
 
-    valid_queue = torch.utils.data.DataLoader(test_ds_wine,sampler=torchdata.sampler.RandomSampler(test_ds_wine),
+    valid_queue = torch.utils.data.DataLoader(test_ds_wine, sampler=torchdata.sampler.RandomSampler(test_ds_wine),
                                               pin_memory=True, num_workers=2)
 
-    #The loop has also been adapted to the Leave one out technique
+    # The loop has also been adapted to the Leave one out technique
     for epoch in  range(args.epochs):
 
         n_epoch = epoch #trainin epoch to be used in the calculations of the perclass accuracy metter
 
-        #scheduler.step()
+        # scheduler.step()
 
-        #lr = scheduler.get_lr()[0]
+        # lr = scheduler.get_lr()[0]
         lr = arg_lr
 
         if args.is_using_inner_epoch_loop:
@@ -147,7 +147,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
         F.softmax(model.alphas_normal, dim=-1)
         F.softmax(model.alphas_reduce, dim=-1)
 
-        #Reusing the train procedure of the DARTS implementation
+        # Reusing the train procedure of the DARTS implementation
         train_acc, train_obj = train(train_queue,valid_queue,model,lr,architecht,criterion,optimizer,CLASSES_WINE)
         logging.info("train_acc %f",train_acc)
         perclass_acc_meter.compute_perclass_accuracy_with_precision_recall(epoch)
@@ -172,7 +172,7 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
     utils.save(model,os.path.join(args.save,"wine_classifier_"+str(window_n)+".pt"))
 
     scheduler = None
-    return perclass_acc_meter.csv_list,model,scheduler
+    return perclass_acc_meter.csv_list, model, scheduler
 
 """
 The train e infer procedure were addapted for the leave one out technique

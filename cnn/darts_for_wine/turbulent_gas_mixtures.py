@@ -20,7 +20,7 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import concurrent.futures
-#import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import os
 import sys
 sys.path.append("../")
@@ -45,7 +45,7 @@ import time as time_formatter
    
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 global tic
-global actualDir,dataset,labels,names,train_results
+global actualDir, dataset, labels, names, train_results
 global test_results,start_value,step,end_value,repetitions
 global ini_value,file_name,first_column,samp,numfiles
     
@@ -62,9 +62,9 @@ Auxiliary functions
 In this function is defined the initial conditions
 """
 def resetv():
-    global actualDir,dataset,labels,names,train_results
-    global test_results,start_value,step,end_value,repetitions
-    global ini_value,file_name,first_column,samp
+    global actualDir, dataset, labels, names, train_results
+    global test_results, start_value, step, end_value, repetitions
+    global ini_value, file_name, first_column, samp
     file_name = os.path.basename(__file__)
     path_name = os.path.realpath(__file__)
     actualDir = path_name[:-len(file_name)]
@@ -72,16 +72,16 @@ def resetv():
     dataset = []
     labels = []
     names = []
-    samp=1 #use sampling to reduce the number of samples
-    first_column=3
-    #with the following configuration the process must train two models,
-    #one model for each window
-    #Window one:  600 - 1785 
-    #Window two:  1785 - 2970 
-    ini_value = int(600/samp) 
-    start_value = int(1785/samp) 
-    step = int(1185/samp) 
-    end_value = int(2970/samp) 
+    samp = 1 # use sampling to reduce the number of samples
+    first_column = 3
+    # with the following configuration the process must train two models,
+    # one model for each window
+    # Window one:  600 - 1785
+    # Window two:  1785 - 2970
+    ini_value = int(600/samp) # old value int(600/samp)
+    start_value = int(837/samp) # old value int(1785/samp)
+    step = int(236/samp) # old value int(1185/samp)
+    end_value = int(2970/samp) # old value int(2970/samp)
     repetitions = 1  #Set up the epochs
     train_results = {}
     test_results = {}
@@ -91,16 +91,16 @@ def resetv():
 This function is for resampling (f>1)
 """
 def resampling(array):
-    narray = np.empty((1,array.shape[1]))
+    narray = np.empty((1, array.shape[1]))
     st_po = 0
     fi_po = samp    
     for k in range(int(array.shape[0]/samp)):    
-        narray_ = array[st_po:fi_po,:].mean(axis=0)
+        narray_ = array[st_po:fi_po, :].mean(axis=0)
         narray = np.append(narray, [narray_], axis=0)
-        st_po+=samp
-        fi_po+=samp
+        st_po += samp
+        fi_po += samp
         
-    narray =narray[1:,:]
+    narray = narray[1:, :]
     
     return narray
 
@@ -111,7 +111,7 @@ This function loads the files
 def load_file(filename_):
     #a_=np.loadtxt(filename_)
     a__ = pd.read_csv(filename_) 
-    a_ = a__.iloc[0:end_value,first_column:].values
+    a_ = a__.iloc[0:end_value, first_column:].values
     
     
     if samp==1:
@@ -155,13 +155,14 @@ def ldataset(folder,i,pic):
     print('loaded' + folder)
 
 def train_model(final_measurement,k_):
-    global start_value,end_value,step,test_results,train_results
-    global repetitions,labels,tic,idx_,tmp_test_acc
-    global ini_value,file_name,last_column,numfiles
+    global start_value, end_value, step, test_results, train_results
+    global repetitions, labels, tic, idx_, tmp_test_acc
+    global ini_value, file_name, last_column, numfiles
     #Added By Ismael
     global num_classes, perclass_meter, model, scheduler, lr
     #split train and test data
-    train_data, test_data, train_label, test_label = train_test_split(dataset[:,ini_value:final_measurement,:], labels, test_size = 0.5)
+    train_data, test_data, train_label, test_label = train_test_split(dataset[:, ini_value:final_measurement, :],
+                                                                      labels, test_size=0.2) # 0.3
      
     #preprocess
     flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
@@ -170,21 +171,21 @@ def train_model(final_measurement,k_):
     flat_train_data = scaler.transform(flat_train_data)
     flat_test_data = scaler.transform(flat_test_data)
 
-    stdd_train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1] , last_column)
+    stdd_train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1], last_column)
     stdd_test_data = flat_test_data.reshape(test_data.shape[0], test_data.shape[1], last_column)
 
-    #cat_train_label = to_categorical(train_label)
-    #cat_test_label = to_categorical(test_label)
+    # cat_train_label = to_categorical(train_label)
+    # cat_test_label = to_categorical(test_label)
     
     ## ********** Put here the Convolutive CNN  **********
-    h, model, scheduler=run_experiment(stdd_train_data,train_label,stdd_test_data,test_label,perclass_meter,
-                   num_classes,model,final_measurement,lr,scheduler)
+    h, model, scheduler = run_experiment(stdd_train_data, train_label, stdd_test_data, test_label, perclass_meter,
+                                         num_classes, model, final_measurement, lr, scheduler)
     h1 = []
     for el in h[1: ]:
         h1.append(el[0])
     train_results[str(final_measurement)] = np.array(h1).astype(float).tolist()
     h1 = []
-    for el in h[1: ]:
+    for el in h[1:]:
         h1.append(el[0])
     test_results[str(final_measurement)] = np.array(h1).astype(float).tolist()
 
@@ -242,7 +243,7 @@ def train_model(final_measurement,k_):
 #    print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))      
 #    
          
-    #return history
+    # return history
     return 0
 
 """
@@ -251,34 +252,37 @@ SECTION 5.
 The main function to train the model
 """
 def train_process(idx):
-    global start_value,end_value,step,test_results,train_results
-    global repetitions,labels,tic,idx_,tmp_test_acc,file_name
+    global start_value, end_value, step, test_results, train_results
+    global repetitions, labels, tic, idx_, tmp_test_acc, file_name
     #Added by Ismael
-    global num_classes,perclass_meter,model,scheduler,lr
+    global num_classes, perclass_meter, model, scheduler, lr
     idx_=idx
     tic = time()
-    
+
+    etime = {}
     for final_measurement in range(start_value, end_value+1, step):
         test_results[str(final_measurement)] = []
         train_results[str(final_measurement)] = []
+        etime[str(final_measurement)] = 0
 
         # Perclass Metter
-        perclass_meter = utils.PerclassAccuracyMeter(num_classes,is_using_prf1=True)
+        perclass_meter = utils.PerclassAccuracyMeter(num_classes)
         perclass_meter.first_iteration = True
         model = None
         scheduler = None
         lr = args.learning_rate
 
         tmp_test_acc=0      
-        #for k in range(repetitions):
-        train_model(final_measurement,0)
+        # for k in range(repetitions):
+        train_model(final_measurement, 0)
+        etime[str(final_measurement)] += time() - tic
             #early stopping
         #    if tmp_test_acc==1:
         #        break
            
   
-    etime = time() - tic
-    print("execution time: "+str(etime))
+    # etime = time() - tic
+    print("execution time total: "+str(time() - tic))
     
     ##Printing partial outcomes
     logging.info("Partial Outcomes")
@@ -316,8 +320,8 @@ def train_process(idx):
     #         spamwriter.writerow([dict_value,  mean_acc_train,  std_acc_train])      
         
     ## Saving the objects:
-    # with open('outcomes_'+ file_name[:-3] + idx_ +'.pkl', 'wb') as f:  # Python 3: open(..., 'wb')
-    #     pickle.dump([train_results,test_results,etime], f)
+    with open('outcomes_'+ file_name[:-3] + idx_ +'.pkl', 'wb') as f:  # Python 3: open(..., 'wb')
+         pickle.dump([train_results, test_results, etime], f)
 
 """
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -371,7 +375,7 @@ SECTION 1.
 The script begins here. 
 """
 global num_classes
-clas_=['Et_n','Et_L','Et_M','Et_H']  #Classes
+clas_=['Et_n', 'Et_L', 'Et_M', 'Et_H']  #Classes
 
 #Added By Ismael
 num_classes = len(clas_)
@@ -386,4 +390,4 @@ fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
 fh.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(fh)
 
-lauch(clas_,pic_) #loading the dataset
+lauch(clas_, pic_) #loading the dataset
