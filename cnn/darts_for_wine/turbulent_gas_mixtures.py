@@ -23,6 +23,7 @@ import concurrent.futures
 # import matplotlib.pyplot as plt
 import os
 import sys
+import torch
 sys.path.append("../")
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
@@ -189,7 +190,7 @@ def train_model(final_measurement,k_):
 
     # cat_train_label = to_categorical(train_label)
     cat_test_label = to_categorical(test_label)
-    preds = model(stdd_test_data)
+    preds = model(torch.FloatTensor(stdd_test_data))
 
     clsf_report = classification_report(cat_test_label, preds)
 

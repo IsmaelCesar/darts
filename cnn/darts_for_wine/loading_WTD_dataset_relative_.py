@@ -220,7 +220,7 @@ def train_model(final_measurement, k_, te_g):
                                          classes_number, model, final_measurement, lr, scheduler)
 
     cat_valid_label = to_categorical(valid_label)
-    preds = model(stdd_valid_data)
+    preds = model(torch.FloatTensor(stdd_valid_data))
 
     clsf_report = classification_report(cat_valid_label, preds)
 

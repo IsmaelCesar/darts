@@ -23,6 +23,7 @@ import concurrent.futures
 #import matplotlib.pyplot as plt
 import os
 import sys
+import torch
 sys.path.append("/data")
 sys.path.append("../")
 import time
@@ -198,7 +199,7 @@ def train_model(final_measurement,k_):
                                         scheduler)
 
     cat_test_label = to_categorical(test_label)
-    preds = model(stdd_test_data)
+    preds = model(torch.FloatTensor(stdd_test_data))
 
     clsf_report = classification_report(cat_test_label, preds)
 
