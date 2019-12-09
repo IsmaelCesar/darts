@@ -394,7 +394,7 @@ log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
 args.save = "EXP_DARTS"
-args.save = ('search-{}-{}-TurbulentGasMixtures').format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+args.save = ('{}-{}-TurbulentGasMixtures').format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
 utils.create_exp_dir(args.save)
 fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
 fh.setFormatter(logging.Formatter(log_format))
