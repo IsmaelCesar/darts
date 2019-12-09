@@ -164,9 +164,9 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
 
         logging.info(perclass_acc_meter.return_current_epoch_perclass_precision_recall())
 
-        perclass_acc_meter.write_csv(
-            os.path.join(args.save, "experiments_measurements_window_" + str(window_n) + ".csv"))
-        perclass_acc_meter.first_iteration=False
+    perclass_acc_meter.write_csv(
+        os.path.join(args.save, "experiments_measurements_window_" + str(window_n) + ".csv"))
+    perclass_acc_meter.first_iteration=False
 
     #Saving the model
     utils.save(model,os.path.join(args.save, "classifier_"+str(window_n)+".pt"))
