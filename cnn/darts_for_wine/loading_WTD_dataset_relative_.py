@@ -19,6 +19,7 @@ import os
 import sys
 sys.path.append("../")
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
 from keras.utils import to_categorical
 from sklearn import preprocessing
 from keras import models
@@ -208,7 +209,7 @@ def train_model(final_measurement, k_, te_g):
     # flat_test_data = scaler2.transform(flat_test_data)
       
     # cat_train_label = to_categorical(train_label)
-    # cat_valid_label = to_categorical(valid_label)
+
     # cat_test_label = to_categorical(test_label)
     # Added By Ismael
     stdd_train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1], last_column)
@@ -219,6 +220,17 @@ def train_model(final_measurement, k_, te_g):
     h, model, scheduler = run_experiment(stdd_train_data, train_label, stdd_valid_data, valid_label, perclass_meter,
                                          classes_number, model, final_measurement, lr, scheduler)
 
+    cat_valid_label = to_categorical(valid_label)
+    preds = model(stdd_valid_data)
+
+    clsf_report = classification_report(cat_valid_label, preds)
+
+    logging.info("Cassification report table window " + str(final_measurement))
+    logging.info("\n\n" + clsf_report + "\n\n")
+
+    with open(args.save + '/' + "precision_recall_f1score_table_window" + str(final_measurement) + ".txt", 'w+') as f:
+        f.write(clsf_report)
+        f.close()
 
     # logging.info("\t\t\n\n USING TEST SET OF WINDOW"+str(final_measurement)+"\n\n")
 

@@ -28,6 +28,7 @@ sys.path.append("../")
 import time
 
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
 from keras.utils import to_categorical
 from sklearn import preprocessing
 from keras import models
@@ -183,7 +184,7 @@ def train_model(final_measurement,k_):
     stdd_train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1], last_column)
     stdd_test_data = flat_test_data.reshape(test_data.shape[0], test_data.shape[1], last_column)
     #cat_train_label = to_categorical(train_label)
-    #cat_test_label = to_categorical(test_label)
+
 
     
     ## ********** Put here the Convolutive CNN  **********
@@ -197,6 +198,19 @@ def train_model(final_measurement,k_):
                                         final_measurement,
                                         lr,
                                         scheduler)
+
+    cat_test_label = to_categorical(test_label)
+    preds = model(stdd_test_data)
+
+    clsf_report = classification_report(cat_test_label, preds)
+
+    logging.info("Cassification report table window " + str(final_measurement))
+    logging.info("\n\n" + clsf_report + "\n\n")
+
+    with open(args.save + '/' + "precision_recall_f1score_table_window" + str(final_measurement) + ".txt", 'w+') as f:
+        f.write(clsf_report)
+        f.close()
+
     h1 = []
     for el in h[1:]:
         h1.append(el[0])
