@@ -168,6 +168,7 @@ class PerclassAccuracyMeter(object):
 
 
     def write_csv(self,file_path, mode="a+"):
+        print("\n\n\n\t\tWrinting on the CSV FILE\n\n\n")
         if (self.first_iteration):
             mode = 'w+'
             with open(file_path, mode) as csv_file:
