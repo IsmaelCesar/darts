@@ -26,7 +26,7 @@ from keras import models
 from keras import layers
 from keras import regularizers
 from keras import backend as K
-from time import time
+import time
 import csv
 from keras.models import model_from_json
 from sklearn.externals import joblib
@@ -44,7 +44,6 @@ from darts_for_wine.winedataset import WinesDataset
 import torch
 import torch.nn as nn
 import torch.utils.data as torchdata
-import time as time_formatter
 
 experiment_option = args.data_set_option - 1
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
@@ -259,7 +258,9 @@ def train_process(te_g):
     #Added by Ismael
     global clas_, model, scheduler, lr, perclass_meter, classes_number
 
-    tic = time()
+    outer_tic = time.time()
+
+    etime = {}
 
     classes_number = len(clas_)
 
@@ -267,8 +268,9 @@ def train_process(te_g):
         valid_results[str(final_measurement)] = []
         train_results[str(final_measurement)] = []
         test_results[str(final_measurement)] = []
+        etime[str(final_measurement)] = 0
 
-
+        tic = time.time()
         #Perclass Metter
         perclass_meter = utils.PerclassAccuracyMeter(classes_number)
         perclass_meter.first_iteration = True
@@ -279,13 +281,14 @@ def train_process(te_g):
         tmp_valid_acc=0   
         #for k in range(repetions):
         train_model(final_measurement, 0, te_g)
+
+        etime[str(final_measurement)] = time.time() - tic
         #early stopping
         #if tmp_valid_acc==1:
         #    break
         
   
-    etime = time() - tic
-    logging.info("execution time: "+str(etime))
+    logging.info("total execution time: "+str(time.time() - outer_tic))
 
     #Printing partial outcomes
     for dict_value in valid_results.keys():
@@ -408,7 +411,7 @@ if experiment_option == 0:
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
     # args.save = "EXP_DARTS"
 
-    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time_formatter.strftime(
+    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time.strftime(
         "%Y%m%d-%H%M%S"))
 
     utils.create_exp_dir(args.save)
@@ -431,7 +434,7 @@ elif experiment_option == 1:
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
     # args.save = "EXP_DARTS"
 
-    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time_formatter.strftime(
+    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time.strftime(
         "%Y%m%d-%H%M%S"))
 
     utils.create_exp_dir(args.save)
@@ -454,7 +457,7 @@ elif experiment_option == 2:
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
     # args.save = "EXP_DARTS"
 
-    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time_formatter.strftime(
+    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time.strftime(
         "%Y%m%d-%H%M%S"))
 
     utils.create_exp_dir(args.save)
@@ -477,7 +480,7 @@ if experiment_option == 3:
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
     # args.save = "EXP_DARTS"
 
-    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time_formatter.strftime(
+    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time.strftime(
         "%Y%m%d-%H%M%S"))
 
     utils.create_exp_dir(args.save)
@@ -500,7 +503,7 @@ elif experiment_option == 4:
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
     # args.save = "EXP_DARTS"
 
-    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time_formatter.strftime(
+    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time.strftime(
         "%Y%m%d-%H%M%S"))
 
     utils.create_exp_dir(args.save)
@@ -523,7 +526,7 @@ elif experiment_option == 5:
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
     # args.save = "EXP_DARTS"
 
-    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time_formatter.strftime(
+    args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time.strftime(
         "%Y%m%d-%H%M%S"))
 
     utils.create_exp_dir(args.save)

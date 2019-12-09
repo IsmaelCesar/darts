@@ -32,7 +32,7 @@ from keras import models
 from keras import layers
 from keras import regularizers
 from keras import backend as K
-from time import time
+import time
 from keras.models import model_from_json
 #import csv
 import pandas as pd
@@ -42,7 +42,7 @@ import utils
 from darts_for_wine.experiment_darts_wine import logging
 from darts_for_wine.experiment_darts_wine import args
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
-import time as time_formatter
+
    
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 global tic
@@ -267,7 +267,7 @@ def train_process(idx):
     #Added by Ismael
     global num_classes, perclass_meter, model, scheduler, lr
     idx_=idx
-    tic = time()
+    outer_tic = time.time()
 
     etime = {}
     for final_measurement in range(start_value, end_value+1, step):
@@ -275,6 +275,7 @@ def train_process(idx):
         train_results[str(final_measurement)] = []
         etime[str(final_measurement)] = 0
 
+        tic = time.time()
         # Perclass Metter
         perclass_meter = utils.PerclassAccuracyMeter(num_classes)
         perclass_meter.first_iteration = True
@@ -285,14 +286,14 @@ def train_process(idx):
         tmp_test_acc=0      
         # for k in range(repetitions):
         train_model(final_measurement, 0)
-        etime[str(final_measurement)] += time() - tic
+        etime[str(final_measurement)] += time.time() - tic
             #early stopping
         #    if tmp_test_acc==1:
         #        break
            
   
     # etime = time() - tic
-    print("execution time total: "+str(time() - tic))
+    logging.info("total execution time: "+str(time.time() - outer_tic))
     
     ##Printing partial outcomes
     logging.info("Partial Outcomes")
@@ -394,7 +395,7 @@ log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
 args.save = "EXP_DARTS"
-args.save = ('{}-{}-TurbulentGasMixtures').format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+args.save = ('{}-{}-TurbulentGasMixtures').format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 utils.create_exp_dir(args.save)
 fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
 fh.setFormatter(logging.Formatter(log_format))

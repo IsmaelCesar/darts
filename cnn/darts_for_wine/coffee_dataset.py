@@ -35,7 +35,6 @@ from keras import models
 from keras import layers
 from keras import regularizers
 from keras import backend as K
-from time import time
 from keras.models import model_from_json
 import csv
 import pandas as pd
@@ -46,7 +45,6 @@ from utils import PerclassAccuracyMeter
 from darts_for_wine.experiment_darts_wine import args
 from darts_for_wine.experiment_darts_wine import logging
 from darts_for_wine.experiment_darts_wine import run_experiment_darts_wine as run_experiment
-import time as time_formatter
 
 
    
@@ -232,7 +230,7 @@ def train_process(idx):
     # Making data necessary for training global variables
     global model, scheduler, lr, perclass_meter, classes_number
     idx_=idx
-    tic = time()
+    outer_tic = time.time()
 
     partial_results = {}
     classes_number = 3
@@ -246,7 +244,7 @@ def train_process(idx):
         scheduler = None
         partial_results[str(final_measurement)] = 0
 
-        etic = time.time()
+        tic = time.time()
         perclass_meter = PerclassAccuracyMeter(classes_number)
         perclass_meter.first_iteration = True
         # logging.info("\n\t WINDOW + %s\n", final_measurement)
@@ -254,11 +252,11 @@ def train_process(idx):
         tmp_test_acc = 0
         # for k in range(repetitions):
         train_model(final_measurement, 0)
-        etime[str(final_measurement)] += time.time() - etic
+        etime[str(final_measurement)] += time.time() - tic
 
   
     # etime =
-    logging.info("execution time: "+str(time() - tic))
+    logging.info("total execution time: "+str(time.time() - outer_tic))
 
     logging.info("Partial Outcomes")
     for dict_value in valid_results.keys():
@@ -329,11 +327,11 @@ log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M:%S %p')
 #args.save ="EXP_DARTS_COFFEE"
-args.save = '{}-{}-Coffee_DataSet_WithPrecisionRecallF1Score'.format(args.save, time_formatter.strftime("%Y%m%d-%H%M%S"))
+args.save = '{}-{}-Coffee_DataSet_WithPrecisionRecallF1Score'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 utils.create_exp_dir(args.save)
 fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
 fh.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(fh)
 
-clas_=['AQ-Coffee','HQ-Coffee','LQ-Coffee']  #Classes
+clas_=['AQ-Coffee', 'HQ-Coffee', 'LQ-Coffee']  #Classes
 lauch(clas_, pic_) #loading the dataset
