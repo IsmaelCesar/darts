@@ -412,7 +412,7 @@ if experiment_option == 0:
     log_format = '%(asctime)s %(message)s'
     logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
-    # args.save = "EXP_DARTS"
+
 
     args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time.strftime(
         "%Y%m%d-%H%M%S"))
@@ -435,7 +435,7 @@ elif experiment_option == 1:
     log_format = '%(asctime)s %(message)s'
     logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
-    # args.save = "EXP_DARTS"
+
 
     args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time.strftime(
         "%Y%m%d-%H%M%S"))
@@ -458,7 +458,7 @@ elif experiment_option == 2:
     log_format = '%(asctime)s %(message)s'
     logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
-    # args.save = "EXP_DARTS"
+
 
     args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time.strftime(
         "%Y%m%d-%H%M%S"))
@@ -481,7 +481,7 @@ if experiment_option == 3:
     log_format = '%(asctime)s %(message)s'
     logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
-    # args.save = "EXP_DARTS"
+
 
     args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time.strftime(
         "%Y%m%d-%H%M%S"))
@@ -504,7 +504,7 @@ elif experiment_option == 4:
     log_format = '%(asctime)s %(message)s'
     logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
-    # args.save = "EXP_DARTS"
+
 
     args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time.strftime(
         "%Y%m%d-%H%M%S"))
@@ -527,7 +527,7 @@ elif experiment_option == 5:
     log_format = '%(asctime)s %(message)s'
     logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
-    # args.save = "EXP_DARTS"
+    
 
     args.save = ('{}-{}-WindTunel_' + syst_[experiment_option] + "PrecisionRecallF1Score").format(args.save, time.strftime(
         "%Y%m%d-%H%M%S"))

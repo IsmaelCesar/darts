@@ -398,7 +398,7 @@ num_classes = len(clas_)
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
-args.save = "EXP_DARTS"
+
 args.save = ('{}-{}-TurbulentGasMixtures').format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 utils.create_exp_dir(args.save)
 fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
