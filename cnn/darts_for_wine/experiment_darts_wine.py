@@ -31,7 +31,7 @@ parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
 parser.add_argument('--weight_decay', type=float, default=3e-4, help='weight decay')
 parser.add_argument('--report_freq', type=float, default=50, help='report frequency')
 parser.add_argument('--gpu', type=int, default=0, help='gpu device id')
-parser.add_argument('--epochs', type=int, default=10, help='num of training epochs')#because LOO cross-validation is being used
+parser.add_argument('--epochs', type=int, default=1, help='num of training epochs')#because LOO cross-validation is being used
 parser.add_argument('--init_channels', type=int, default=1, help='num of init channels')#the initial channels of the data is one
 parser.add_argument('--layers', type=int, default=5, help='total number of layers')
 parser.add_argument('--model_path', type=str, default='saved_models', help='path to save the model')
@@ -61,8 +61,9 @@ global CLASSES_WINE,perclass_acc_meter,n_epoch
 #fh.setFormatter(logging.Formatter(log_format))
 #logging.getLogger().addHandler(fh)
 
-def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perclass_meter,classes_number,model,
-                              window_n,arg_lr,arg_scheduler):
+
+def run_experiment_darts_wine(train_data, train_labels, test_data, test_labels, perclass_meter, classes_number, model,
+                              window_n, arg_lr, arg_scheduler):
     global CLASSES_WINE, perclass_acc_meter, n_epoch
 
 
@@ -85,9 +86,8 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
 
     perclass_acc_meter = perclass_meter
 
-    CLASSES_WINE =  classes_number
+    CLASSES_WINE = classes_number
 
-    ##criterion = nn.MSELoss()
     criterion = nn.CrossEntropyLoss()
     criterion.cuda()
 
@@ -96,16 +96,21 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
         model.cuda()
         logging.info("A new model has been created")
     
-    
     optimizer = torch.optim.SGD(
         model.parameters(),
         arg_lr,
         momentum=args.momentum,
         weight_decay=args.weight_decay)
-    
 
-    train_ds_wine = WinesDataset(train_data,train_labels)
+    train_ds_wine = WinesDataset(train_data, train_labels)
     test_ds_wine  = WinesDataset(test_data,test_labels)
+
+    # reshaping data
+    train_data = train_data.reshape(train_data.shape[0], 1,
+                                    train_data.shape[1], train_data.shape[2])
+
+    test_data = test_data.reshape(test_data.shape[0], 1,
+                                  test_data.shape[1], test_data.shape[2])
 
     logging.info("The data set has been loaded")
 
@@ -119,9 +124,9 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
     ds_lenght = len(train_ds_wine)
     loo_test_element_indx = 0
 
-    architecht = Architect(model,args)
+    architecht = Architect(model, args)
 
-    train_queue = torch.utils.data.DataLoader(train_ds_wine,sampler=torchdata.sampler.RandomSampler(train_ds_wine),
+    train_queue = torch.utils.data.DataLoader(train_ds_wine, sampler=torchdata.sampler.RandomSampler(train_ds_wine),
                                               batch_size=args.batch_size,
                                               pin_memory=True)#, num_workers=1
 
@@ -130,8 +135,8 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
 
     # The loop has also been adapted to the Leave one out technique
     for epoch in range(args.epochs):
-
-        n_epoch = epoch #trainin epoch to be used in the calculations of the perclass accuracy metter
+        # training epoch to be used in the calculations of the perclass accuracy metter
+        n_epoch = epoch
 
         # scheduler.step()
 
@@ -139,7 +144,8 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
         lr = arg_lr
 
         if args.is_using_inner_epoch_loop:
-            logging.info('epoch %d lr %e', n_epoch, lr)#in the fonollosa experiment the epoch is logged in the parent procedure
+            # in the fonollosa experiment the epoch is logged in the parent procedure
+            logging.info('epoch %d lr %e', n_epoch, lr)
 
         genotype = model.genotype()
         logging.info('genotype = %s', genotype)
@@ -148,35 +154,47 @@ def run_experiment_darts_wine(train_data,train_labels,test_data,test_labels,perc
         F.softmax(model.alphas_reduce, dim=-1)
 
         # Reusing the train procedure of the DARTS implementation
-        train_acc, train_obj = train(train_queue,valid_queue,model,lr,architecht,criterion,optimizer,CLASSES_WINE)
-        logging.info("train_acc %f",train_acc)
-        perclass_acc_meter.compute_perclass_accuracy_with_precision_recall(epoch)
-        perclass_acc_meter.csv_list[epoch+1][0] = train_acc.item()
+        train_acc, train_loss = train(train_queue, valid_queue, model, lr, architecht, criterion, optimizer, CLASSES_WINE)
 
-        perclass_acc_meter.reset_confusion_matrix()
+        logging.info("train_acc %f", train_acc)
 
-        valid_acc, valid_obj  = infer(valid_queue,model,criterion,CLASSES_WINE)
-        logging.info("valid_acc %f",valid_acc)
-        perclass_acc_meter.compute_perclass_accuracy_with_precision_recall(epoch, is_train=False)
-        perclass_acc_meter.reset_confusion_matrix()
-        perclass_acc_meter.csv_list[epoch + 1][CLASSES_WINE * 2 + 1] = valid_acc.item()
+        # Computing other trainning metrics
+        # .cuda()
+        preds = model(torch.FloatTensor(train_data).cuda())
 
+        train_precision, train_recall, train_fscore = perclass_acc_meter.compute_metrics(train_labels, preds)
+
+        perclass_acc_meter.save_train_metrics_into_list(epoch+1, train_acc.item(), train_loss.item(),
+                                                        train_precision, train_recall, train_fscore)
+
+        valid_acc, valid_loss = infer(valid_queue, model, criterion, CLASSES_WINE)
+
+        logging.info("valid_acc %f", valid_acc)
+
+        # Computing other validation metrics
+        # .cuda()
+        preds = model(torch.FloatTensor(test_data).cuda())
+
+        valid_precision, valid_recall, valid_fscore = perclass_acc_meter.compute_metrics(test_labels, preds)
+
+        perclass_acc_meter.save_valid_metrics_into_list(epoch + 1, valid_acc.item(), valid_loss.item(),
+                                                        valid_precision, valid_recall, valid_fscore)
 
         logging.info(perclass_acc_meter.return_current_epoch_perclass_precision_recall())
 
-    perclass_acc_meter.write_csv(
-        os.path.join(args.save, "experiments_measurements_window_" + str(window_n) + ".csv"))
-    perclass_acc_meter.first_iteration=False
+    perclass_acc_meter.write_csv(args.save, "per_epoch_accuracy_loss.csv",
+                                 "per_epoch_precision_recall_fscore.csv")
 
     #Saving the model
-    utils.save(model,os.path.join(args.save, "classifier_"+str(window_n)+".pt"))
+    utils.save(model, os.path.join(args.save, "classifier_"+str(window_n)+".pt"))
 
     scheduler = None
-    return perclass_acc_meter.csv_list, model, scheduler
+    return perclass_acc_meter.main_train_metrics_values, perclass_acc_meter.main_valid_metrics_values, model, scheduler
 
 """
 The train e infer procedure were addapted for the leave one out technique
 """
+
 
 def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_classes):
   """
@@ -188,11 +206,12 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     :param lr: learning rate
     :return: train_acc(train accuracy), train_obj(Object used to compute the train accuracy)
   """
-  global CLASSES_WINE, perclass_acc_meter, n_epoch
+  global CLASSES_WINE, n_epoch
 
   objs = utils.AvgrageMeter()
   top1 = utils.AvgrageMeter()
   top5 = utils.AvgrageMeter()
+
   manual_report_freq = 2
 
   for step, (input, target) in enumerate(train_queue):
@@ -204,51 +223,47 @@ def train(train_queue,valid_queue, model,lr,architect,criterion,optimizer,num_cl
     input = Variable(input, requires_grad=False).cuda()
     target = Variable(target, requires_grad=False).cuda(async=True)
 
-    #get a random minibatch from the search queue with replacement
+    # get a random minibatch from the search queue with replacement
     input_search, target_search = next(iter(valid_queue))
     input_search = Variable(input_search, requires_grad=False).cuda()
     target_search = Variable(target_search, requires_grad=False).cuda(async=True)
 
-    architect.step(input,target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
+    architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
 
     optimizer.zero_grad()
     logits = model(input)
 
-    perclass_acc_meter.compute_confusion_matrix(target,logits)
+    loss = criterion(logits, target)
 
-    loss = criterion(logits,target)
     loss.backward()
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 
-
-    prec1, prec5 = utils.accuracy(logits, target,topk=(1,num_classes//2))
+    prec1, prec5 = utils.accuracy(logits, target, topk=(1,num_classes//2))
 
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
 
-    #perclass_acc_meter.include_top1_avg_acc(top1.avg.item())
-    #objs.update(loss.data[0], n)
-    #top1.update(prec1.data[0], n)
-    #top5.update(prec5.data[0], n)
     if step % manual_report_freq == 0:
       logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
 
-  return top1.avg,objs.avg
+  return top1.avg, objs.avg
 
-def infer(valid_queue, model, criterion,num_classes):
+
+def infer(valid_queue, model, criterion, num_classes):
   """
   :param valid_queue: Data loader that randomly picks the samples in the Dataset, as defined in the previous procedure
   :param model:      Model of the network
   :param criterion:  Criterion(Function over which the loss of the model shall be computed)
   :return: valid_acc(validation accuracy), valid_obj(Object used to compute the validation accuracy)
   """
-  global CLASSES_WINE, perclass_acc_meter, n_epoch
+  global CLASSES_WINE, n_epoch
 
   objs = utils.AvgrageMeter()
   top1 = utils.AvgrageMeter()
   top5 = utils.AvgrageMeter()
+
   model.eval()
 
   manual_report_freq = 5
@@ -262,7 +277,6 @@ def infer(valid_queue, model, criterion,num_classes):
     target = Variable(target, volatile=True).cuda(async=True)
 
     logits = model(input)
-    perclass_acc_meter.compute_confusion_matrix(target, logits)
 
     loss = criterion(logits, target)
 
@@ -271,11 +285,6 @@ def infer(valid_queue, model, criterion,num_classes):
     objs.update(loss.data, n)
     top1.update(prec1.data, n)
     top5.update(prec5.data, n)
-
-    #perclass_acc_meter.include_top1_avg_acc(top1.avg.item(),is_train=False)
-    # objs.update(loss.data[0], n)
-    # top1.update(prec1.data[0], n)
-    # top5.update(prec5.data[0], n)
 
     if step % manual_report_freq == 0:
         logging.info('valid %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)

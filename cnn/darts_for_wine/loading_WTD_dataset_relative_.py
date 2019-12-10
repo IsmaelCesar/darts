@@ -216,13 +216,14 @@ def train_model(final_measurement, k_, te_g):
     # stdd_test_data = flat_test_data.reshape(test_data.shape[0], test_data.shape[1], last_columnT)
 
     ## ********** Put here the Convolutive CNN  **********
-    h, model, scheduler = run_experiment(stdd_train_data, train_label, stdd_valid_data, valid_label, perclass_meter,
-                                         classes_number, model, final_measurement, lr, scheduler)
-    perclass_meter.first_iteration = False
-    #cat_valid_label = to_categorical(valid_label)
+    train_h, valid_h, model, scheduler = run_experiment(stdd_train_data, train_label, stdd_valid_data, valid_label,
+                                                        perclass_meter, classes_number, model,
+                                                        final_measurement, lr, scheduler)
+    # cat_valid_label = to_categorical(valid_label)
     stdd_valid_data = stdd_valid_data.reshape(stdd_valid_data.shape[0], 1,
                                               stdd_valid_data.shape[1], stdd_valid_data.shape[2])
 
+    #.cuda()
     preds = model(torch.FloatTensor(stdd_valid_data).cuda()).cpu().detach().numpy()
 
     clsf_report = classification_report(valid_label, np.argmax(preds, axis=1))
@@ -230,8 +231,8 @@ def train_model(final_measurement, k_, te_g):
     logging.info("Cassification report table window " + str(final_measurement))
     logging.info("\n\n" + clsf_report + "\n\n")
 
-    train_results[str(final_measurement)] += np.array(h)[1:, 0].astype(float).tolist()
-    valid_results[str(final_measurement)] += np.array(h)[1:, classes_number * 2 + 1].astype(float).tolist()
+    train_results[str(final_measurement)] += np.array(train_h)[:, 1].astype(float).tolist()
+    valid_results[str(final_measurement)] += np.array(valid_h)[:, 0].astype(float).tolist()
 
     with open(args.save + '/' + "precision_recall_f1score_table_window" + str(final_measurement) + ".txt", 'w+') as f:
         f.write(clsf_report)
@@ -270,7 +271,6 @@ def train_process(te_g):
         tic = time.time()
         #Perclass Metter
         perclass_meter = utils.PerclassAccuracyMeter(classes_number)
-        perclass_meter.first_iteration = True
         model = None
         scheduler = None
         lr = args.learning_rate

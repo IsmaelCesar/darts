@@ -178,13 +178,12 @@ def train_model(final_measurement,k_):
     stdd_test_data = flat_test_data.reshape(test_data.shape[0], test_data.shape[1], last_column)
     
     ## ********** Put here the Convolutive CNN  **********
-    h, model, scheduler = run_experiment(stdd_train_data, train_label, stdd_test_data, test_label, perclass_meter,
-                                         num_classes, model, final_measurement, lr, scheduler)
+    train_h, valid_h, model, scheduler = run_experiment(stdd_train_data, train_label, stdd_test_data, test_label,
+                                                        perclass_meter, num_classes, model,
+                                                        final_measurement, lr, scheduler)
 
-    perclass_meter.first_iteration = False
-
-    train_results[str(final_measurement)] += np.array(h)[1:, 0].astype(float).tolist()
-    test_results[str(final_measurement)] += np.array(h)[1:, num_classes * 2 + 1].astype(float).tolist()
+    train_results[str(final_measurement)] += np.array(train_h)[:, 1].astype(float).tolist()
+    test_results[str(final_measurement)] += np.array(valid_h)[:, 3].astype(float).tolist()
 
     # cat_train_label = to_categorical(train_label)
     #cat_test_label = to_categorical(test_label)
@@ -270,6 +269,7 @@ def train_process(idx):
     global num_classes, perclass_meter, model, scheduler, lr
     idx_=idx
     outer_tic = time.time()
+    # args.epochs = 1
     etime = {}
     for final_measurement in range(start_value, end_value, step):# end_value+1
         test_results[str(final_measurement)] = []
@@ -279,7 +279,6 @@ def train_process(idx):
         tic = time.time()
         # Perclass Metter
         perclass_meter = utils.PerclassAccuracyMeter(num_classes)
-        perclass_meter.first_iteration = True
         model = None
         scheduler = None
         lr = args.learning_rate

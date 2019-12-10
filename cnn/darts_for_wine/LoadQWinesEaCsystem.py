@@ -218,7 +218,6 @@ def run_experiment_with_loo_cross_validation(idx, arg_lr, perclass_metter, final
 
     # In this section is to perform the LOO
     model = None
-    perclass_metter.first_iteration = True
 
     for i in range(ncl):
         test_set = []
@@ -269,12 +268,11 @@ def run_experiment_with_loo_cross_validation(idx, arg_lr, perclass_metter, final
         ##Put here the Convolutive CNN
         # train_data = data_transformer.tranform_sensor_values_to_image(train_data)
 
-        results_list, model, arg_scheduler = run_experiment(train_data_stdd, train_label, test_data_stdd, test_label,
-                                                            perclass_metter, num_classes, model, final_measurement,
-                                                            arg_lr, arg_scheduler)
-        train_results[str(final_measurement)] += np.array(results_list)[1:, 0].astype(float).tolist()
-        test_results[str(final_measurement)] += np.array(results_list)[1:, ngr * 2 + 1].astype(float).tolist()
-        perclass_metter.first_iteration = False
+        train_h, valid_h, model, arg_scheduler = run_experiment(train_data_stdd, train_label, test_data_stdd,
+                                                                test_label, perclass_metter, num_classes, model,
+                                                                final_measurement, arg_lr, arg_scheduler)
+        train_results[str(final_measurement)] += np.array(train_h)[:, 1].astype(float).tolist()
+        test_results[str(final_measurement)] += np.array(valid_h)[:, 0].astype(float).tolist()
 
         test_data_stdd = test_data_stdd.reshape(test_data_stdd.shape[0], 1,
                                                 test_data_stdd.shape[1], test_data_stdd.shape[2])
@@ -307,6 +305,7 @@ def run_experiment_with_loo_cross_validation(idx, arg_lr, perclass_metter, final
 
     return train_results, test_results, etime
 
+
 def run_experiment_with_hold_out_validation(idx, arg_lr, perclass_metter, final_measurement, arg_scheduler,
                                             train_results, test_results, etime):
     """
@@ -321,7 +320,6 @@ def run_experiment_with_hold_out_validation(idx, arg_lr, perclass_metter, final_
 
     # In this section is to perform the LOO
     model = None
-    perclass_metter.first_iteration = True
 
     # repetitions = 10  # repetitions
     # for k in range(repetions):
@@ -350,12 +348,11 @@ def run_experiment_with_hold_out_validation(idx, arg_lr, perclass_metter, final_
     ##Put here the Convolutive CNN
     # train_data = data_transformer.tranform_sensor_values_to_image(train_data)
 
-    results_list, model, arg_scheduler = run_experiment(train_data_stdd, train_label, test_data_stdd, test_label,
-                                                        perclass_metter, num_classes, model, final_measurement,
-                                                        arg_lr, arg_scheduler)
-    train_results[str(final_measurement)] += np.array(results_list)[1:, 0].astype(float).tolist()
-    test_results[str(final_measurement)] += np.array(results_list)[1:, ngr * 2 + 1].astype(float).tolist()
-    perclass_metter.first_iteration = False
+    train_h, valid_h, model, arg_scheduler = run_experiment(train_data_stdd, train_label, test_data_stdd, test_label,
+                                                            perclass_metter, num_classes, model, final_measurement,
+                                                            arg_lr, arg_scheduler)
+    train_results[str(final_measurement)] += np.array(train_h)[:, 1].astype(float).tolist()
+    test_results[str(final_measurement)] += np.array(valid_h)[:, 0].astype(float).tolist()
 
     test_data_stdd = test_data_stdd.reshape(test_data_stdd.shape[0], 1,
                                             test_data_stdd.shape[1], test_data_stdd.shape[2])

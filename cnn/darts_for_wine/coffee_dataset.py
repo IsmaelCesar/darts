@@ -185,18 +185,9 @@ def train_model(final_measurement,k_):
     #cat_train_label = to_categorical(train_label)
 
     ## ********** Put here the Convolutive CNN  **********
-    h, model, scheduler =run_experiment(stdd_train_data,
-                                        train_label,
-                                        stdd_test_data,
-                                        test_label,
-                                        perclass_meter,
-                                        classes_number,
-                                        model,
-                                        final_measurement,
-                                        lr,
-                                        scheduler)
-
-    perclass_meter.first_iteration = False
+    train_h, valid_h, model, scheduler = run_experiment(stdd_train_data, train_label, stdd_test_data, test_label,
+                                                        perclass_meter, classes_number, model, final_measurement,
+                                                        lr, scheduler)
     # cat_test_label = to_categorical(test_label)
 
     stdd_test_data = stdd_test_data.reshape(stdd_test_data.shape[0], 1,
@@ -213,8 +204,8 @@ def train_model(final_measurement,k_):
         f.write(clsf_report)
         f.close()
 
-    train_results[str(final_measurement)] += np.array(h)[1:, 0].astype(float).tolist()
-    valid_results[str(final_measurement)] += np.array(h)[1:, classes_number*2+1].astype(float).tolist()
+    train_results[str(final_measurement)] += np.array(train_h)[:, 1].astype(float).tolist()
+    valid_results[str(final_measurement)] += np.array(valid_h)[:, 0].astype(float).tolist()
 
     return 0
 
@@ -245,7 +236,6 @@ def train_process(idx):
 
         tic = time.time()
         perclass_meter = PerclassAccuracyMeter(classes_number)
-        perclass_meter.first_iteration = True
         # logging.info("\n\t WINDOW + %s\n", final_measurement)
 
         tmp_test_acc = 0

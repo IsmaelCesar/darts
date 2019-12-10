@@ -75,56 +75,46 @@ def test_data_loading():
         print("Shape of the target1: \n", target1.shape)
         print("Shape of the target2: \n", target2.shape)
 
-def testing_csv_list(perclass_meter,labels,save,window_n):
+def testing_csv_list(perclass_meter):
 
 
     batch_size = 10
 
     #myCsv  = np.random.randn(10,num_classes*2+2)
     num_classes = perclass_meter.num_classes
+    acc = 0
+    loss = 100
     for epoch in range(10):
-        start_slice = 0
+
         end_slice   = batch_size
         #Train
-        for i in range(0,len(labels),batch_size):
+        target = torch.randint(num_classes, (100,)).numpy().tolist()
+        logits = torch.rand(100, num_classes)
 
-            target  = labels[start_slice:end_slice]
-            logits = torch.rand(batch_size,num_classes)
+        train_precision, train_recall, train_fscore = perclass_meter.compute_metrics(target, logits)
 
-            perclass_meter.compute_confusion_matrix(torch.LongTensor(target),logits)
+        acc += 0.1
+        loss -= 10
 
-            start_slice = end_slice
-            end_slice += batch_size
-        perclass_meter.compute_perclass_accuracy_with_precision_recall(epoch)
-        perclass_meter.csv_list[epoch + 1][0] = 99.98
-        perclass_meter.reset_confusion_matrix()
+        perclass_meter.save_train_metrics_into_list(int(epoch), acc, loss,
+                                                    train_precision, train_recall, train_fscore)
 
         #validation
-        labels = torch.randint(num_classes, (50,))
-        start_slice = 0
-        end_slice = batch_size
+        val_labels = torch.randint(num_classes, (50,))
+        val_logits = torch.rand(50, num_classes)
 
-        for i in range(0,len(labels),batch_size):
+        val_precision, val_recall, val_fscore = perclass_meter.compute_metrics(val_labels, val_logits)
+        perclass_meter.save_validation_metrics_into_list(acc, loss,
+                                                         val_precision, val_recall, val_fscore)
 
-            target  = labels[start_slice:end_slice]
-            logits = torch.rand(batch_size,num_classes)
-
-            perclass_meter.compute_confusion_matrix(target,logits)
-
-            start_slice = end_slice
-            end_slice += batch_size
-        perclass_meter.compute_perclass_accuracy_with_precision_recall(epoch,is_train=False)
-        perclass_meter.reset_confusion_matrix()
-        perclass_meter.csv_list[epoch + 1][num_classes * 2 + 1] = 99.98
-        print(perclass_meter.return_current_epoch_perclass_precision_recall())
-        perclass_meter.write_csv(
-            os.path.join(save, "experiments_measurements_window_" + str(window_n) + ".csv"))
-        perclass_meter.first_iteration = False
-
-    return perclass_meter.csv_list
+        print(perclass_meter.display_current_epoch_metrics())
+    perclass_meter.write_csv("", "per_epoch_loss_and_accuracy.csv", "per_epoch_precision_recall_fscore.csv")
+    return perclass_meter.main_train_metrics_values, perclass_meter.main_valid_metrics_values
 
 if __name__ == '__main__':
-    num_classes  = 3
+    num_classes = 10
     perclass_meter = PerclassAccuracyMeter(num_classes)
 
-    testing_csv_list(perclass_meter,num_classes)
+    train_h, valid_h = testing_csv_list(perclass_meter)
+    print("Train h:", np.array(train_h)[:, 1].mean())
+    print("valid h:", np.array(valid_h)[:, 0].mean())

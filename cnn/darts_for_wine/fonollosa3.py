@@ -18,6 +18,7 @@ from tensorflow import set_random_seed
 set_random_seed(1)
 import numpy as np
 import pickle
+import torch
 import matplotlib.pyplot as plt
 import concurrent.futures
 #import matplotlib.pyplot as plt
@@ -26,6 +27,7 @@ import sys
 sys.path.append("/data")
 sys.path.append("../")
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
 from keras.utils import to_categorical
 from sklearn import preprocessing
 from keras import models
@@ -168,11 +170,10 @@ def train_model(final_measurement,k_):
     global ini_value,file_name,last_column,numfiles
     # Added by ismael
     global model,perclass_meter,lr,scheduler
-    #split train and test data
+    # split train and test data
 
-
-    train_data, test_data, train_label, test_label = train_test_split(dataset[:,ini_value:final_measurement,:], labels, test_size = 0.2)
-     
+    train_data, test_data, train_label, test_label = train_test_split(dataset[:,ini_value:final_measurement,:],
+                                                                      labels, test_size=0.2)
     #preprocess
     flat_train_data = train_data.reshape(train_data.shape[0], train_data.shape[1] * last_column)
     flat_test_data = test_data.reshape(test_data.shape[0], test_data.shape[1] * last_column)
@@ -180,9 +181,8 @@ def train_model(final_measurement,k_):
     flat_train_data = scaler.transform(flat_train_data)
     flat_test_data = scaler.transform(flat_test_data)
 
-
-    #Added by Ismael
-    #Re Reshaping the data.
+    # Added by Ismael
+    # Re Reshaping the data.
     train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1], train_data.shape[2], 1)
     test_data = flat_test_data.reshape(test_data.shape[0], train_data.shape[1], train_data.shape[2], 1)
     ####################################################################################################
@@ -191,13 +191,25 @@ def train_model(final_measurement,k_):
 
     classes_number = 4
     ## ********** Put here the Convolutive CNN  **********
-    history,model,scheduler = run_experiment(train_data, train_label, test_data, test_label, perclass_meter, classes_number,
-                                             model,final_measurement,lr,scheduler)
+    train_h, valid_h, model, scheduler = run_experiment(train_data, train_label, test_data, test_label,
+                                                        perclass_meter, classes_number, model, final_measurement,
+                                                        lr, scheduler)
 
+    train_results[str(final_measurement)] += np.array(train_h)[:, 1].astype(float).tolist()
+    test_results[str(final_measurement)] += np.array(valid_h)[:, 0].astype(float).tolist()
 
-    train_results[str(final_measurement)] += np.array(history)[1:, 0].astype(float).tolist()
-    test_results[str(final_measurement)] += np.array(history)[1:,classes_number*2+1].astype(float).tolist()
+    # Making Classification report
+    test_data = test_data.reshape(test_data.shape[0], 1, test_data.shape[1], test_data.shape[2])
+    # .cuda()
+    preds = model(torch.FloatTensor(test_data).cuda()).cpu().detach().numpy()
+    clsf_report = classification_report(test_label, np.argmax(preds, axis=1))
 
+    logging.info("Cassification report table window " + str(final_measurement))
+    logging.info("\n\n" + clsf_report + "\n\n")
+
+    with open(args.save + '/' + "classification_report_window" + str(final_measurement) + ".txt", 'w+') as f:
+        f.write(clsf_report)
+        f.close()
 
     # #creating the model
     # K.clear_session()
@@ -252,7 +264,7 @@ def train_model(final_measurement,k_):
 #    print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))      
 #    
          
-    return history
+    return 0
 
 """
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -274,10 +286,9 @@ def train_process(idx):
 
         model = None #added by Ismael
         scheduler = None #added by Ismael
-        args.epochs = 1 #seting inner script epochs to one in order to use the fonollosa script epochs
-        #csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
+        # seting inner script epochs to one in order to use the fonollosa script epochs
+        # csv_list = [['avg_train_acc', 'ata_standard_deviation', 'valid_acc', 'valid_stdd']]
         perclass_meter = PerclassAccuracyMeter(4)
-        perclass_meter.first_iteration = True #added by Ismael
         lr = args.learning_rate
         tmp_test_acc=0
         logging.info("\n\t WINDOW + %s\n", final_measurement)
@@ -285,8 +296,7 @@ def train_process(idx):
         for k in range(repetions):
         #for k in range(2):
             logging.info('epoch %d lr %e', k, lr)
-            train_model(final_measurement,k)
-            perclass_meter.first_iteration = False #added by Ismael
+            train_model(final_measurement, k)
             # lr = scheduler.get_lr()[0]
             #early stopping
             if tmp_test_acc==1:
@@ -341,6 +351,7 @@ def train_process(idx):
 SECTION 2.1
 The primary function to load the dataset.
 """    
+
 def call_ldataset(fold,clas,pic_):
     resetv()
     for i in range(len(clas)):

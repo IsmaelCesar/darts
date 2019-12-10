@@ -51,7 +51,7 @@ class PerclassAccuracyMeter(object):
             secondary_valid_metrics_header += ["class" + str(i) + "_valid_f1_score"]
 
         secondary_valid_metrics_header = [secondary_valid_metrics_header]
-    
+
         self.main_train_metrics_header = main_train_metrics_header
         self.main_train_metrics_values = []
 
