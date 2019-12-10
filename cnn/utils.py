@@ -3,6 +3,9 @@ import csv
 import numpy as np
 import torch
 import shutil
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import f1_score
 import torchvision.transforms as transforms
 from torch.autograd import Variable
 
@@ -28,192 +31,171 @@ class PerclassAccuracyMeter(object):
     in the csv list there shal be the accuracy per-class
     along with the perclass error.
     """
-    def __init__(self,num_classes):
+    def __init__(self, num_classes):
 
-        csv_list = [['train_acc']]
+        main_train_metrics_header = [['epoch', 'train_acc', 'train_loss']]
+        secondary_train_metrics_header = [['epoch']]
         valid_acc_added = 0
 
-        while valid_acc_added < 2:
-            for i in  range(num_classes):
-                csv_list[0] += ["class"+str(i)+"_acc"]
-                csv_list[0] += ["class"+str(i)+"_precision_recall_f1"]
+        for i in  range(num_classes):
+            secondary_train_metrics_header[0] += ["class_"+str(i)+"_train_precision"]
+            secondary_train_metrics_header[0] += ["class" + str(i) + "_train_recall"]
+            secondary_train_metrics_header[0] += ["class" + str(i) + "_train_f1_score"]
 
+        main_valid_metrics_header = [['valid_acc', 'valid_loss']]
+        secondary_valid_metrics_header = []
 
-            valid_acc_added += 1
+        for i in range(num_classes):
+            secondary_valid_metrics_header += ["class" + str(i) + "_valid_precision"]
+            secondary_valid_metrics_header += ["class" + str(i) + "_valid_recall"]
+            secondary_valid_metrics_header += ["class" + str(i) + "_valid_f1_score"]
 
-            if valid_acc_added == 1:
-                csv_list[0] += ["valid_acc"]
+        secondary_valid_metrics_header = [secondary_valid_metrics_header]
+    
+        self.main_train_metrics_header = main_train_metrics_header
+        self.main_train_metrics_values = []
 
-        csv_list.append(np.zeros(num_classes * 4 + 2).tolist())
-        self.csv_list = csv_list
-        self.current_epoch = 0
+        self.secondary_train_metrics_header = secondary_train_metrics_header
+        self.secondary_train_metrics_values = []
+
+        self.main_valid_metrics_header = main_valid_metrics_header
+        self.main_valid_metrics_values = []
+
+        self.secondary_valid_metrics_header = secondary_valid_metrics_header
+        self.secondary_valid_metrics_values = []
         self.num_classes = num_classes
-        self.first_iteration = False
-        self.reset_confusion_matrix()
 
+    def __write_main_metrics_csv(self, file_path, mode='w+'):
 
-    def compute_confusion_matrix(self,taget,logits):
+        temp_header = [self.main_train_metrics_header[0] + self.main_valid_metrics_header[0]]
+        temp_values = np.concatenate([self.main_train_metrics_values, self.main_valid_metrics_values], axis=1).tolist()
+        csv_list = temp_header + temp_values
 
-        _, preds = torch.max(logits,1)
+        with open(file_path, mode) as csv_file:
+            csv_writer = csv.writer(csv_file, delimiter=',')
+            csv_writer.writerows(csv_list)
+            csv_file.close()
 
-        for t,p in zip(taget.view(-1),preds.view(-1)):
-            self.confusion_matrix[t,p] += 1
+    def __write_secondary_metrics_csv(self, file_path, mode='w+'):
 
-    def reset_confusion_matrix(self):
-        self.confusion_matrix = torch.zeros(self.num_classes, self.num_classes)
+        temp_header = [self.secondary_train_metrics_header[0] + self.secondary_valid_metrics_header[0]]
+        temp_values = np.concatenate([self.secondary_train_metrics_values, self.secondary_valid_metrics_values],
+                                     axis=1).tolist()
+        csv_list = temp_header + temp_values
 
-    def compute_perclass_accuracy(self,epoch,is_train=True):
+        with open(file_path, mode) as csv_file:
+            csv_writer = csv.writer(csv_file, delimiter=',')
+            csv_writer.writerows(csv_list)
+            csv_file.close()
 
-        perclass_acc = self.confusion_matrix.diag() / self.confusion_matrix.sum(1)
-        perclass_error = self.__compute_perclass_error()
-        #Adding the values to the csv_list
-        if self.current_epoch < epoch:
-            self.current_epoch = epoch
-            self.csv_list.append(np.zeros(self.num_classes*4+2).tolist())
+    def write_csv(self,file_path, main_metrics_file, secondary_metrics_file=None,
+                  mode="w+", write_secondary_metrics=True):
 
-        offset = 1
+        self.__write_main_metrics_csv(os.path.join(file_path, main_metrics_file), mode=mode)
 
-        if not is_train:
-            offset = self.num_classes*2 + 2
-
-        for p_acc,pc_error,i in zip(perclass_acc,perclass_error,range(0,self.num_classes*2,2)):
-            self.csv_list[self.current_epoch+1][offset+i] = p_acc.item()*100
-            self.csv_list[self.current_epoch+1][offset+i+1] = pc_error.item()
-
-        return perclass_acc
-
-    def compute_perclass_accuracy_with_precision_recall(self, epoch, is_train=True):
-        perclass_acc = self.confusion_matrix.diag() / self.confusion_matrix.sum(1)
-        precision_recall = self.__compute_precision_recall_and_f1()
-        # Adding the values to the csv_list
-        if self.current_epoch < epoch:
-            self.current_epoch = epoch
-            self.csv_list.append(np.zeros(self.num_classes * 4 + 2).tolist())
-
-        offset = 1
-
-        if not is_train:
-            offset = self.num_classes*2 + 2
-
-        for p_acc, pc_rc, i in zip(perclass_acc, precision_recall, range(0, self.num_classes * 2, 2)):
-            self.csv_list[self.current_epoch + 1][offset + i] = p_acc.item() * 100
-            self.csv_list[self.current_epoch + 1][offset + i + 1] = (pc_rc[0].item(),pc_rc[1].item(),pc_rc[2].item())
-
-        return perclass_acc
-
-    def __compute_perclass_error(self):
-        """
-        The error computed in this method is the error rate of each class.
-        Let fp - false positives, tp - true positives, fn - false negatives
-        and tn - true negatives
-
-        For each class the following equation is computed
-        (fp + fn) /(tp + fp + fn)
-
-        :return: list of perclass t2 error
-        """
-        perclass_error = []
-
-        for i in range(self.num_classes):
-            fp =0
-            fn =0
-            tp =0
-            for j in range(self.num_classes):
-                if i!=j:
-                    fp += self.confusion_matrix[i][j]
-                    fn += self.confusion_matrix[j][i]
-
-            result = (fp + fn) / (self.confusion_matrix.diag().sum().item() + fp + fn)
-
-            perclass_error.append(result)
-
-        return perclass_error
-
-    def __compute_precision_recall_and_f1(self):
-        """
-        The error computed in this method is the error rate of each class.
-        Let fp - false positives, tp - true positives, fn - false negatives
-        and tn - true negatives
-
-        For each class the following equation is computed for precision:
-        tp /(tp + fp)
-
-        For each class the following equation is computed for recall
-        tp /(tp + fn)
-
-        For each class the following equation is computed for f1 score
-        2* (precision*recall)/(precsion + recall)
-
-        :return: list of perclass t2 error
-        """
-        precision_recall = []
-        epsilon  = 0.0000001 #factor to avoid division by zero
-        for i in range(self.num_classes):
-            fp = 0
-            fn = 0
-            tp = 0
-            for j in range(self.num_classes):
-                if i != j:
-                    fp += self.confusion_matrix[i][j]
-                    fn += self.confusion_matrix[j][i]
-                else:
-                    tp = self.confusion_matrix[j][i]
-
-            precision = tp/((tp + fp)+epsilon)
-            recall = tp/((tp + fn)+epsilon)
-            f1score     = 2*(precision*recall)/((precision+recall)+epsilon)
-            precision_recall.append((precision,recall,f1score))
-
-        return precision_recall
-
-
-    def write_csv(self,file_path, mode="a+"):
-        print("\n\n\n\t\tWrinting on the CSV FILE\n\n\n")
-        if (self.first_iteration):
-            mode = 'w+'
-            with open(file_path, mode) as csv_file:
-                csv_writer = csv.writer(csv_file, delimiter=',')
-                csv_writer.writerows(self.csv_list)
-                csv_file.close()
+        if write_secondary_metrics and secondary_metrics_file is not None:
+            self.__write_secondary_metrics_csv(os.path.join(file_path, secondary_metrics_file), mode=mode)
         else:
-            new_list = self.csv_list[1:]
-            with open(file_path, mode) as csv_file:
-                csv_writer = csv.writer(csv_file, delimiter=',')
-                csv_writer.writerows(new_list)
-                csv_file.close()
+            raise Exception("Secondary metrics file must not be None type")
 
-    def include_top1_avg_acc(self,top1,is_train=True):
+    def compute_metrics(self, y_true, y_predicted):
         """
-        :param top1: Value that includes top1 prediction average accuracy
+        Compute mestrics concerning Precision, Recall and F1_score per learning epoch
+        :return: Precision, Recall and F_score
         """
-        offset = 0
-        if not is_train:
-          offset = self.num_classes*2+1
+        y_true_np = y_true
+        if type(y_true) == torch.Tensor:
+            y_true_np = y_true.cpu().detach().numpy()
 
-        self.csv_list[self.current_epoch+1][offset] = top1
+        y_predicted_np = y_predicted.cpu().detach().numpy()
+        y_predicted_np = np.argmax(y_predicted_np, axis=1)
 
+        precision = precision_score(y_true_np, y_predicted_np, average=None).tolist()
+        recall = recall_score(y_true_np, y_predicted_np, average=None).tolist()
+        f_score = f1_score(y_true_np, y_predicted_np, average=None).tolist()
 
-    def return_current_epoch_perclass_precision_recall(self):
+        return precision, recall, f_score
+
+    def save_train_metrics_into_list(self, epoch, accuracy, loss, precision, recall, fscore):
+        """
+        Save computed metrics, including accuracy and loss into the train list
+        :param epoch: current epoch
+        :param accuracy: model's accuracy in current epoch
+        :param loss: model's accuracy in current epoch
+        :param precision: model's accuracy in current epoch
+        :param recall: model's accuracy in current epoch
+        :param f1_score: model's accuracy in current epoch# Computing other trainning metrics
+        :return: void
+        """
+        temp_list = []
+
+        for i in range(self.num_classes):
+            temp_list += [precision[i], recall[i], fscore[i]]
+
+        self.secondary_train_metrics_values.append([epoch] + temp_list)
+        self.main_train_metrics_values.append([epoch, accuracy, loss])
+
+    def save_validation_metrics_into_list(self, accuracy, loss, precision, recall, fscore):
+        """
+        Save computed metrics, including accuracy and loss into the train list
+        :param accuracy: model's accuracy in current epoch
+        :param loss: model's accuracy in current epoch
+        :param precision: model's accuracy in current epoch
+        :param recall: model's accuracy in current epoch
+        :param f1_score: model's accuracy in current epoch
+        :return: void
+        """
+        temp_list = []
+
+        for i in range(self.num_classes):
+            temp_list += [precision[i], recall[i], fscore[i]]
+
+        self.secondary_valid_metrics_values.append(temp_list)
+        self.main_valid_metrics_values.append([accuracy, loss])
+
+    def display_current_epoch_metrics(self):
+        """
+        Display the computed metrics of the current epoch,
+        Concerning the values in the csv_list_train and csv_list_valid elements of this object
+        :param epoch:
+        :return: String value of the current epoch metrics
+        """
+
         string_value = ""
-        for v in ['train_acc','valid_acc']:
-            string_value += "\n"+v + ": \n"
-            offset = 1
 
-            if v == 'valid_acc':
-                offset = 2 + self.num_classes*2
-            c = 0
-            for i in range(0,self.num_classes*2,2):
-                 string_value += "class_"+str(c)+"acc: "
-                 string_value += str(self.csv_list[self.current_epoch+1][offset+i]) + "\t\t"
-                 string_value += "class_" + str(c) + "_precision: "
-                 string_value += str(self.csv_list[self.current_epoch + 1][offset + i + 1][0]) + "\t\t"
-                 string_value += "class_" + str(c) + "_recall: "
-                 string_value += str(self.csv_list[self.current_epoch + 1][offset + i + 1][1]) + "\t\t"
-                 string_value += "class_" + str(c) + "_f1_score: "
-                 string_value += str(self.csv_list[self.current_epoch + 1][offset + i + 1][2]) + "\n"
-                 c+= 1
+        # Displaying Train Metrics
 
+        curent_epoch_metrics_train = self.secondary_train_metrics_values[-1]
+        # Offset for skipping epoch cell
+        offset_epoch = 1
+        curent_epoch_metrics_train = curent_epoch_metrics_train[offset_epoch:]
+        offset = 2
+        string_value += "Train metrics: \n\n"
+        for i in range(self.num_classes):
+            string_value += "class_" + str(i) + "_precision: %.2f \t\t" % curent_epoch_metrics_train[offset-2]
+            string_value += "class_" + str(i) + "_recall: %.2f    \t\t" % curent_epoch_metrics_train[offset-1]
+            string_value += "class_" + str(i) + "_f1_score: %.2f  \t\t" % curent_epoch_metrics_train[offset]
+            offset += 3
+            string_value += "\n"
+
+        string_value += "\n\n"
+
+        # Displaying Valid Metrics
+        curent_epoch_metrics_valid = self.secondary_valid_metrics_values[-1]
+        # curent_epoch_metrics_valid = curent_epoch_metrics_valid
+
+        offset = 2
+        string_value += "Validation metrics: \n\n"
+        for i in range(self.num_classes):
+            string_value += "class_" + str(i) + "_precision: %.2f \t\t" % curent_epoch_metrics_valid[offset-2]
+            string_value += "class_" + str(i) + "_recall: %.2f    \t\t" % curent_epoch_metrics_valid[offset-1]
+            string_value += "class_" + str(i) + "_f1_score: %.2f \t\t" % curent_epoch_metrics_valid[offset]
+            string_value += "\n"
+            offset += 3
+
+        string_value += "\n\n"
         return string_value
+
 
 class SensorDataTransformer(object):
     """
@@ -250,11 +232,11 @@ class SensorDataTransformer(object):
         :return:
         """
         sensor_images = []
-        for sample,j in zip(sensor_array,range(sensor_array.shape[0])):
-            image = np.full((sensor_array.shape[2],self.canvas_lenght,self.canvas_height),0)
+        for sample, j in zip(sensor_array,range(sensor_array.shape[0])):
+            image = np.full((sensor_array.shape[2], self.canvas_lenght,self.canvas_height),0)
             for line in sample:
-                for sensor,sensor_index in zip(line,range(len(line))):
-                    image[sensor_index] = self.__dot(image[sensor_index],sensor,j)
+                for sensor, sensor_index in zip(line, range(len(line))):
+                    image[sensor_index] = self.__dot(image[sensor_index], sensor, j)
             sensor_images.append(image)
 
         return np.array(sensor_images)
