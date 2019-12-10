@@ -28,8 +28,10 @@ import numpy as np
 import pickle
 import time
 import keras
+import torch
 import sklearn
 from sklearn import preprocessing
+from sklearn.metrics import classification_report
 import concurrent.futures
 import logging
 import tensorflow as tf
@@ -205,7 +207,7 @@ def train_process(idx, use_loo=False):
                                                                                          etime)
                              
 # Saving the objects:
-    with open('out_' + file_name[:-3] + idx +'.pkl', 'wb') as f:  
+    with open(args.save+'/'+'out_' + file_name[:-3] + idx +'.pkl', 'wb') as f:
         pickle.dump([train_results, test_results, etime], f)
 
 
@@ -266,24 +268,39 @@ def run_experiment_with_loo_cross_validation(idx, arg_lr, perclass_metter, final
         flat_train_data = scaler.transform(flat_train_data)
         flat_test_data = scaler.transform(flat_test_data)
         ## UNCOMMENT BEFORE LATER
-        # train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
-        # test_data = flat_test_data.reshape(test_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
-        # input_shape = (train_data.shape[1],train_data.shape[2],1)
+        train_data_stdd = flat_train_data.reshape(train_data.shape[0], train_data.shape[1],
+                                                  train_data.shape[2], 1)
+        test_data_stdd = flat_test_data.reshape(test_data.shape[0], train_data.shape[1],
+                                                train_data.shape[2], 1)
+        #input_shape = (train_data.shape[1],train_data.shape[2], last_column)
 
         # convert class vectors to binary class matrices
         cat_train_label = keras.utils.to_categorical(train_label, ngr)
-        cat_test_label = keras.utils.to_categorical(test_label, ngr)
+        #cat_test_label = keras.utils.to_categorical(test_label, ngr)
         num_classes = cat_train_label.shape[1]
 
         ##Put here the Convolutive CNN
         # train_data = data_transformer.tranform_sensor_values_to_image(train_data)
 
-        results_list, model, arg_scheduler = run_experiment(train_data, train_label, test_data, test_label,
+        results_list, model, arg_scheduler = run_experiment(train_data_stdd, train_label, test_data_stdd, test_label,
                                                             perclass_metter, num_classes, model, final_measurement,
                                                             arg_lr, arg_scheduler)
         train_results[str(final_measurement)] += np.array(results_list)[1:, 0].astype(float).tolist()
         test_results[str(final_measurement)] += np.array(results_list)[1:, ngr * 2 + 1].astype(float).tolist()
         perclass_metter.first_iteration = False
+
+        #.cuda()
+        preds = model(torch.FloatTensor(test_data_stdd).cuda()).cpu().detach().numpy()#.cpu()
+
+        clsf_report = classification_report(test_label, np.argmax(preds, axis=1))
+
+        logging.info("Cassification report table window " + str(final_measurement))
+        logging.info("\n\n" + clsf_report + "\n\n")
+
+        with open(args.save + '/' + "precision_recall_f1score_table_window" + str(final_measurement) + ".txt",
+                  'w+') as f:
+            f.write(clsf_report)
+            f.close()
 
     etime_ = time.time() - tic
     etime[str(final_measurement)].append(etime_)
@@ -334,9 +351,9 @@ def run_experiment_with_hold_out_validation(idx, arg_lr, perclass_metter, final_
     flat_train_data = scaler.transform(flat_train_data)
     flat_test_data = scaler.transform(flat_test_data)
     ## UNCOMMENT BEFORE LATER
-    # train_data = flat_train_data.reshape(train_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
-    # test_data = flat_test_data.reshape(test_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
-    # input_shape = (train_data.shape[1],train_data.shape[2],1)
+    train_data_stdd = flat_train_data.reshape(train_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
+    test_data_stdd = flat_test_data.reshape(test_data.shape[0], train_data.shape[1],train_data.shape[2], 1)
+    #input_shape_stdd = (train_data.shape[1],train_data.shape[2],1)
 
     # convert class vectors to binary class matrices
     cat_train_label = keras.utils.to_categorical(train_label, ngr)
@@ -346,12 +363,27 @@ def run_experiment_with_hold_out_validation(idx, arg_lr, perclass_metter, final_
     ##Put here the Convolutive CNN
     # train_data = data_transformer.tranform_sensor_values_to_image(train_data)
 
-    results_list, model, arg_scheduler = run_experiment(train_data, train_label, test_data, test_label,
+    results_list, model, arg_scheduler = run_experiment(train_data_stdd, train_label, test_data_stdd, test_label,
                                                         perclass_metter, num_classes, model, final_measurement,
                                                         arg_lr, arg_scheduler)
     train_results[str(final_measurement)] += np.array(results_list)[1:, 0].astype(float).tolist()
     test_results[str(final_measurement)] += np.array(results_list)[1:, ngr * 2 + 1].astype(float).tolist()
     perclass_metter.first_iteration = False
+
+    test_data_stdd = test_data_stdd.reshape(test_data_stdd.shape[0], 1,
+                                            test_data_stdd.shape[1], test_data_stdd.shape[2])
+    # .cuda()
+    preds = model(torch.FloatTensor(test_data_stdd).cuda()).cpu().detach().numpy()  # .cpu()
+
+    clsf_report = classification_report(test_label, np.argmax(preds, axis=1))
+
+    logging.info("Cassification report table window " + str(final_measurement))
+    logging.info("\n\n" + clsf_report + "\n\n")
+
+    with open(args.save + '/' + "precision_recall_f1score_table_window" + str(final_measurement) + ".txt",
+              'w+') as f:
+        f.write(clsf_report)
+        f.close()
 
     etime_ = time.time() - tic
     etime[str(final_measurement)].append(etime_)
